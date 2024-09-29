@@ -1,0 +1,791 @@
+graphics
+wait
+e
+take pear
+examine it
+examine rabbit
+w
+sw
+w
+w
+s
+s
+take jar
+wait
+stand
+examine heap
+search heap
+take key
+examine key
+e
+se
+examine glass table
+take bottle
+examine
+bottle
+read potion bottle label
+look under table
+take glass box
+and examine it
+nw
+w
+w
+open door
+nw
+examine piano
+examine
+sheet
+take key
+take sheet 
+open piano
+look in
+piano
+stand on chair
+open bottle
+drink potion
+climb inside piano
+take key in G
+jump out of piano
+se
+e
+examine door
+unlock door 
+the key
+the key in c
+open door
+s
+take card shoe, overall, coat hanger
+examine card shoe
+examine handle
+wear overall
+n
+e
+se
+examine curtain
+take blue fan, blue gloves
+open curtain
+unlock tiny door with key in G
+open fan
+wave fan
+wear overall
+wear blue gloves
+w
+w
+wait
+wait
+e
+examine insect
+take insect
+take stick
+e
+look at poster
+open garden gate
+n
+examine line
+take peg
+take line
+unlock door
+with front door key
+untie line
+n
+e
+w
+n
+examine table
+examine egg rack
+take breakfast egg, examine it
+open cupboard
+look in cupboard
+take cup
+open back door
+n
+e
+put hanger into vice
+straighten hanger
+open vice
+w
+s
+s
+up
+open clock
+examine clock
+get card
+examine door
+insert sheet into gap
+insert hanger
+into keyhole
+take sheet
+take bedroom door key
+unlock door
+with bedroom door key
+open bedroom door
+n
+examine chest of drawers
+open it
+examine bed
+take pink fan
+score
+examine desk
+examine shelf
+take quartz bottle
+look in chest of drawers
+take pink gloves
+s
+d
+s
+read brass plate
+s
+w
+n
+examine tailor's house
+examine door
+read notice
+w
+take gardening gloves
+examine door
+e
+s
+e
+n
+n
+n
+n
+take off blue gloves
+wear gardening gloves
+wear peg on nose
+search heap
+take card
+s
+s
+s
+s
+se
+se
+ne
+nw
+examine treacle well
+ne
+examine fork
+ne
+n
+e
+examine
+examine table
+take gazettes
+take card
+examine book case
+wear peg on nose
+open glasses case
+examine it
+take lens
+e
+examine glass cabinet
+w
+up
+e
+look under bed
+take slippers
+w
+s
+take off shoes
+wear slippers
+e
+pull rope
+w
+examine cauldron
+open cupboard
+look in cupboard
+take jug
+close cupboard
+examine table
+take
+glass key
+examine rack
+take knife
+e
+pull rope
+w
+n
+d
+e
+unlock glass cabinet with glass key
+open glass cabinet
+take pass read it
+w
+w
+s
+sw
+sw
+se
+se
+se
+s
+examine caterpillar
+ask caterpillar about sherbet
+n
+nw
+nw
+sw
+nw
+nw
+w
+n
+n
+examine fountain
+hold cup in mist
+n
+show pass to guard
+give pink gloves and fan to rabbit
+
+w
+examine coat of arms
+take it
+examine
+hook
+take hook
+open left door
+s
+n
+w
+s
+examine metal plate
+read it
+turn handle clockwise
+n
+n
+examine crystal chest
+w
+ask chef about paper
+read paper
+score
+read paper
+d
+unlock door
+the ancient key
+open door
+up
+take piece of steak
+e
+s
+e
+read roster
+e
+up
+examine coat of arms
+w
+examine bed
+examine pillow
+take card
+open queenside drawer
+look in it
+take wooden key
+e
+e
+open
+cabinet
+look in it
+take large lens and nail varnish remover bottle
+w
+up
+examine telescope
+examine small end
+examine large end
+look at roof
+examine stand
+take card
+put large lens into large end of telescope
+put small lens into small end of telescope
+d
+d
+look at coat of arms
+drop coat of arms
+s
+s
+s
+s
+s
+s
+w
+w
+throw stick at puppy
+give steak to puppy
+take silver key
+e
+e
+n
+n
+nw
+unlock silver door with silver key
+open silver door
+e
+ne
+se
+se
+ne
+se
+se
+s
+give cup to caterpillar
+use knife to cut right side of mushroom
+again
+n
+nw
+ne
+sw
+nw
+nw
+ne
+nw
+w
+sw
+sw
+e
+up
+take tub
+open cupboard
+e
+examine table
+take tea chest
+sw
+open door
+e
+take sack
+w
+examine chairs
+examine napkin
+fold napkin
+take napkin
+s
+w
+examine table
+examine teapot
+stand on table
+eat chunk
+get on teapot
+eat chunk
+climb into teapot
+take card
+tell mouse, move
+take card
+climb out of teapot
+stand
+w
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+wait
+e
+n
+ne
+w
+d
+w
+ne
+ne
+e
+se
+sw
+examine well
+attach winch handle to winch
+se
+sw
+nw
+nw
+w
+s
+examine jug
+put cream into saucer
+take saucer
+ne
+ne
+se
+se
+ne
+nw
+take rope
+tie rope to jug
+turn handle clockwise
+turn handle counterclockwise
+untie jug from rope
+examine jug
+drop rope
+se
+sw
+nw
+nw
+n
+n
+up
+n
+examine ink well
+examine brush
+put brush into ink well
+paint egg with brush
+s
+d
+s
+s
+se
+se
+open quartz bottle
+drink potion
+put egg in mouth
+wait
+put breakfast egg in nest
+w
+w
+z
+z
+z
+z
+z
+z
+z
+score
+eat cake
+take flamingo
+z
+z
+z
+ne
+se
+se
+s
+use knife to cut right side of mushroom
+n
+nw
+nw
+sw
+nw
+nw
+sw
+w
+n
+w
+eat chunk
+w
+s
+look at rose tree
+examine brush
+open remover bottle
+put brush into nail remover
+put brush into paint pot
+w
+s
+se
+w
+s
+wake gryphon
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+ne
+n
+e
+nw
+nw
+nw
+ne
+unlock door
+the wooden key
+n
+e
+n
+n
+up
+up
+drop chest
+stand on chest
+look through telescope with right eye
+close left eye
+point telescope se
+look
+d
+d
+s
+s
+s
+e
+se
+se
+ne
+se
+se
+s
+use knife to cut left side of mushroom
+again
+go to the throne room
+eat chunk
+again
+pull bell pull
+s
+take card
+take key
+s
+go to the giant elm tree
+yes
+ne
+se
+se
+ne
+up
+put arm through hole
+w
+tie line to limb
+d
+wear blue gloves
+open sack
+take hedgehog
+put hedgehog into sack and close sack
+examine trapdoor
+attach hook to hole
+open trapdoor
+drop
+line
+d
+n
+take wedge
+take bottle
+examine green bottle
+open door
+n
+up
+e
+s
+e
+e
+open door
+e
+unlock 10
+10 key
+take 3 key
+open 10
+take 3 key
+unlock 3
+3 key
+open 3
+take card, 7 key
+unlock 7
+7 key
+open 7
+take boots
+score
+w
+w
+w
+n
+w
+d
+s
+s
+up
+up
+e
+d
+nw
+sw
+nw
+sw
+nw
+nw
+w
+n
+w
+s
+take off slippers
+wear boots
+s
+take card
+n
+n
+e
+n
+drop boots
+n
+w
+w
+n
+w
+give jug to chef
+give green bottle to chef
+give napkin to chef
+give saucer to chef
+give flour to chef
+open tub
+look in tub
+give lard to chef
+catch key
+again
+e
+unlock crystal chest
+crystal key
+open chest
+take invitation
+s
+e
+e
+s
+go to the giant elm tree
+ne
+se
+se
+ne
+nw
+remove brick with knife
+take card
+se
+up
+w
+d
+take card
+Go to the beaver's hole
+sw
+take card
+Go to the giant elm tree
+nw
+nw
+w
+n
+w
+s
+sw
+se
+sw
+show invitation to guards
+w
+wait
+z
+z
+z
+z
+z
+z
+z
+z
+z
+sw
+z
+open sack
+drop hedgehog
+hit hedgehog with flamingo
+se
+take hedgehog
+hit hedgehog with flamingo
+take card
+take card
+nw
+wait
+wait
+wait
+wait
+look at queen
+look at guards
+look at guests
+wait
+wait
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+z
+ne
+nw
+n
+e
+n
+n
+close door
+lock door
+the red key
+s
+s
+open tailor's door
+e
+give suit of diamonds to tailor
+examine chef's overall
+take pantry key
+w
+n
+n
+w
+read roster
+w
+n
+w
+unlock door with pantry key
+open door
+nw
+take tarts
+wait
+wait
+wait
+select 6
+select 9
+select 4
+select jack
+select 9
+select 5
+select 3
+select 2
+select 8
+q
+y
