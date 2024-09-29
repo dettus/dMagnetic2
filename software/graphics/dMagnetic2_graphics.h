@@ -32,6 +32,8 @@
 #define	DMAGNETIC2_GRAPHICS_MAX_WIDTH	640
 #define	DMAGNETIC2_GRAPHICS_MAX_HEIGHT	480
 
+#define	DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL	10
+
 // The RGB values are 10 bit wide. 
 // red = 29..20
 // green=19..10

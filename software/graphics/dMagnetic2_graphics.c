@@ -90,3 +90,5 @@ int dMagnetic2_graphics_set_gfx(void *pHandle,int size,unsigned char* pGfx,int v
 	}
 	return retval;
 }
+
+
