@@ -31,6 +31,7 @@
 #define	DMAGNETIC2_GRAPHICS_MAX_COLORS	16
 #define	DMAGNETIC2_GRAPHICS_MAX_WIDTH	640
 #define	DMAGNETIC2_GRAPHICS_MAX_HEIGHT	480
+#define	DMAGNETIC2_GRAPHICS_MAX_PIXELS	(DMAGNETIC2_GRAPHICS_MAX_WIDTH*DMAGNETIC2_GRAPHICS_MAX_HEIGHT)
 
 #define	DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL	10
 
@@ -43,23 +44,26 @@ typedef struct _tdMagnetic2_canvas_small
 {
 	int width;	// width in pixels
 	int height;	// height in pixels
+	unsigned int flags;	// some meta information, for the renderer
 	unsigned int rgb[DMAGNETIC2_GRAPHICS_MAX_COLORS];	// RGB values. 10 Bit per channel.
-	unsigned char pixels[DMAGNETIC2_GRAPHICS_MAX_WIDTH*DMAGNETIC2_GRAPHICS_MAX_HEIGHT];
+	unsigned char pixels[DMAGNETIC2_GRAPHICS_MAX_PIXELS];
 } tdMagnetic2_canvas_small;
 
 typedef struct _tdMagnetic2_canvas_large
 {
 	int width;	// width in pixels
 	int height;	// height in pixels
-	unsigned int rgbpixels[DMAGNETIC2_GRAPHICS_MAX_WIDTH*DMAGNETIC2_GRAPHICS_MAX_HEIGHT];	// RGB values. 10 Bit per pixel
+	unsigned int flags;	// some meta information, for the renderer
+	unsigned int rgbpixels[DMAGNETIC2_GRAPHICS_MAX_PIXELS];	// RGB values. 10 Bit per pixel
 } tdMagnetic2_canvas_large;
 
-#define	DMAGNETIC2_GRAPHICS_TYPE_NONE		0
-#define	DMAGNETIC2_GRAPHICS_TYPE_PICTURE	1
-#define	DMAGNETIC2_GRAPHICS_TYPE_ANIMATION	2
-#define	DMAGNETIC2_GRAPHICS_TYPE_C64		3
-#define	DMAGNETIC2_GRAPHICS_TYPE_HALFTONE	4
-#define	DMAGNETIC2_GRAPHICS_TYPE_VGA		5
+
+#define	DMAGNETIC2_GRAPHICS_RENDER_FLAG_NONE		0
+#define	DMAGNETIC2_GRAPHICS_RENDER_FLAG_VALID		(1<<0)
+#define	DMAGNETIC2_GRAPHICS_RENDER_FLAG_C64		(1<<1)
+#define	DMAGNETIC2_GRAPHICS_RENDER_FLAG_WIDEN		(1<<2)
+#define	DMAGNETIC2_GRAPHICS_RENDER_FLAG_HALFTONE	(1<<3)
+
 
 // API functions for initialization
 int dMagnetic2_graphics_get_size(int *pBytes);
