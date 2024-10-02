@@ -25,6 +25,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "dMagnetic2_loader.h"
+#include "dMagnetic2_loader_shared.h"
 
 const unsigned char *dMagnetic2_game_names[8]={
 	"unknown",
@@ -49,7 +50,7 @@ const unsigned char *dMagnetic2_game_sources[9]={
 	"Apple II"
 };
 
-#define	MAX_TMP_SIZE	(1<<20)		// TODO
+#define	MAX_TMP_SIZE	(1<<20)		// TODO. c64: 4*174848 bytes+1
 
 #define	MAGIC		0xfb328c12
 

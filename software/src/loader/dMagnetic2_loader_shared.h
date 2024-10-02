@@ -24,17 +24,14 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef	DMAGNETIC2_ERRORCODES_H
-#define	DMAGNETIC2_ERRORCODES_H
+#ifndef DMAGNETIC2_LOADER_SHARED_H
+#define	DMAGNETIC2_LOADER_SHARED_H
 
-#define	DMAGNETIC2_OK				0
-#define	DMAGNETIC2_UNKNOWN_SOURCE		1
-#define	DMAGNETIC2_MISSING_IMAGE		2
+const unsigned char *dMagnetic2_game_names[8];
+const unsigned char *dMagnetic2_game_sources[9];
 
-
-#define	DMAGNETIC2_ERROR_WRONG_HANDLE		-1
-#define	DMAGNETIC2_ERROR_BUFFER_TOO_SMALL	-2
-#define	DMAGNETIC2_ERROR_WRONG_PICTUREFORMAT	-3
-#define	DMAGNETIC2_UNABLE_TO_OPEN_FILE		-4
+int dMagnetic2_loader_shared_unhuffer(unsigned char* input,int length,unsigned char* output);
+int dMagnetic2_loader_shared_addmagheader(unsigned char* magbuf,int magsize,int version,int codesize,int string1size,int string2size,int dictsize,int huffmantreeidx);
+int dMagnetic2_loader_shared_descramble(unsigned char* inptr,unsigned char* outptr,int pivot,unsigned char *lastchar,int rle);
 
 #endif

@@ -39,6 +39,8 @@ INCFLAGS=	\
 
 SOURCEFILES=	\
 	dMagnetic2_loader.c	\
+	dMagnetic2_loader_shared.c	\
+	dMagnetic2_loader_c64.c	\
 
 OBJFILES=${SOURCEFILES:.c=.o}
 
