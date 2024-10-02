@@ -25,9 +25,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "dMagnetic2_pictures.h"
-#include "dMagnetic2_graphics.h"	// for the datatypes
-#include "dMagnetic2_shared.h"		// for the macros
-#include "dMagnetic2.h"			// for the error codes
+#include "dMagnetic2_graphics.h"		// for the datatypes
+#include "dMagnetic2_shared.h"			// for the macros
+#include "dMagnetic2_errorcodes.h"		// for the error codes
 
 #include "dMagnetic2_pictures_amstrad_cpc.h"	// Header MaP6
 #include "dMagnetic2_pictures_appleii.h"	// Header MaP8
@@ -46,28 +46,30 @@ typedef	struct _tdMagnetic2_picture_handle
 	unsigned char tmpbuf[65536];		// TODO: how much is needed?
 	unsigned char *pGfxbuf;
 	int gfxsize;
+	int version;
 	int vga0ega1;
 } tdMagnetic2_picture_handle;
 
 
-int dMagnetic2_pictures_getsize(int *bytes)
+int dMagnetic2_pictures_getsize(int *pBytes)
 {
-	*size=sizeof(tdMagnetic2_picture_handle);
+	*pBytes=sizeof(tdMagnetic2_picture_handle);
 	return DMAGNETIC2_OK;
 }
 
-int dMagnetic2_pictures_init(void *pHandle,unsigned char* pGfxbuf,int gfxsize,int vga0ega1)
+int dMagnetic2_pictures_init(void *pHandle,unsigned char* pGfxbuf,int gfxsize,int version,int vga0ega1)
 {
 	tdMagnetic2_picture_handle* pThis=(tdMagnetic2_picture_handle*)pHandle;
 	pThis->magic=MAGICNUM;
 	pThis->pGfxbuf=pGfxbuf;
 	pThis->gfxsize=gfxsize;
+	pThis->version=version;
 	pThis->vga0ega1=vga0ega1;
 	return DMAGNETIC2_OK;
 }
 
 
-int dMagnetic2_pictures_decode(void *pHandle,unsigned char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
+int dMagnetic2_pictures_decode(void *pHandle,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
 	tdMagnetic2_picture_handle* pThis=(tdMagnetic2_picture_handle*)pHandle;
 	return DMAGNETIC2_OK;

@@ -24,10 +24,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dMagnetic2_pictures.h"
+#include <stdlib.h>
+#include "dMagnetic2_pictures_amstrad_cpc.h"
 #include "dMagnetic2_graphics.h"	// for the datatypes
 #include "dMagnetic2_shared.h"		// for the macros
-#include "dMagnetic2.h"			// for the error codes
+#include "dMagnetic2_errorcodes.h"	// for the error codes
 
 #define	PICTURE_MAX_RGB_VALUE		((1<<DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL)-1)
 
@@ -166,8 +167,8 @@ int dMagnetic2_gfxloader_amstrad_cpc(unsigned char* gfxbuf,int gfxsize,int picnu
 
 						if (pLarge!=NULL)
 						{
-							pLarge->pixels[outidx+0]=rgbs[xorbuf[xoridx+0]];
-							pLarge->pixels[outidx+1]=rgbs[xorbuf[xoridx+1]];
+							pLarge->rgbpixels[outidx+0]=rgbs[xorbuf[xoridx+0]];
+							pLarge->rgbpixels[outidx+1]=rgbs[xorbuf[xoridx+1]];
 						}
 
 						outidx+=2;

@@ -24,9 +24,10 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <stdlib.h>
 #include "dMagnetic2_graphics.h"	// for the datatypes
 #include "dMagnetic2_shared.h"		// for the macros
-#include "dMagnetic2.h"			// for the error codes
+#include "dMagnetic2_errorcodes.h"			// for the error codes
 
 #define	PICTURE_MAX_RGB_VALUE		((1<<DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL)-1)
 int dMagnetic2_gfxloader_gfx1(unsigned char* gfxbuf,int gfxsize,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
@@ -96,7 +97,7 @@ int dMagnetic2_gfxloader_gfx1(unsigned char* gfxbuf,int gfxsize,int picnum,tdMag
 		red*=PICTURE_MAX_RGB_VALUE;green*=PICTURE_MAX_RGB_VALUE;blue*=PICTURE_MAX_RGB_VALUE;
 		red/=7;green/=7;blue/=7;
 
-		rgbs[i]=(red<<(2*PICTURE_BITS_PER_RGB_CHANNEL))|(green<<(1*PICTURE_BITS_PER_RGB_CHANNEL))|blue;
+		rgbs[i]=(red<<(2*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))|(green<<(1*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))|blue;
 
 
 	}
@@ -183,7 +184,7 @@ int dMagnetic2_gfxloader_gfx1(unsigned char* gfxbuf,int gfxsize,int picnum,tdMag
 	return retval;
 }
 
-int dMagnetic2_gfxloader_gfx2(unsigned char* gfxbuf,int gfxsize,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
+int dMagnetic2_gfxloader_gfx2(unsigned char* gfxbuf,int gfxsize,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
 	int directorysize;
 	int offset;
@@ -265,13 +266,13 @@ int dMagnetic2_gfxloader_gfx2(unsigned char* gfxbuf,int gfxsize,int picnum,tdMag
 			red*=PICTURE_MAX_RGB_VALUE;green*=PICTURE_MAX_RGB_VALUE;blue*=PICTURE_MAX_RGB_VALUE;
 			red/=7;green/=7;blue/=7;
 
-			rgbs[i]=(red<<(2*PICTURE_BITS_PER_RGB_CHANNEL))|(green<<(1*PICTURE_BITS_PER_RGB_CHANNEL))|blue;
+			rgbs[i]=(red<<(2*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))|(green<<(1*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))|blue;
 		}
 		datasize=READ_INT32ME(gfxbuf,offset+38);
 		width=READ_INT16LE(gfxbuf,offset+42);
 		height=READ_INT16LE(gfxbuf,offset+44);
 
-		if (width>PICTURE_MAX_WIDTH)
+		if (width>DMAGNETIC2_GRAPHICS_MAX_WIDTH)
 		{
 			retval=DMAGNETIC2_ERROR_WRONG_PICTUREFORMAT;
 			return retval;

@@ -24,15 +24,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef	DMAGNETIC2_PICTURES_GFX_H
-#define	DMAGNETIC2_PICTURES_GFX_H
+#ifndef	DMAGNETIC2_PICTURES_C64_H
+#define	DMAGNETIC2_PICTURES_C64_H
+
 #include "dMagnetic2_graphics.h"	// for the datatypes
 
-// the purpose of those two functions is to decode the pictures of the .mag/.gfx format. 
-// it is also the format for the Acron and Amiga releases.
-int dMagnetic2_gfxloader_gfx1(unsigned char* gfxbuf,int gfxsize,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
-int dMagnetic2_gfxloader_gfx2(unsigned char* gfxbuf,int gfxsize,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
-
+int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tmpbuf,int version,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 
 #endif
 

@@ -24,10 +24,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <stdlib.h>
 #include "dMagnetic2_pictures.h"
 #include "dMagnetic2_graphics.h"	// for the datatypes
 #include "dMagnetic2_shared.h"		// for the macros
-#include "dMagnetic2.h"			// for the error codes
+#include "dMagnetic2_errorcodes.h"			// for the error codes
 
 #define	PICTURE_MAX_RGB_VALUE		((1<<DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL)-1)
 
@@ -70,7 +71,7 @@
 // the xor is being performed line by line.
 //
 // note that the end of the image comes BEFORE the end of the bitstream. (due to a bug in the encoder)
-int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,int picnum,int egamode,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
+int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,char* picname,int egamode,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
 #define	SIZEOFTREE	609
 	int directorysize;
@@ -208,7 +209,7 @@ int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,int picnum,int
 
 
 
-			rgbs[i]=(red<<(2*PICTURE_BITS_PER_RGB_CHANNEL))|(green<<(1*PICTURE_BITS_PER_RGB_CHANNEL))|blue;
+			rgbs[i]=(red<<(2*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))|(green<<(1*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))|blue;
 
 		}
 		// bytes 0x24,0x25= width
@@ -216,7 +217,7 @@ int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,int picnum,int
 		width=READ_INT16LE(gfxbuf,picstart+0x24);
 		height=READ_INT16LE(gfxbuf,picstart+0x26);
 		xorbufsize=(width+1)/2;
-		if (width>PICTURE_MAX_WIDTH)
+		if (width>DMAGNETIC2_GRAPHICS_MAX_WIDTH)
 		{
 			retval=-1;
 			return retval;
@@ -284,7 +285,7 @@ int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,int picnum,int
 				{
 					while (repnum && j<(width*height))
 					{
-						char pl,pr;
+						int pl,pr;
 						xorbuf[xoridx]^=branch;
 						pl=(xorbuf[xoridx]>>0)&0xf;	// left pixel in the lower 4 bits
 						pr=(xorbuf[xoridx]>>4)&0xf;	// right pixel in the higher 4 bits
@@ -312,7 +313,7 @@ int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,int picnum,int
 
 							j++;
 						}
-						xoridx=(xoridx1)%xorbufsize;
+						xoridx=(xoridx+1)%xorbufsize;
 						repnum--;
 					}
 				}

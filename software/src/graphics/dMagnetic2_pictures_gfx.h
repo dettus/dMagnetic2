@@ -24,71 +24,15 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dMagnetic2_errorcodes.h"
-#include "dMagnetic2_graphics.h"
-#include <string.h>
+#ifndef	DMAGNETIC2_PICTURES_GFX_H
+#define	DMAGNETIC2_PICTURES_GFX_H
+#include "dMagnetic2_graphics.h"	// for the datatypes
 
-#define	MAGICNUM	0xbc412ef9
-
-
-#define	MAX_GFX_SIZE	2534116		// wonder.gfx is 2534113 bytes large
-typedef	struct _tHandle_graphics
-{
-	unsigned int	magic;
-
-	int 		gfxsize;
-	unsigned char	gfxbuf[MAX_GFX_SIZE];
-// internal canvas
-	tdMagnetic2_canvas_small	canvas_small;
-// configurations
-	int		vga0ega1;
-} tHandle_graphics;
+// the purpose of those two functions is to decode the pictures of the .mag/.gfx format. 
+// it is also the format for the Acron and Amiga releases.
+int dMagnetic2_gfxloader_gfx1(unsigned char* gfxbuf,int gfxsize,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+int dMagnetic2_gfxloader_gfx2(unsigned char* gfxbuf,int gfxsize,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 
 
-int dMagnetic2_graphics_getSize(int *pBytes)
-{
-	int size;
-	size=sizeof(tHandle_graphics);
-	return DMAGNETIC2_OK;
-}
-
-int dMagnetic2_graphics_init(void *pHandle)
-{
-	tHandle_graphics* pThis=(tHandle_graphics*)pThis;
-	memset(pThis,0,sizeof(tHandle_graphics));
-	pThis->magic=MAGICNUM;
-	return DMAGNETIC2_OK;
-}
-
-int dMagnetic2_graphics_check_handle(tHandle_graphics* pThis)
-{
-	int retval;
-
-	retval=DMAGNETIC2_OK;
-	if (pThis->magic!=MAGICNUM)
-	{
-		retval=DMAGNETIC2_ERROR_WRONG_HANDLE;
-	}
-	return retval;
-}
-
-int dMagnetic2_graphics_set_gfx(void *pHandle,int size,unsigned char* pGfx,int vga0ega1)
-{
-	tHandle_graphics* pThis=(tHandle_graphics*)pThis;
-	int retval;
-	retval=dMagnetic2_graphics_check_handle(pThis);
-	if (retval==DMAGNETIC2_OK)
-	{
-		if (size<=MAX_GFX_SIZE)
-		{
-			memcpy(pThis->gfxbuf,pGfx,size);
-			pThis->gfxsize=size;
-			pThis->vga0ega1=vga0ega1;
-		} else {
-			retval=DMAGNETIC2_ERROR_BUFFER_TOO_SMALL;
-		}
-	}
-	return retval;
-}
-
+#endif
 

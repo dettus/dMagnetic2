@@ -23,18 +23,18 @@
 // CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+#include <stdlib.h>
 #include "dMagnetic2_pictures.h"
 #include "dMagnetic2_graphics.h"	// for the datatypes
 #include "dMagnetic2_shared.h"		// for the macros
-#include "dMagnetic2.h"			// for the error codes
+#include "dMagnetic2_errorcodes.h"			// for the error codes
 
 #define	PICTURE_MAX_RGB_VALUE		((1<<DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL)-1)
 
 // the Commodore C64 pictures
 // The c64 pictures consist of two parts: the bitmap and the colour map. essentially, each 8x8 block can be rendered with 4 colours. 
 // 2 of them are fixed, the others are determined by the colourmap.
-int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tmpbuf,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
+int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tmpbuf,int version,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
 #define	C64_PICWIDTH			160
 #define	C64_PICHEIGHT			152
@@ -49,7 +49,6 @@ int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tm
 #define	C64_MAXBYTES_PICTURE_V1		(C64_BYTES_BITMAP+C64_BYTES_COLOURMAP_V1+C64_BYTES_COLOURMAP_HIGH)
 #define	C64_MAXBYTES_PICTURE		C64_MAXBYTES_PICTURE_V1
 #define	C64_BYTES_IN_BITMAP		(C64_PICWIDTH*C64_PICHEIGHT/C64_PIXELPERBYTE)
-	int blockidx;
 	unsigned char colour[4]={0};
 	int format;
 	int i;
@@ -77,7 +76,6 @@ int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tm
 		0x1c16d7ae,	// light blue
 		0x2cab2aca};	// grey 3
 
-	blockidx=0;
 
 	retval=0;
 	picoffs=READ_INT32BE(gfxbuf,4+4*picnum);
@@ -264,11 +262,11 @@ int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tm
 					col=colour[(mask>>6)&0x3];
 					if (pSmall!=NULL)
 					{
-						pSmall->pixels[x2+y2*(pPicture->width)]=col;
+						pSmall->pixels[x2+y2*(C64_PICWIDTH)]=col;
 					}
 					if (pLarge!=NULL)
 					{
-						pLarge->pixels[x2+y2*(pPicture->width)]=gfx5_rgbvalues[col];
+						pLarge->rgbpixels[x2+y2*(C64_PICWIDTH)]=gfx5_rgbvalues[col];
 					}
 					mask<<=2;
 				}

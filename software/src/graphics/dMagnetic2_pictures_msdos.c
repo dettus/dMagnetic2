@@ -24,9 +24,14 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <stdlib.h>
+#include <string.h>
 #include "dMagnetic2_pictures_msdos.h"
+#include "dMagnetic2_shared.h"	// for the macros
 #include "dMagnetic2_graphics.h"	// for the datatypes
+#include "dMagnetic2_errorcodes.h"
 
+#define	PICTURE_MAX_RGB_VALUE		((1<<DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL)-1)
 
 int dMagnetic2_gfxloader_msdos(unsigned char* gfxbuf,int gfxsize,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
@@ -59,11 +64,11 @@ int dMagnetic2_gfxloader_msdos(unsigned char* gfxbuf,int gfxsize,int picnum,tdMa
 	int max_stipple;
 	unsigned char pl_lut[128]={0};	// lookup table for left pixels
 	unsigned char pr_lut[128]={0};	// lookup table for right pixels
-	unsigned char xorbuf[PICTURE_MAX_WIDTH*2]={0};	// ring buffer, to perform an XOR over two lines of stipples
-	unsigned char rgbbuf[16]={0};		// RGB values are 6 bits wide. 2 bits red, 2 bits green, 2 bits blue. 
+	unsigned char xorbuf[DMAGNETIC2_GRAPHICS_MAX_WIDTH*2]={0};	// ring buffer, to perform an XOR over two lines of stipples
 	unsigned char last_stipple;
 	int state_cnt;
 	int height,width;
+	unsigned int rgbs[DMAGNETIC2_GRAPHICS_MAX_COLORS];
 	if (!gfxsize) return 0;		// there is no picture data available. nothing to do.
 
 	picnum&=0xffff;
@@ -83,8 +88,8 @@ int dMagnetic2_gfxloader_msdos(unsigned char* gfxbuf,int gfxsize,int picnum,tdMa
 	// the way it is stored is that the offsets within disk1 are stored in the first half,
 	// and the offsets for disk2 are in the second half.
 	// in case the offset is -1, it must be in the other one.
-	offs1=(tVM68k_slong)READ_INT32LE(gfxbuf,indexoffs+picnum*4);
-	offs2=(tVM68k_slong)READ_INT32LE(gfxbuf,indexoffs+indexlen/2+picnum*4);
+	offs1=(int)READ_INT32LE(gfxbuf,indexoffs+picnum*4);
+	offs2=(int)READ_INT32LE(gfxbuf,indexoffs+indexlen/2+picnum*4);
 	if (picnum!=30 && offs1!=-1 && offs2!=-1) offs2=-1;	// in case one picture is stored on both disks, prefer the first one.
 
 	if (picnum==30 && offs1==-1 && offs2==-1) offs1=0;	// special case: the title screen for the GUILD of thieves is the first picture in DISK1.PIX
@@ -188,7 +193,7 @@ int dMagnetic2_gfxloader_msdos(unsigned char* gfxbuf,int gfxsize,int picnum,tdMa
 						blue	=(halftonelut[blue]*PICTURE_MAX_RGB_VALUE)/7;
 
 
-						rgbs[state_cnt++]=(red<<(2*PICTURE_BITS_PER_RGB_CHANNEL))|(green<<(1*PICTURE_BITS_PER_RGB_CHANNEL))|blue;
+						rgbs[state_cnt++]=(red<<(2*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))|(green<<(1*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))|blue;
 						
 					}
 					if (state_cnt==16) 

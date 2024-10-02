@@ -24,12 +24,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef	DMAGNETIC2_PICTURES_C64_H
-#define	DMAGNETIC2_PICTURES_C64_H
+#ifndef	DMAGNETIC2_ERRORCODES_H
+#define	DMAGNETIC2_ERRORCODES_H
 
-#include "dMagnetic2_graphics.h"	// for the datatypes
-
-int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tmpbuf,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+#define	DMAGNETIC2_OK				0
+#define	DMAGNETIC2_ERROR_WRONG_HANDLE		-1
+#define	DMAGNETIC2_ERROR_BUFFER_TOO_SMALL	-2
+#define	DMAGNETIC2_ERROR_WRONG_PICTUREFORMAT	-3
 
 #endif
-

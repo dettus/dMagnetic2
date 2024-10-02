@@ -73,7 +73,7 @@ int dMagnetic2_graphics_set_gfx(void *pHandle,int size,unsigned char* pGfx,int v
 // API functions for drawing
 int dMagnetic2_graphics_set_current_picture(void *pHandle,char* pPicname,int picNum);
 int dMagnetic2_graphics_get_current_type(void* pHandle,char* todo);
-int dMagnetic2_graphics_draw_picture(void* pHandle,tdMagnetic2_canvas_small *pCanvas,tdMagnetic2_canvas_large *pCanvas);
-int dMagnetic2_graphics_draw_animation(void* pHandle,tdMagnetic2_canvas_small *pCanvas,tdMagnetic2_canvas_large *pCanvas,int *pEnd);
+int dMagnetic2_graphics_draw_picture(void* pHandle,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+int dMagnetic2_graphics_draw_animation(void* pHandle,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge,int *pEnd);
 
 #endif

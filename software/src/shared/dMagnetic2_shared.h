@@ -58,7 +58,6 @@ typedef int_least64_t	tVM68k_sint64;
 #endif
 
 #define	MAX_MEMORY		98304		// for wonderland
-#define	
 typedef struct _tdMagnetic2_vmstate
 {
 	tVM68k_ulong	magic; // just so that the functions can identify a handle as this particular data structure	

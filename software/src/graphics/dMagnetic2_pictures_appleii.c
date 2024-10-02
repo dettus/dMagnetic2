@@ -24,10 +24,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <stdlib.h>
 #include "dMagnetic2_pictures.h"
 #include "dMagnetic2_graphics.h"	// for the datatypes
 #include "dMagnetic2_shared.h"		// for the macros
-#include "dMagnetic2.h"			// for the error codes
+#include "dMagnetic2_errorcodes.h"	// for the error codes
 
 #define	PICTURE_MAX_RGB_VALUE		((1<<DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL)-1)
 
@@ -245,7 +246,7 @@ int dMagnetic2_gfxloader_appleii(unsigned char* gfxbuf,int gfxsize,unsigned char
 		pLarge->width=APPLE_II_WIDTH;
 		for (i=0;i<APPLE_II_PIXELS;i++)
 		{
-			pLarge->pixels[i]=gfx8_apple2_palette[tmpbuf[i]];
+			pLarge->rgbpixels[i]=gfx8_apple2_palette[tmpbuf[i]];
 		}
 		pLarge->flags=DMAGNETIC2_GRAPHICS_RENDER_FLAG_WIDEN;
 	}

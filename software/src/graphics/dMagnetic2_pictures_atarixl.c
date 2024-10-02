@@ -24,12 +24,13 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <stdlib.h>
 #include "dMagnetic2_pictures.h"
 #include "dMagnetic2_graphics.h"	// for the datatypes
 #include "dMagnetic2_shared.h"		// for the macros
-#include "dMagnetic2.h"			// for the error codes
+#include "dMagnetic2_errorcodes.h"			// for the error codes
 
-#define	PICTURE_MAX_RGB_VALUE		((1<<DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL)-1)
+#define	PICTURE_MAX_RGB_VALUE		((1<<DMAGNETIC2_DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL)-1)
 
 int dMagnetic2_gfxloader_atarixl(unsigned char* gfxbuf,int gfxsize,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
@@ -55,7 +56,7 @@ int dMagnetic2_gfxloader_atarixl(unsigned char* gfxbuf,int gfxsize,int picnum,td
 	unsigned char lc;
 	unsigned char rlebuf[256];
 	unsigned char threebuf[3];
-	unsigned int rgbs[DMAGNETIC2_PICTURE_MAX_COLORS];
+	unsigned int rgbs[DMAGNETIC2_GRAPHICS_MAX_COLORS];
 	int threecnt;
 	int pixcnt;
 	int rlerep;
@@ -160,13 +161,13 @@ int dMagnetic2_gfxloader_atarixl(unsigned char* gfxbuf,int gfxsize,int picnum,td
 								basecolor=(c>>4)&0xf;
 								brightness=(c>>0)&0xf;
 
-								red_dark	=(gfx7_ataripalette[basecolor][0]>>(2*PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
-								green_dark	=(gfx7_ataripalette[basecolor][0]>>(1*PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
-								blue_dark	=(gfx7_ataripalette[basecolor][0]>>(0*PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
+								red_dark	=(gfx7_ataripalette[basecolor][0]>>(2*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
+								green_dark	=(gfx7_ataripalette[basecolor][0]>>(1*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
+								blue_dark	=(gfx7_ataripalette[basecolor][0]>>(0*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
 
-								red_bright	=(gfx7_ataripalette[basecolor][1]>>(2*PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
-								green_bright	=(gfx7_ataripalette[basecolor][1]>>(1*PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
-								blue_bright	=(gfx7_ataripalette[basecolor][1]>>(0*PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
+								red_bright	=(gfx7_ataripalette[basecolor][1]>>(2*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
+								green_bright	=(gfx7_ataripalette[basecolor][1]>>(1*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
+								blue_bright	=(gfx7_ataripalette[basecolor][1]>>(0*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))&0x3ff;
 
 								r=red_dark	+((red_bright	-red_dark)*brightness)/NUM_BRIGHTNESSLEVELS;
 								g=green_dark	+((green_bright	-green_dark)*brightness)/NUM_BRIGHTNESSLEVELS;
@@ -175,7 +176,7 @@ int dMagnetic2_gfxloader_atarixl(unsigned char* gfxbuf,int gfxsize,int picnum,td
 
 
 
-								rgb=(r<<(2*PICTURE_BITS_PER_RGB_CHANNEL))|(g<<(1*PICTURE_BITS_PER_RGB_CHANNEL))|b;
+								rgb=(r<<(2*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))|(g<<(1*DMAGNETIC2_PICTURE_BITS_PER_RGB_CHANNEL))|b;
 
 
 							}
@@ -237,15 +238,15 @@ int dMagnetic2_gfxloader_atarixl(unsigned char* gfxbuf,int gfxsize,int picnum,td
 								{
 									if (rlenum==0)
 									{
-										pLarge->pixels[pixcnt+0]=rgbs[p0];
-										pLarge->pixels[pixcnt+1]=rgbs[p1];
-										pLarge->pixels[pixcnt+2]=rgbs[p2];
-										pLarge->pixels[pixcnt+3]=rgbs[p3];
+										pLarge->rgbpixels[pixcnt+0]=rgbs[p0];
+										pLarge->rgbpixels[pixcnt+1]=rgbs[p1];
+										pLarge->rgbpixels[pixcnt+2]=rgbs[p2];
+										pLarge->rgbpixels[pixcnt+3]=rgbs[p3];
 									} else {
-										pLarge->pixels[pixcnt+0]=rgbs[xorbuf[(xoridx+0)]];
-										pLarge->pixels[pixcnt+1]=rgbs[xorbuf[(xoridx+1)]];
-										pLarge->pixels[pixcnt+2]=rgbs[xorbuf[(xoridx+2)]];
-										pLarge->pixels[pixcnt+3]=rgbs[xorbuf[(xoridx+3)]];
+										pLarge->rgbpixels[pixcnt+0]=rgbs[xorbuf[(xoridx+0)]];
+										pLarge->rgbpixels[pixcnt+1]=rgbs[xorbuf[(xoridx+1)]];
+										pLarge->rgbpixels[pixcnt+2]=rgbs[xorbuf[(xoridx+2)]];
+										pLarge->rgbpixels[pixcnt+3]=rgbs[xorbuf[(xoridx+3)]];
 									}
 								}
 								pixcnt+=4;
@@ -263,7 +264,7 @@ int dMagnetic2_gfxloader_atarixl(unsigned char* gfxbuf,int gfxsize,int picnum,td
 	{
 		pSmall->width=ATARI_XL_PICTURE_WIDTH;
 		pSmall->height=ATARI_XL_PICTURE_HEIGHT;
-		for (i=0;i<DMAGNETIC2_PICTURE_MAX_COLORS;i++)
+		for (i=0;i<DMAGNETIC2_GRAPHICS_MAX_COLORS;i++)
 		{
 			pSmall->rgb[i]=rgbs[i];
 		}
