@@ -27,12 +27,42 @@
 #ifndef	DMAGNETIC2_LOADER_H
 #define	DMAGNETIC2_LOADER_H
 
+#define	DMAGNETIC2_GAME_NONE		0
+#define	DMAGNETIC2_GAME_PAWN		1
+#define	DMAGNETIC2_GAME_GUILD		2
+#define	DMAGNETIC2_GAME_JINXTER		3
+#define	DMAGNETIC2_GAME_CORRUPTION	4
+#define	DMAGNETIC2_GAME_MYTH		5
+#define	DMAGNETIC2_GAME_FISH		6
+#define	DMAGNETIC2_GAME_WONDERLAND	7
+
+#define	DMAGNETIC2_SOURCE_NONE		0
+#define	DMAGNETIC2_SOURCE_MAGGFX	1
+#define	DMAGNETIC2_SOURCE_ACRON		2
+#define	DMAGNETIC2_SOURCE_MSDOS		3
+#define	DMAGNETIC2_SOURCE_MW		4
+#define	DMAGNETIC2_SOURCE_C64		5
+#define	DMAGNETIC2_SOURCE_AMSTRAD_CPC	6
+#define	DMAGNETIC2_SOURCE_ATARIXL	7
+#define	DMAGNETIC2_SOURCE_APPLEII	8
+
+const unsigned char *dMagnetic2_game_names[8];
+const unsigned char *dMagnetic2_game_sources[9];
+
+#define	DMAGNETIC2_MAX_MAGSIZE		(1<<20)		// TODO
+#define	DMAGNETIC2_MAX_GFXSIZE		(4<<20)		// TODO
+
+typedef struct _tdMagnetic2_game_meta
+{
+	int game;
+	int source;
+	int version;
+	int real_magsize;
+	int real_gfxsize;
+} tdMagnetic2_game_meta;
+
 int dMagnetic2_loader_getsize(int * pBytes);
 int dMagnetic2_loader_init(void *pHandle);
 
-int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filename3);
-int dMagnetic2_loader_getDescription(void* pHandle,int *version,char* todo);
-int dMagnetic2_loader_getgamesizes(void *pHandle,int *pSizeMag,int *pSizeGfx);
-int dMagnetic2_loader_getMagGfx(void* pHandle,unsigned char** ppMag,unsigned char** ppGfx);
-
+int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filename3,unsigned char* pMagBuf, unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta);
 #endif
