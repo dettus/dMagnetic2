@@ -29,7 +29,7 @@
 #include "dMagnetic2_graphics.h"	// for the datatypes
 
 // the purpose of those two functions is to decode the pictures of the .mag/.gfx format. 
-// it is also the format for the Acron and Amiga releases.
+// it is also the format for the Acron Archimedes and Amiga releases.
 int dMagnetic2_gfxloader_gfx1(unsigned char* gfxbuf,int gfxsize,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 int dMagnetic2_gfxloader_gfx2(unsigned char* gfxbuf,int gfxsize,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 

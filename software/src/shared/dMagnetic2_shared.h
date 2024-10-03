@@ -101,6 +101,12 @@ typedef struct _tdMagnetic2_vmstate
 		(((unsigned int)((ptr)[((idx)+1)])&0xff)<< 8)	|\
 		(((unsigned int)((ptr)[((idx)+0)])&0xff)<< 0)	|\
 		0)
+#define READ_INT24LE(ptr,idx)   (\
+		(((unsigned int)((ptr)[((idx)+2)])&0xff)<<16)   |\
+		(((unsigned int)((ptr)[((idx)+1)])&0xff)<< 8)   |\
+		(((unsigned int)((ptr)[((idx)+0)])&0xff)<< 0)   |\
+		0)      
+
 #define READ_INT16LE(ptr,idx)	(\
 		(((unsigned int)((ptr)[((idx)+1)])&0xff)<< 8)	|\
 		(((unsigned int)((ptr)[((idx)+0)])&0xff)<< 0)	|\

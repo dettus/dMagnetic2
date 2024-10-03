@@ -24,54 +24,17 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef	DMAGNETIC2_LOADER_H
-#define	DMAGNETIC2_LOADER_H
+#ifndef	DMAGNETIC2_LOADER_ARCHIMEDES_H
+#define	DMAGNETIC2_LOADER_ARCHIMEDES_H
 
-typedef	enum _edMagnetic2_game
-{
-	DMAGNETIC2_GAME_NONE=0,
-	DMAGNETIC2_GAME_PAWN,
-	DMAGNETIC2_GAME_GUILD,
-	DMAGNETIC2_GAME_JINXTER,
-	DMAGNETIC2_GAME_CORRUPTION,
-	DMAGNETIC2_GAME_MYTH,
-	DMAGNETIC2_GAME_FISH,
-	DMAGNETIC2_GAME_WONDERLAND,
-	DMAGNETIC2_GAME_TODO=0xff
-} edMagnetic2_game;
+#include "dMagnetic2_loader.h"
+int dMagnetic2_loader_archimedes(
+		char* filename1,
+		unsigned char* pTmpBuf,int tmpsize,
+		unsigned char* pMagBuf,int* pRealMagSize,
+		unsigned char* pGfxBuf,int* pRealGfxSize,
+		tdMagnetic2_game_meta *pMeta,
+		int nodoc);
 
-typedef enum _edMagnetic2_source
-{
-	DMAGNETIC2_SOURCE_NONE=0,
-	DMAGNETIC2_SOURCE_MAGGFX,
-	DMAGNETIC2_SOURCE_ARCHIMEDES,
-	DMAGNETIC2_SOURCE_MSDOS,
-	DMAGNETIC2_SOURCE_MW,
-	DMAGNETIC2_SOURCE_C64,
-	DMAGNETIC2_SOURCE_AMSTRAD_CPC,
-	DMAGNETIC2_SOURCE_ATARIXL,
-	DMAGNETIC2_SOURCE_APPLEII
-} edMagnetic2_source;
-
-
-
-
-#define	DMAGNETIC2_MAX_MAGSIZE		(1<<20)		// TODO
-#define	DMAGNETIC2_MAX_GFXSIZE		(4<<20)		// TODO
-
-typedef struct _tdMagnetic2_game_meta
-{
-	edMagnetic2_game game;
-	edMagnetic2_source source;
-	char gamename[32];
-	char sourcename[32];
-	int version;
-	int real_magsize;
-	int real_gfxsize;
-} tdMagnetic2_game_meta;
-
-int dMagnetic2_loader_getsize(int * pBytes);
-int dMagnetic2_loader_init(void *pHandle);
-
-int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filename3,unsigned char* pMagBuf, unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta);
 #endif
+
