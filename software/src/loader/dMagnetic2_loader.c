@@ -50,7 +50,7 @@ const unsigned char *dMagnetic2_game_sources[9]={
 	"Apple II"
 };
 
-#define	MAX_TMP_SIZE	(1<<20)		// TODO. c64: 4*174848 bytes+1
+#define	MAX_TMP_SIZE	(1<<20)		// TODO. c64: 2*174848 bytes+1
 
 #define	MAGIC		0xfb328c12
 

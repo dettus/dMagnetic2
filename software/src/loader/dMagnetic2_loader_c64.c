@@ -26,6 +26,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "dMagnetic2_shared.h"			// for the macros
+#include "dMagnetic2_errorcodes.h"		// for the error codes
+
 #include "dMagnetic2_loader.h"
 #include "dMagnetic2_loader_shared.h"
 
@@ -306,7 +309,7 @@ void dMagnetic2_loader_c64_identifyEntries(unsigned char* d64image,tFileEntry* p
 	}
 }
 
-void loader_d64_advanceSector(int *pTrack,int *pSector)
+void dMagnetic2_loader_c64_advanceSector(int *pTrack,int *pSector)
 {
 	int sect;
 	int track;
@@ -314,7 +317,7 @@ void loader_d64_advanceSector(int *pTrack,int *pSector)
 	track=*pTrack;
 	sect=*pSector;
 	sect=sect+1;
-	if (sect==loader_d64_sectorcnt[track-1])
+	if (sect==dMagnetic2_loader_d64_sectorcnt[track-1])
 	{
 		sect=0;
 		track++;
@@ -324,7 +327,9 @@ void loader_d64_advanceSector(int *pTrack,int *pSector)
 	*pSector=sect;
 }
 
-int loader_d64_readCode1(unsigned char* d64image,tFileEntry *pEntries,int entryNum,unsigned char* pCode1Buf,int* pCode1Size)
+
+// The "code" section of the game is broken into two parts on the C64: The first one is being kept in memory.
+int dMagnetic2_loader_c64_readCode1(unsigned char* d64image,tFileEntry *pEntries,int entryNum,unsigned char* pCode1Buf,int* pCode1Size)
 {
 	int i;
 	int j;
@@ -361,20 +366,20 @@ int loader_d64_readCode1(unsigned char* d64image,tFileEntry *pEntries,int entryN
 	for (i=0;i<len;i++)
 	{
 		int start;
-		loader_d64_readSector(&d64image[offset],track,sect,tmp);
-		loader_d64_advanceSector(&track,&sect);
+		dMagnetic2_loader_c64_readSector(&d64image[offset],track,sect,tmp);
+		dMagnetic2_loader_c64_advanceSector(&track,&sect);
 		start=0;
 		if (encrypted)
 		{
-			loader_common_descramble(tmp,tmp,i,NULL,0);
+			dMagnetic2_loader_shared_descramble(tmp,tmp,i,NULL,0);	// the first part of the game is "encrypted"
 		}
 		if (i==0)
 		{
-			if (tmp[0]==0x49 && tmp[1]==0xfa) 
+			if (tmp[0]==0x49 && tmp[1]==0xfa) 	// some games are packed. some are not.
 			{
 				rle=0;
 			} else {
-				inputsize=tmp[0]*256+tmp[1]-2;
+				inputsize=READ_INT16BE(tmp,0)-2;	// when the game is packed, the first 16 bit are the size 
 				rle=1;
 				start=2;
 			}
@@ -396,10 +401,11 @@ int loader_d64_readCode1(unsigned char* d64image,tFileEntry *pEntries,int entryN
 		}
 	}
 	*pCode1Size=outcnt;
-	return 0;
+	return DMAGNETIC2_OK;
 }
 
-int loader_d64_readCode2(unsigned char* d64image,tFileEntry *pEntries,int entryNum,unsigned char* pCode2Buf,int* pCode2Size)
+// The "code" section of the game is broken into two parts on the C64: The second one was "swapped in" when it was needed.
+int dMagnetic2_loader_c64_readCode2(unsigned char* d64image,tFileEntry *pEntries,int entryNum,unsigned char* pCode2Buf,int* pCode2Size)
 {
 	int i;
 	int j;
@@ -434,9 +440,9 @@ int loader_d64_readCode2(unsigned char* d64image,tFileEntry *pEntries,int entryN
 	outcnt=0;
 	for (i=0;i<len;i++)
 	{
-		loader_d64_readSector(&d64image[offset],track,sect,tmp);
-		if (encrypted) loader_common_descramble(tmp,tmp,i+scrambleoffs,NULL,0);
-		loader_d64_advanceSector(&track,&sect);
+		dMagnetic2_loader_c64_readSector(&d64image[offset],track,sect,tmp);
+		if (encrypted) dMagnetic2_loader_shared_descramble(tmp,tmp,i+scrambleoffs,NULL,0);
+		dMagnetic2_loader_c64_advanceSector(&track,&sect);
 		for (j=0;j<256;j++)
 		{
 			pCode2Buf[outcnt++]=tmp[j];
@@ -445,7 +451,9 @@ int loader_d64_readCode2(unsigned char* d64image,tFileEntry *pEntries,int entryN
 	*pCode2Size=outcnt;
 	return 0;
 }
-int loader_d64_readStrings(unsigned char* d64image,tFileEntry* pEntries,int entryNum,unsigned char* pStringBuf,int* string1size,int* string2size,int* dictsize)
+
+
+int dMagnetic2_loader_c64_readStrings(unsigned char* d64image,tFileEntry* pEntries,int entryNum,unsigned char* pStringBuf,int* string1size,int* string2size,int* dictsize)
 {
 	int i;
 	int j;
@@ -481,9 +489,9 @@ int loader_d64_readStrings(unsigned char* d64image,tFileEntry* pEntries,int entr
 
 			for (j=0;j<len;j++)
 			{
-				loader_d64_readSector(&d64image[offset],track,sect,tmp);
-				if (encrypted) loader_common_descramble(tmp,tmp,j,NULL,0);
-				loader_d64_advanceSector(&track,&sect);
+				dMagnetic2_loader_c64_readSector(&d64image[offset],track,sect,tmp);
+				if (encrypted) dMagnetic2_loader_shared_descramble(tmp,tmp,j,NULL,0);
+				dMagnetic2_loader_c64_advanceSector(&track,&sect);
 				for (k=0;k<256;k++)
 				{
 					pStringBuf[outcnt++]=tmp[k];
@@ -496,7 +504,7 @@ int loader_d64_readStrings(unsigned char* d64image,tFileEntry* pEntries,int entr
 	*string1size	=cnt[0];
 	*string2size	=cnt[1];
 	*dictsize	=cnt[2];
-	return 0;
+	return DMAGNETIC2_OK;
 }
 int dMagnetic2_loader_c64(
 		char* filename1,char* filename2,
@@ -518,16 +526,29 @@ int dMagnetic2_loader_c64(
 	tFileEntry entries[D64_MAXENTRIES];
 	FILE *f;
 	int code1size,code2size,string1size,string2size,dictsize;
-	unsigned char *gfxptr;
 
-	if (tmpsize<4*D64_IMAGESIZE+1)
+
+	// check the important output buffers
+	if (tmpsize<2*D64_IMAGESIZE+1)	// should be large enough for two disk images. and a spare byte for a trick to determine the correct file size
 	{
 		return DMAGNETIC2_ERROR_BUFFER_TOO_SMALL;
 	}
+	if (pMeta==NULL || pTmpBuf==NULL)
+	{
+		return DMAGNETIC2_ERROR_NULLPTR;
+	}
+
+	pMeta->game=DMAGNETIC2_GAME_NONE;
+	pMeta->source=DMAGNETIC2_SOURCE_NONE;
+	pMeta->gamename[0]=0;
+	pMeta->sourcename[0]=0;
+	pMeta->version=-1;
+	pMeta->real_magsize=0;
+	pMeta->real_gfxsize=0;
 
 
 
-	d64image=(unsigned char*)&tmpbuf[2*D64_IMAGESIZE];
+	d64image=(unsigned char*)&pTmpBuf[0];
 	if (filename1==NULL)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
@@ -589,20 +610,21 @@ int dMagnetic2_loader_c64(
 	dMagnetic2_loader_c64_identifyEntries(d64image,entries,entryNum,diskcnt_is);	// and figure out if they are code, pictures or something else
 
 
+	if (pMagBuf!=NULL)
 	{
 		int huffmantreeidx;
 		int magidx;
 		////////////////// LOAD THE MAG BUFFER /////////////////
 		magidx=42;	// leave some room for the header
-		loader_d64_readCode1(d64image,entries,entryNum,(unsigned char*)&magbuf[magidx],&code1size);
+		dMagnetic2_loader_c64_readCode1(d64image,entries,entryNum,(unsigned char*)&pMagBuf[magidx],&code1size);
 		magidx+=code1size;
-		loader_d64_readCode2(d64image,entries,entryNum,(unsigned char*)&magbuf[magidx],&code2size);
+		dMagnetic2_loader_c64_readCode2(d64image,entries,entryNum,(unsigned char*)&pMagBuf[magidx],&code2size);
 		magidx+=code2size;
-		loader_d64_readStrings(d64image,entries,entryNum,(unsigned char*)&magbuf[magidx],&string1size,&string2size,&dictsize);
+		dMagnetic2_loader_c64_readStrings(d64image,entries,entryNum,(unsigned char*)&pMagBuf[magidx],&string1size,&string2size,&dictsize);
 		huffmantreeidx=0;
 
 		// within the string buffer, there is the beginning of the huffman tree
-		if (loader_d64_gameinfo[gameID].version<=1) 
+		if (dMagnetic2_loader_c64_gameinfo[gameID].version<=1) 
 		{
 			huffmantreeidx=string1size;		// the PAWN and GUILD of Thieves had the beginning of the huffman tree in the second string buffer.
 		} else {
@@ -612,29 +634,32 @@ int dMagnetic2_loader_c64(
 			// in addition to this, it is aligned to sectors, so its indes has to be a multiple of 256.
 			for (i=0x100;i<string1size+string2size;i+=0x100)
 			{
-				if (	magbuf[magidx+i-3]==0x00 && magbuf[magidx+i-2]==0x00 && magbuf[magidx+i-1]==0x00 &&			// the previous sector ends with 0x00
-					magbuf[magidx+i+0]==0x01 && magbuf[magidx+i+1]==0x02 && magbuf[magidx+i+2]==0x03) huffmantreeidx=i;	// the sector with the huffmann tree starts with 0x01 0x02 0x03
+				if (	pMagBuf[magidx+i-3]==0x00 && pMagBuf[magidx+i-2]==0x00 && pMagBuf[magidx+i-1]==0x00 &&			// the previous sector ends with 0x00
+					pMagBuf[magidx+i+0]==0x01 && pMagBuf[magidx+i+1]==0x02 && pMagBuf[magidx+i+2]==0x03) huffmantreeidx=i;	// the sector with the huffmann tree starts with 0x01 0x02 0x03
 			}
 		}
 
 		magidx+=string1size+string2size+dictsize;
-		loader_common_addmagheader((unsigned char*)magbuf,magidx,loader_d64_gameinfo[gameID].version,code1size+code2size,string1size,string2size,dictsize,huffmantreeidx);
+		dMagnetic2_loader_shared_addmagheader(pMagBuf,magidx,dMagnetic2_loader_c64_gameinfo[gameidx].version,code1size+code2size,string1size,string2size,dictsize,huffmantreeidx);
 
 		if (nodoc)
 		{
 			int i;
-			unsigned char* ptr=(unsigned char*)&magbuf[0];
+			unsigned char* ptr=(unsigned char*)&pMagBuf[0];
 			for (i=0;i<magidx-4;i++)
 			{
 				if (ptr[i+0]==0x62 && ptr[i+1]==0x02 && ptr[i+2]==0xa2 && ptr[i+3]==0x00) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
 				if (ptr[i+0]==0xa4 && ptr[i+1]==0x06 && ptr[i+2]==0xaa && ptr[i+3]==0xdf) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
 			}
 		}
-		if (loader_d64_gameinfo[gameID].game==GAME_MYTH && magbuf[0x3080]==0x66) magbuf[0x3080]=0x60;	// final touch
+		if (dMagnetic2_loader_c64_gameinfo[gameID].game==GAME_MYTH && pMagBuf[0x3080]==0x66) pMagBuf[0x3080]=0x60;	// final touch
 
-		*magsize=magidx;
+		*pRealMagSize=magidx;
+		pMeta->real_magsize=magidx;
 		/////////// MAG IS FINISHED ////////////////////////////////
 	}
+
+	if (pGfxBuf!=NULL)
 	{
 		unsigned int picoffs[32]={0};
 		int side;
@@ -672,33 +697,34 @@ int dMagnetic2_loader_c64(
 				picoffs[piccnt]=gfxidx;
 				for (j=0;j<len && track<36;j++)
 				{
-					loader_d64_readSector(&d64image[offset],track,sector,(unsigned char*)&gfxbuf[gfxidx]);
-					loader_d64_advanceSector(&track,&sector);
+					dMagnetic2_loader_c64_readSector(&d64image[offset],track,sector,(unsigned char*)&pGfxBuf[gfxidx]);
+					dMagnetic2_loader_c64_advanceSector(&track,&sector);
 					gfxidx+=D64_SECTORSIZE;
 				}
 				piccnt++;
 			}
 		}
 
-		*gfxsize=gfxidx;
+		*pRealGfxSize=gfxidx;
+		pMeta->real_gfxsize=gfxidx;
 
 		gfxidx=0;
 		// now the buffer is complete. write the header.
-		gfxbuf[gfxidx++]='M';
-		gfxbuf[gfxidx++]='a';
-		gfxbuf[gfxidx++]='P';
-		gfxbuf[gfxidx++]='5';
+		pGfxBuf[gfxidx++]='M';
+		pGfxBuf[gfxidx++]='a';
+		pGfxBuf[gfxidx++]='P';
+		pGfxBuf[gfxidx++]='5';
 		for (i=0;i<32;i++)
 		{
 			int order;
-			order=loader_d64_gameinfo[gameID].pictureorder[i];
-			WRITE_INT32BE(gfxptr,gfxidx ,(order==-1)?0xffffffff:picoffs[order]);
+			order=dMagnetic2_loader_c64_gameinfo[gameidx].pictureorder[i];
+			WRITE_INT32BE(pGfxBuf,gfxidx ,(order==-1)?0xffffffff:picoffs[order]);
 			gfxidx+=4;
 		}
-		gfxbuf[4+4*32]=loader_d64_gameinfo[gameID].version;
+		pGfxBuf[4+4*32]=dMagnetic2_loader_c64_gameinfo[gameidx].version;
 		/////////// GFX is finished ///////////////
 	}
-	return 0;
+	return DMAGNETIC2_OK;
 }
 
 

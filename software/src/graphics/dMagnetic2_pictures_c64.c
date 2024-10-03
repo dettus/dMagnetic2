@@ -34,7 +34,7 @@
 // the Commodore C64 pictures
 // The c64 pictures consist of two parts: the bitmap and the colour map. essentially, each 8x8 block can be rendered with 4 colours. 
 // 2 of them are fixed, the others are determined by the colourmap.
-int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tmpbuf,int version,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
+int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tmpbuf,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
 #define	C64_PICWIDTH			160
 #define	C64_PICHEIGHT			152
@@ -54,6 +54,7 @@ int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tm
 	int i;
 	int picoffs;
 	int retval;
+	int version;
 	// approximation of the fixed C64 palette with 10bit RGB values
 	const unsigned int gfx5_rgbvalues[16]={
 		0x00000000,	// black
@@ -87,7 +88,7 @@ int dMagnetic2_gfxloader_c64(unsigned char* gfxbuf,int gfxsize,unsigned char* tm
 
 
 	format=0;
-
+	version=gfxbuf[4+4*32];		// the loader has encoded the game version at this position
 	///////////// dehuff /////////////
 	{
 		int outcnt;
