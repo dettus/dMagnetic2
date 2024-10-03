@@ -748,8 +748,6 @@ int dMagnetic2_loader_appleii(
 	int diskcnt;
 	int n;
 	int offs;
-	int magsize;
-	int gfxsize;
 	FILE *f;
 	char *filenames[]={filename1,filename2,filename3};
 	unsigned char *pTrackBuf;
@@ -941,6 +939,16 @@ int dMagnetic2_loader_appleii(
 		}
 		pMeta->real_magsize=magsize;	
 		pMeta->version=pMagBuf[13];
+		if (nodoc)
+		{
+			int i;
+			unsigned char* ptr=(unsigned char*)&pMagBuf[0];
+			for (i=0;i<magsize-4;i++)
+			{
+				if (ptr[i+0]==0x62 && ptr[i+1]==0x02 && ptr[i+2]==0xa2 && ptr[i+3]==0x00) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
+				if (ptr[i+0]==0xa4 && ptr[i+1]==0x06 && ptr[i+2]==0xaa && ptr[i+3]==0xdf) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
+			}
+		}
 	}
 	if (pGfxBuf!=NULL)
 	{
@@ -951,17 +959,6 @@ int dMagnetic2_loader_appleii(
 		}
 		pMeta->real_gfxsize=gfxsize;	
 	}
-
-	if (nodoc)
-	{
-		int i;
-		unsigned char* ptr=(unsigned char*)&pMagBuf[0];
-		for (i=0;i<magsize-4;i++)
-		{
-			if (ptr[i+0]==0x62 && ptr[i+1]==0x02 && ptr[i+2]==0xa2 && ptr[i+3]==0x00) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
-			if (ptr[i+0]==0xa4 && ptr[i+1]==0x06 && ptr[i+2]==0xaa && ptr[i+3]==0xdf) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
-		}
-	}
-
+	return DMAGNETIC2_OK;
 }
 
