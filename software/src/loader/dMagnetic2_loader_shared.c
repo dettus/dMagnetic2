@@ -24,6 +24,8 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <stdio.h>
+#include "dMagnetic2_errorcodes.h"
 #include "dMagnetic2_shared.h"
 #include "dMagnetic2_loader_shared.h"
 
@@ -109,7 +111,7 @@ int dMagnetic2_loader_shared_addmagheader(unsigned char* magbuf,int magsize,int 
 	WRITE_INT32BE(magbuf,30 ,huffmantreeidx)                // 30..33 the beginning of the huffman tree within the string buffer
 	WRITE_INT32BE(magbuf,34 ,0);                            //  34..37: undo size
 	WRITE_INT32BE(magbuf,38 ,0);                            //  38..41: undo pc
-	return LOADER_OK;
+	return DMAGNETIC2_OK;
 }
 #define	BLOCKSIZE	256
 #define	MAXPIVOT	8

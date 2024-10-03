@@ -24,6 +24,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "dMagnetic2_shared.h"			// for the macros
@@ -82,7 +83,7 @@ typedef struct _tGameInfo
 	int sides;			// how many floppy sides did this game occupy?
 	char magicword[5];		// the word, that is hidden in the second sector of the disk image
 	int version;			// the virtual machine's version
-	signed char pictureorder[32];		// the order in which the pictures can be found in the images are not the same as in other releases.
+	int pictureorder[32];		// the order in which the pictures can be found in the images are not the same as in other releases.
 } tGameInfo;
 
 const tGameInfo dMagnetic2_loader_c64_gameinfo[6]=
@@ -133,7 +134,7 @@ const tGameInfo dMagnetic2_loader_c64_gameinfo[6]=
 	}
 };
 
-edMagnetic2_game dMagnetic2_loader_c64_detectgame(unsigned char* diskram,tdMagnetic2_game_meta *pMeta,int *pSidecnt_expected)
+edMagnetic2_game dMagnetic2_loader_c64_detectgame(unsigned char* diskram,tdMagnetic2_game_meta *pMeta,int *pSidecnt_expected,const int **ppPictureorder)
 {
 
 	// find the magic word
@@ -155,9 +156,10 @@ edMagnetic2_game dMagnetic2_loader_c64_detectgame(unsigned char* diskram,tdMagne
 			pMeta->game=dMagnetic2_loader_c64_gameinfo[i].game;
 			pMeta->source=DMAGNETIC2_SOURCE_C64;
 			pMeta->version=dMagnetic2_loader_c64_gameinfo[i].version;
-			strncmp(pMeta->gamename,32,dMagnetic2_game_names[dMagnetic2_loader_c64_gameinfo[i].game]);
-			strncmp(pMeta->sourcename,32,dMagnetic2_source_sources[DMAGNETIC2_SOURCE_C64]);
-			*pSidecnt_expected=dMagnetic2_loader_c64_gameinfo[i].sidecnt;
+			strncpy(pMeta->gamename,dMagnetic2_game_names[dMagnetic2_loader_c64_gameinfo[i].game],32);
+			strncpy(pMeta->sourcename,dMagnetic2_game_sources[DMAGNETIC2_SOURCE_C64],32);
+			*pSidecnt_expected=dMagnetic2_loader_c64_gameinfo[i].sides;
+			*ppPictureorder=dMagnetic2_loader_c64_gameinfo[i].pictureorder;
 			return DMAGNETIC2_OK;
 		}
 	}
@@ -225,7 +227,7 @@ void dMagnetic2_loader_c64_readSector(unsigned char* d64image,int track,int sect
 	offset=sect*D64_SECTORSIZE;
 	for (i=1;i<track;i++)
 	{
-		offset+=loader_d64_sectorcnt[i-1]*D64_SECTORSIZE;
+		offset+=dMagnetic2_loader_c64_sectorcnt[i-1]*D64_SECTORSIZE;
 	}
 	if ((offset+256)>D64_IMAGESIZE)
 	{
@@ -317,7 +319,7 @@ void dMagnetic2_loader_c64_advanceSector(int *pTrack,int *pSector)
 	track=*pTrack;
 	sect=*pSector;
 	sect=sect+1;
-	if (sect==dMagnetic2_loader_d64_sectorcnt[track-1])
+	if (sect==dMagnetic2_loader_c64_sectorcnt[track-1])
 	{
 		sect=0;
 		track++;
@@ -514,10 +516,8 @@ int dMagnetic2_loader_c64(
 		tdMagnetic2_game_meta *pMeta,
 		int nodoc)
 {
-	int gameidx;
 	int i;
 	int l;
-	int gfxsize0;
 	unsigned char *d64image;
 	int sidecnt_is;
 	int sidecnt_expected;
@@ -526,6 +526,7 @@ int dMagnetic2_loader_c64(
 	tFileEntry entries[D64_MAXENTRIES];
 	FILE *f;
 	int code1size,code2size,string1size,string2size,dictsize;
+	const int *pPictureorder;
 
 
 	// check the important output buffers
@@ -561,7 +562,7 @@ int dMagnetic2_loader_c64(
 		{
 			return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
 		}
-		l=fread(&dimage[0*D64_IMAGESIZE],sizeof(char),D64_IMAGESIZE+1,f);	// this is a trick to read the buffer AND to check if the filesize is correct
+		l=fread(&d64image[0*D64_IMAGESIZE],sizeof(char),D64_IMAGESIZE+1,f);	// this is a trick to read the buffer AND to check if the filesize is correct
 		fclose(f);
 		if (l!=D64_IMAGESIZE)	// in case there were more or less bytes in the file than the exact size of a .D64 image,
 		{
@@ -589,7 +590,7 @@ int dMagnetic2_loader_c64(
 
 	// now the images are in memory. now we can parse them.
 	// first, find out which game it is
-	retval=dMagnetic2_loader_c64_detectgame(d64image,pMeta,&sidecnt_expected);
+	retval=dMagnetic2_loader_c64_detectgame(d64image,pMeta,&sidecnt_expected,&pPictureorder);
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
@@ -607,7 +608,7 @@ int dMagnetic2_loader_c64(
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
 
-	dMagnetic2_loader_c64_identifyEntries(d64image,entries,entryNum,diskcnt_is);	// and figure out if they are code, pictures or something else
+	dMagnetic2_loader_c64_identifyEntries(d64image,entries,entryNum,sidecnt_is);	// and figure out if they are code, pictures or something else
 
 
 	if (pMagBuf!=NULL)
@@ -624,7 +625,7 @@ int dMagnetic2_loader_c64(
 		huffmantreeidx=0;
 
 		// within the string buffer, there is the beginning of the huffman tree
-		if (dMagnetic2_loader_c64_gameinfo[gameID].version<=1) 
+		if (pMeta->version<=1) 
 		{
 			huffmantreeidx=string1size;		// the PAWN and GUILD of Thieves had the beginning of the huffman tree in the second string buffer.
 		} else {
@@ -640,7 +641,7 @@ int dMagnetic2_loader_c64(
 		}
 
 		magidx+=string1size+string2size+dictsize;
-		dMagnetic2_loader_shared_addmagheader(pMagBuf,magidx,dMagnetic2_loader_c64_gameinfo[gameidx].version,code1size+code2size,string1size,string2size,dictsize,huffmantreeidx);
+		dMagnetic2_loader_shared_addmagheader(pMagBuf,magidx,pMeta->version,code1size+code2size,string1size,string2size,dictsize,huffmantreeidx);
 
 		if (nodoc)
 		{
@@ -652,7 +653,7 @@ int dMagnetic2_loader_c64(
 				if (ptr[i+0]==0xa4 && ptr[i+1]==0x06 && ptr[i+2]==0xaa && ptr[i+3]==0xdf) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
 			}
 		}
-		if (dMagnetic2_loader_c64_gameinfo[gameID].game==GAME_MYTH && pMagBuf[0x3080]==0x66) pMagBuf[0x3080]=0x60;	// final touch
+		if (pMeta->game==DMAGNETIC2_GAME_MYTH && pMagBuf[0x3080]==0x66) pMagBuf[0x3080]=0x60;	// final touch
 
 		*pRealMagSize=magidx;
 		pMeta->real_magsize=magidx;
@@ -717,11 +718,11 @@ int dMagnetic2_loader_c64(
 		for (i=0;i<32;i++)
 		{
 			int order;
-			order=dMagnetic2_loader_c64_gameinfo[gameidx].pictureorder[i];
+			order=pPictureorder[i];
 			WRITE_INT32BE(pGfxBuf,gfxidx ,(order==-1)?0xffffffff:picoffs[order]);
 			gfxidx+=4;
 		}
-		pGfxBuf[4+4*32]=dMagnetic2_loader_c64_gameinfo[gameidx].version;
+		pGfxBuf[4+4*32]=pMeta->version;
 		/////////// GFX is finished ///////////////
 	}
 	return DMAGNETIC2_OK;
