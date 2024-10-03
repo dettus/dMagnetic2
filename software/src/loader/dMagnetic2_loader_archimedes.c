@@ -49,8 +49,8 @@ typedef	struct _tGames
 } tGames;
 #define	MAXGAMES	5
 #define	MAXFILENAMENUM	10
-#define	F6CODE	6
-#define	F7DICT	7
+#define	F6CODE		6
+#define	F7DICT		7
 #define	F8STRING2	8
 #define	F9STRING1	9
 #define	F10PICTURES	10
@@ -75,7 +75,7 @@ const tGames dMagnetic2_loader_archimedes_cGames[MAXGAMES]={
 			.version=2,
 			.magicdirname="Jinxter",
 			.expectedmask=(1<<F6CODE)|(1<<F7DICT)|(1<<F8STRING2)|(1<<F9STRING1)|(1<<F10PICTURES),
-			.pictureorder={16,21,22,11,0,6,3,15,24,7,12,13,1,28,26,17,23,9,4,18,25,20,10,8,19,14,2,    0,0,0,0,0}
+			.pictureorder={16,21,22,11,0,6,3,15,24,7,12,13,1,28,26,17,23,9,4,18,25,20,10,8,19,14,2,    -1,-1,-1,-1,-1}
 		},
 		{
 			.game=DMAGNETIC2_GAME_CORRUPTION,
@@ -150,7 +150,7 @@ int dMagnetic2_loader_archimedes_findoffset(unsigned char* map,int mapsize,int s
 	}
 	return DMAGNETIC2_OK;	// did not find the indicator
 }
-int loader_archimedes_recursivedir(unsigned char* dskimg,int dsksize,int recursivettl,char* dirname,int hugo0nick1,int sectorsize,int indlen,int bytespermapbit,int diridx, int* pGameId,int *pOffsets,int* pLengths)
+int dMagnetic2_loader_archimedes_recursivedir(unsigned char* dskimg,int recursivettl,char* dirname,int hugo0nick1,int sectorsize,int indlen,int bytespermapbit,int diridx, int* pGameId,int *pOffsets,int* pLengths)
 {
 	int dirsize[2]={0x4cc-5,0x7dd-5};	// Hugo/Nick have different sizes for the directory
 	int i;
@@ -201,7 +201,7 @@ int loader_archimedes_recursivedir(unsigned char* dskimg,int dsksize,int recursi
 
 			if ((dirtype&0x8)==0x8)	// incase it is another directory
 			{
-				retval=dMagnetic2_loader_archimedes_recursivedir(dskimg,dsksize,recursivettl-1,(char*)&dskimg[diridx+i+0],hugo0nick1,sectorsize,indlen,bytespermapbit,offset,pGameId,pOffsets,pLengths);
+				retval=dMagnetic2_loader_archimedes_recursivedir(dskimg,recursivettl-1,(char*)&dskimg[diridx+i+0],hugo0nick1,sectorsize,indlen,bytespermapbit,offset,pGameId,pOffsets,pLengths);
 			} else {
 				if (name[0]=='F' || name[0]=='f' || name[0]=='c' )	// when the filename starts with an 'f' or 'F'. For "corruption", it is a lower case 'c'. those are the files we are looking for
 				{
@@ -251,8 +251,10 @@ int loader_archimedes_recursivedir(unsigned char* dskimg,int dsksize,int recursi
 	}
 	return retval;
 }
-int dMagnetic2_loader_archimedes_findfiles(unsigned char* dskimg,int dsksize,
-	int *pGameId,int* pOffsets,int* pLengths)		// pOffsets are pointers to the files F6 (code), F7 (dict), f8 (string2), f9(string1), F10 (pictures). IN THAT ORDER. the same goes for the lengths
+int dMagnetic2_loader_archimedes_findfiles(unsigned char* dskimg,
+	int *pGameId,int* pOffsets,int* pLengths,
+	tdMagnetic2_game_meta *pMeta
+	)		// pOffsets are pointers to the files F6 (code), F7 (dict), f8 (string2), f9(string1), F10 (pictures). IN THAT ORDER. the same goes for the lengths
 {
 	int hugo0nick1;
 	int sectorsize;
@@ -260,12 +262,6 @@ int dMagnetic2_loader_archimedes_findfiles(unsigned char* dskimg,int dsksize,
 	int bytespermapbit;
 	int diridx;
 	unsigned int filemask;
-
-	if (dsksize!=ADFS_IMAGESIZE)
-	{
-//		fprintf(stderr,"The diskiamge size is off: %d was expected, but %d bytes were read\n",ADFS_IMAGESIZE,dsksize);
-		return DMAGNETIC2_UNKNOWN_SOURCE;
-	}
 
 	// step 1: find out, if the disk image contains a file system in the 'Hugo' or 'Nick' format.
 	hugo0nick1=-1;
@@ -324,23 +320,27 @@ int dMagnetic2_loader_archimedes_findfiles(unsigned char* dskimg,int dsksize,
 
 	// at this point, the location of the root directory is known.
 	// to find the files named F6, F7, F8, F9, F10, start a recursive search
-	filemask=dMagnetic2_loader_archimedes_recursivedir(dskimg,dsksize,RECURSIVEMAX,"$",	hugo0nick1,sectorsize,indlen,bytespermapbit,diridx,	pGameId,pOffsets,pLengths);
+	filemask=dMagnetic2_loader_archimedes_recursivedir(dskimg,RECURSIVEMAX,"$",	hugo0nick1,sectorsize,indlen,bytespermapbit,diridx,	pGameId,pOffsets,pLengths);
 
 	if (filemask && *pGameId!=-1)
 	{
 //		fprintf(stderr,"loader detected %s --> ",loader_archimedes_cGames[*pGameId].gamename);
-		if ((filemask&loader_archimedes_cGames[*pGameId].expectedmask)!=loader_archimedes_cGames[*pGameId].expectedmask)
+		if ((filemask&dMagnetic2_loader_archimedes_cGames[*pGameId].expectedmask)!=dMagnetic2_loader_archimedes_cGames[*pGameId].expectedmask)
 		{
 //			fprintf(stderr,"FAIL\n");
 //			fprintf(stderr,"insufficient files on the disk. sorry\n");
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
+		pMeta->game=dMagnetic2_loader_archimedes_cGames[*pGameId].game;
+		pMeta->source=DMAGNETIC2_SOURCE_ARCHIMEDES;
+		pMeta->version=dMagnetic2_loader_archimedes_cGames[*pGameId].version;
+		
 //		fprintf(stderr,"okay\n");
 		return DMAGNETIC2_OK;
 	}
 	return DMAGNETIC2_UNKNOWN_SOURCE;
 }
-int loader_archimedes_mkmag(unsigned char *dskimg,int dsksize,unsigned char* magbuf,int* magsize,
+int dMagnetic2_loader_archimedes_mkmag(unsigned char *dskimg,unsigned char* magbuf,int* magsize,
 		int gameId,int* offsets,int *lengths,int nodoc)
 {
 	int magidx;
@@ -351,19 +351,19 @@ int loader_archimedes_mkmag(unsigned char *dskimg,int dsksize,unsigned char* mag
 
 	magidx=42;
 	// the game code is stored in F6, it is packed
-	codesize=loader_common_unhuffer(&dskimg[offsets[F6CODE]],lengths[F6CODE],&magbuf[magidx]);
+	codesize=dMagnetic2_loader_shared_unhuffer(&dskimg[offsets[F6CODE]],lengths[F6CODE],&magbuf[magidx]);
 	magidx+=codesize;
 	// the string1 is stored in F9
 	memcpy(&magbuf[magidx],&dskimg[offsets[F9STRING1]],lengths[F9STRING1]);
 	string1size=lengths[F9STRING1];
 	magidx+=string1size;
 	// string2 is in F8, it is packed
-	string2size=loader_common_unhuffer(&dskimg[offsets[F8STRING2]],lengths[F8STRING2],&magbuf[magidx]);
+	string2size=dMagnetic2_loader_shared_unhuffer(&dskimg[offsets[F8STRING2]],lengths[F8STRING2],&magbuf[magidx]);
 	magidx+=string2size;
-	if (loader_archimedes_cGames[gameId].version)	// the pawn did not have a dictionary file.
+	if (dMagnetic2_loader_archimedes_cGames[gameId].version)	// the pawn did not have a dictionary file.
 	{
 		// the dict is stored in F7, it is packed
-		dictsize=loader_common_unhuffer(&dskimg[offsets[F7DICT]],lengths[F7DICT],&magbuf[magidx]);
+		dictsize=dMagnetic2_loader_shared_unhuffer(&dskimg[offsets[F7DICT]],lengths[F7DICT],&magbuf[magidx]);
 		magidx+=dictsize;
 	} else {
 		dictsize=0;
@@ -380,41 +380,52 @@ int loader_archimedes_mkmag(unsigned char *dskimg,int dsksize,unsigned char* mag
 		}
 	}
 
-	loader_common_addmagheader(magbuf,magidx,loader_archimedes_cGames[gameId].version,codesize,string1size,string2size,dictsize,-1);
+	dMagnetic2_loader_shared_addmagheader(magbuf,magidx,dMagnetic2_loader_archimedes_cGames[gameId].version,codesize,string1size,string2size,dictsize,-1);
 
 	*magsize=magidx;
 
-	return LOADER_OK;
+	return DMAGNETIC2_OK;
 }
 // the archimedes basically uses the same graphic format as the Amiga and the Atari.
 // all that is needed is to find the offsets to the pictures.
-int loader_archimedes_mkgfx(unsigned char *dskimg,int dsksize,unsigned char* gfxbuf,int* gfxsize,
+int dMagnetic2_loader_archimedes_mkgfx(unsigned char *dskimg,unsigned char* gfxbuf,int* gfxsize,
 		int gameId,int* offsets,int *lengths)
 {
 
 	int gfxcnt;
 	int idx;
-	// TODO: since the memory is shared, make sure that offsets[10]>260!!!
+	int length;
+#define	GFX_HEADER_SIZE	(4+4+32*4)	
+#define	PICTURE_HEADER_SIZE	48
 	gfxbuf[0]='M';gfxbuf[1]='a';gfxbuf[2]='P';gfxbuf[3]='i';
-	WRITE_INT32BE(gfxbuf,4,*gfxsize);
-	idx=offsets[F10PICTURES];
 	gfxcnt=0;
-	while (idx<(offsets[F10PICTURES]+lengths[F10PICTURES]-48))
+
+	length=lengths[F10PICTURES]+GFX_HEADER_SIZE;
+	// copy the picture "file" from the disk image into the gfx buffer
+	// todo: this will leave some junk in the gfx buffer. 
+	memcpy(&gfxbuf[GFX_HEADER_SIZE],&dskimg[offsets[F10PICTURES]],lengths[F10PICTURES]);
+	*gfxsize=length;
+	idx=GFX_HEADER_SIZE;
+	while (idx<(length-PICTURE_HEADER_SIZE))
 	{
 		// i do not know where the index for the pictures is.
 		// their format is as followed: there is a 48 byte header. then comes the picture data.
 		// luckily, within this header, at position 0x10, there is a magic sequece 00 00 07 77.
 		// that is sufficient to find the end of the header, and consequently, the beginning of the picture data.
 
-		if (dskimg[idx+0x10]==0x00 && dskimg[idx+0x11]==0x00 && dskimg[idx+0x12]==0x07 && dskimg[idx+0x13]==0x77)
+		if (gfxbuf[idx+0x10]==0x00 && gfxbuf[idx+0x11]==0x00 && gfxbuf[idx+0x12]==0x07 && gfxbuf[idx+0x13]==0x77)
 		{
-			WRITE_INT32BE(gfxbuf,4*loader_archimedes_cGames[gameId].pictureorder[gfxcnt]+8,idx+48);
+			int idx_dir;
+			idx_dir=4*dMagnetic2_loader_archimedes_cGames[gameId].pictureorder[gfxcnt]+8;
+			WRITE_INT32BE(gfxbuf,idx_dir,idx+PICTURE_HEADER_SIZE);
 			gfxcnt++;
 		}
 		idx++;
 	}
-	return LOADER_OK;
+	WRITE_INT32BE(gfxbuf,4,length);
+	return DMAGNETIC2_OK;
 }
+
 
 
 
@@ -427,6 +438,11 @@ int dMagnetic2_loader_archimedes(
 		int nodoc)
 		
 {
+
+	int offsets[MAXFILENAMENUM+1]={0};
+	int lengths[MAXFILENAMENUM+1]={0};
+	int gameId=-1;
+
 	int n;
 	FILE *f;
 	// check the important output buffers
@@ -463,6 +479,31 @@ int dMagnetic2_loader_archimedes(
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
 	}
+
+	// at this point, the diskiamge has been loaded.
+	if (dMagnetic2_loader_archimedes_findfiles(pTmpBuf,&gameId,offsets,lengths,pMeta)!=DMAGNETIC2_OK)
+	{
+		return DMAGNETIC2_UNKNOWN_SOURCE;
+	}
+
+	if (pMagBuf!=NULL)
+	{
+		if (dMagnetic2_loader_archimedes_mkmag(pTmpBuf,pMagBuf,pRealMagSize,gameId,offsets,lengths,nodoc)!=DMAGNETIC2_OK)
+		{
+			return DMAGNETIC2_UNKNOWN_SOURCE;
+		}
+		pMeta->real_magsize=*pRealMagSize;
+	}
+	if (pGfxBuf!=NULL)
+	{
+		if (dMagnetic2_loader_archimedes_mkgfx(pTmpBuf,pGfxBuf,pRealGfxSize,gameId,offsets,lengths)!=DMAGNETIC2_OK)
+		{
+			return DMAGNETIC2_UNKNOWN_SOURCE;
+		}
+		pMeta->real_gfxsize=*pRealGfxSize;
+	}
+	
+
 	return DMAGNETIC2_OK;	
 
 
