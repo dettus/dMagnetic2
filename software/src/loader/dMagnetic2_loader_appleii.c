@@ -76,7 +76,7 @@ typedef struct _tWozInfo
 // moreover, since a track is round, a sector could start at the end and continue at the beginnig
 int dMagnetic2_loader_appleii_decode_addrbuf(unsigned char* pAddrBuf,unsigned char* volume,unsigned char* track,unsigned char* sector,unsigned char* checksum)
 {
-	const unsigned char loader_appleii_deinterleave[16]={ 0x0,0x7,0xe,0x6,0xd,0x5,0xc,0x4,0xb,0x3,0xa,0x2,0x9,0x1,0x8,0xf };
+	const unsigned char dMagnetic2_loader_appleii_deinterleave[16]={ 0x0,0x7,0xe,0x6,0xd,0x5,0xc,0x4,0xb,0x3,0xa,0x2,0x9,0x1,0x8,0xf };
 	int ridx;
 	unsigned char x;
 	unsigned char check;
@@ -85,7 +85,7 @@ int dMagnetic2_loader_appleii_decode_addrbuf(unsigned char* pAddrBuf,unsigned ch
 #define	ROL(x)	((((x)&0x80)>>7|(x)<<1)&0xff)
 	x=pAddrBuf[ridx++];x=ROL(x);x&=pAddrBuf[ridx++];*volume=x;check^=x;
 	x=pAddrBuf[ridx++];x=ROL(x);x&=pAddrBuf[ridx++];*track=x;check^=x;
-	x=pAddrBuf[ridx++];x=ROL(x);x&=pAddrBuf[ridx++];*sector=loader_appleii_deinterleave[x&0xf];check^=x;
+	x=pAddrBuf[ridx++];x=ROL(x);x&=pAddrBuf[ridx++];*sector=dMagnetic2_loader_appleii_deinterleave[x&0xf];check^=x;
 	x=pAddrBuf[ridx++];x=ROL(x);x&=pAddrBuf[ridx++];*checksum=x;check^=x;
 	if (check)
 	{
@@ -137,7 +137,7 @@ int dMagnetic2_loader_appleii_decodenibtrack(unsigned char* pTrackBuf,int track,
 		{
 			case 0:		// find the ADDR preamble
 				{
-					if ( pTrackBuf[(ridx+0)%NIBTRACKSIZE]==loader_appleii_addr_preamble[0] && pTrackBuf[(ridx+1)%NIBTRACKSIZE]==loader_appleii_addr_preamble[1] && pTrackBuf[(ridx+2)%NIBTRACKSIZE]==loader_appleii_addr_preamble[2])
+					if ( pTrackBuf[(ridx+0)%NIBTRACKSIZE]==dMagnetic2_loader_appleii_addr_preamble[0] && pTrackBuf[(ridx+1)%NIBTRACKSIZE]==dMagnetic2_loader_appleii_addr_preamble[1] && pTrackBuf[(ridx+2)%NIBTRACKSIZE]==dMagnetic2_loader_appleii_addr_preamble[2])
 					{
 						ridx+=PREAMBLE_SIZE;
 						state=1;
@@ -173,7 +173,7 @@ int dMagnetic2_loader_appleii_decodenibtrack(unsigned char* pTrackBuf,int track,
 				break;
 			case 2:		// find the DATA preamble
 				{
-					if ( pTrackBuf[(ridx+0)%NIBTRACKSIZE]==loader_appleii_data_preamble[0] && pTrackBuf[(ridx+1)%NIBTRACKSIZE]==loader_appleii_data_preamble[1] && pTrackBuf[(ridx+2)%NIBTRACKSIZE]==loader_appleii_data_preamble[2])
+					if ( pTrackBuf[(ridx+0)%NIBTRACKSIZE]==dMagnetic2_loader_appleii_data_preamble[0] && pTrackBuf[(ridx+1)%NIBTRACKSIZE]==dMagnetic2_loader_appleii_data_preamble[1] && pTrackBuf[(ridx+2)%NIBTRACKSIZE]==dMagnetic2_loader_appleii_data_preamble[2])
 					{
 						ridx+=PREAMBLE_SIZE;
 						state=3;
@@ -188,18 +188,18 @@ int dMagnetic2_loader_appleii_decodenibtrack(unsigned char* pTrackBuf,int track,
 					accu=0;
 					for (j=0;j<SECTORLSB;j++)
 					{
-						accu^=loader_appleii_translatetab[pTrackBuf[ridx%NIBTRACKSIZE]-DECODEROFFS];
+						accu^=dMagnetic2_loader_appleii_translatetab[pTrackBuf[ridx%NIBTRACKSIZE]-DECODEROFFS];
 						lsbbuf[j]=accu;
 						ridx++;
 					}
 					for (j=0;j<SECTORBYTES;j++)
 					{
 						int widx;
-						accu^=loader_appleii_translatetab[pTrackBuf[ridx%NIBTRACKSIZE]-DECODEROFFS];
+						accu^=dMagnetic2_loader_appleii_translatetab[pTrackBuf[ridx%NIBTRACKSIZE]-DECODEROFFS];
 						widx=j+SECTORBYTES*addr_sector;
-						pDskBuf[widx]=accu;
-						pDskBuf[widx]<<=1;pDskBuf[widx]|=(1&lsbbuf[j%SECTORLSB]);lsbbuf[j%SECTORLSB]>>=1;
-						pDskBuf[widx]<<=1;pDskBuf[widx]|=(1&lsbbuf[j%SECTORLSB]);lsbbuf[j%SECTORLSB]>>=1;
+						pTmpBuf[widx]=accu;
+						pTmpBuf[widx]<<=1;pTmpBuf[widx]|=(1&lsbbuf[j%SECTORLSB]);lsbbuf[j%SECTORLSB]>>=1;
+						pTmpBuf[widx]<<=1;pTmpBuf[widx]|=(1&lsbbuf[j%SECTORLSB]);lsbbuf[j%SECTORLSB]>>=1;
 						ridx++;
 					}
 					ridx+=PREAMBLESIZE;	// skip over the epilogue
@@ -292,7 +292,7 @@ int dMagnetic2_loader_appleii_woz_parseheader(unsigned char* pWozBuf,int wozsize
 //		fprintf(stderr," Error parsing the WOZ header\n");
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
-	return DMAGNETIC_OK;
+	return DMAGNETIC2_OK;
 }
 
 // when the woz bit stream is synchronized, it can be interpreted as a nib stream.
@@ -555,16 +555,16 @@ int dMagnetic2_loader_appleii_mkmag(unsigned char* magbuf,int* magsize, edMagnet
 //	}
 
 	magidx=42;
-	codesize=dMagnetic2_loader_appleii_readsection(&magbuf[magidx],loader_appleii_gameInfo[gameid].code_section,pDskBuf,diskcnt,pDskOffs,0);
-	codesize+=dMagnetic2_loader_appleii_readsection(&magbuf[magidx+codesize],loader_appleii_gameInfo[gameid].code2_section,pDskBuf,diskcnt,pDskOffs,loader_appleii_gameInfo[gameid].pivot_code2);
+	codesize=dMagnetic2_loader_appleii_readsection(&magbuf[magidx],dMagnetic2_loader_appleii_gameInfo[gameid].code_section,pDskBuf,diskcnt,pDskOffs,0);
+	codesize+=dMagnetic2_loader_appleii_readsection(&magbuf[magidx+codesize],dMagnetic2_loader_appleii_gameInfo[gameid].code2_section,pDskBuf,diskcnt,pDskOffs,dMagnetic2_loader_appleii_gameInfo[gameid].pivot_code2);
 	magidx+=codesize;
 
 	stringidx0=magidx;
-	string1size=dMagnetic2_loader_appleii_readsection(&magbuf[magidx],loader_appleii_gameInfo[gameid].string1_section,pDskBuf,diskcnt,pDskOffs,0);
+	string1size=dMagnetic2_loader_appleii_readsection(&magbuf[magidx],dMagnetic2_loader_appleii_gameInfo[gameid].string1_section,pDskBuf,diskcnt,pDskOffs,0);
 	magidx+=string1size;
-	string2size=dMagnetic2_loader_appleii_readsection(&magbuf[magidx],loader_appleii_gameInfo[gameid].string2_section,pDskBuf,diskcnt,pDskOffs,0);
+	string2size=dMagnetic2_loader_appleii_readsection(&magbuf[magidx],dMagnetic2_loader_appleii_gameInfo[gameid].string2_section,pDskBuf,diskcnt,pDskOffs,0);
 	magidx+=string2size;
-	dictsize=dMagnetic2_loader_appleii_readsection(&magbuf[magidx],loader_appleii_gameInfo[gameid].dict_section,pDskBuf,diskcnt,pDskOffs,0);
+	dictsize=dMagnetic2_loader_appleii_readsection(&magbuf[magidx],dMagnetic2_loader_appleii_gameInfo[gameid].dict_section,pDskBuf,diskcnt,pDskOffs,0);
 	magidx+=dictsize;
 
 
@@ -588,12 +588,12 @@ int dMagnetic2_loader_appleii_mkmag(unsigned char* magbuf,int* magsize, edMagnet
 
 	if (gameid==GAME_CORRUPTION) for (i=0x212a;i<0x232a;i++) magbuf[i]=0;	// finishing touches on corruption
 
-	dMagnetic2_loader_shared_addmagheader(magbuf,magidx,loader_appleii_gameInfo[gameid].version,codesize,string1size,string2size,dictsize,huffmantreeidx);
+	dMagnetic2_loader_shared_addmagheader(magbuf,magidx,dMagnetic2_loader_appleii_gameInfo[gameid].version,codesize,string1size,string2size,dictsize,huffmantreeidx);
 	*magsize=magidx;
 	return DMAGNETIC2_OK;
 }
 
-int loader_appleii_mkgfx(unsigned char *gfxbuf,int* gfxsize,edMagnetic2_game game,int diskcnt,unsigned char *pTmpBuf,int *diskoffs,int *decodedlens)
+int dMagnetic2_loader_appleii_mkgfx(unsigned char *gfxbuf,int* gfxsize,edMagnetic2_game game,int diskcnt,unsigned char *pTmpBuf,int *diskoffs,int *decodedlens)
 {
 #define	PICTURE_HOTFIX1		0x80000000
 #define	PICTURE_HOTFIX2		0x40000000
@@ -602,7 +602,6 @@ int loader_appleii_mkgfx(unsigned char *gfxbuf,int* gfxsize,edMagnetic2_game gam
 #define	CODESECTIONS		5
 #define	TOTALSECTIONS		(PICTURENUM+CODESECTIONS)
 	int i;
-	int offs;
 	int idx;
 	unsigned int hotfix1=(1<<1)|(1<< 7);
 	unsigned int hotfix2=(1<<2)|(1<<13);
@@ -723,7 +722,7 @@ int loader_appleii_mkgfx(unsigned char *gfxbuf,int* gfxsize,edMagnetic2_game gam
 	gfxbuf[0]='M';gfxbuf[1]='a';gfxbuf[2]='P';gfxbuf[3]='8';
 	
 
-	return DMAGNETIC_OK;
+	return DMAGNETIC2_OK;
 }
 
 
@@ -818,8 +817,8 @@ int dMagnetic2_loader_appleii(
 				int volumeid;
 				// to conserve memory, this process overwrites the loaded image. 
 				// since a decoded track has less bytes than an encoded one, it can be done in place.
-				memcpy(&pTrackBuf,pTmpBuf[diskoffs[i]+j*NIBTRACKSIZE],NIBTRACKSIZE);
-				volumeid=dMagnetic2_loader_decodenibtrack(pTrackBuf,j,&pTmpBuf[offs]);
+				memcpy(pTrackBuf,&pTmpBuf[diskoffs[i]+j*NIBTRACKSIZE],NIBTRACKSIZE);
+				volumeid=dMagnetic2_loader_appleii_decodenibtrack(pTrackBuf,j,&pTmpBuf[offs]);
 				offs+=MAXSECTORS*SECTORBYTES;
 				if (lastvolumeid==-1)
 				{
@@ -841,6 +840,7 @@ int dMagnetic2_loader_appleii(
 		}
 		else 	// must be a .woz file
 		{
+			int j;
 			offs=diskoffs[i];
 			if (pTmpBuf[offs+0]=='W' && pTmpBuf[offs+1]=='O' && pTmpBuf[offs+2]=='Z' && pTmpBuf[offs+3]=='2' )
 			{
@@ -850,7 +850,7 @@ int dMagnetic2_loader_appleii(
 				// the idea is to synchronize the tracks and treat it as a NIB file.
 
 				// first, the wo header needs to be parsed, to find the tracks within the diskfile
-				if (dMagnetic2_loader_woz_parseheader(&pTmpBuf[offs],disklens[i],&wozInfo)!=DMAGNETIC2_OK)
+				if (dMagnetic2_loader_appleii_woz_parseheader(&pTmpBuf[offs],disklens[i],&wozInfo)!=DMAGNETIC2_OK)
 				{
 					return DMAGNETIC2_UNKNOWN_SOURCE;
 				}
@@ -873,7 +873,7 @@ int dMagnetic2_loader_appleii(
 						int volumeid;
 						// Synchronize the bit stream in the .woz to make it a .nib stream						
 						dMagnetic2_loader_appleii_woz_synchronize(pTrackBuf,&pTmpBuf[diskoffs[i]+start],len);
-						volumeid=dMagnetic2_loader_decodenibtrack(pTrackBuf,j,&pTmpBuf[offs]);
+						volumeid=dMagnetic2_loader_appleii_decodenibtrack(pTrackBuf,j,&pTmpBuf[offs]);
 						offs+=MAXSECTORS*SECTORBYTES;
 						if (lastvolumeid==-1)
 						{
@@ -893,12 +893,12 @@ int dMagnetic2_loader_appleii(
 	}
 	// at this point, the disk images have been decoded and are available in the tmpbuf.
 	// with the volumeid, it is now possible to detect the game which disk it is
-	pMeta->game=DMAGNETIC2_GAME_UNKNOWN;
+	pMeta->game=DMAGNETIC2_GAME_NONE;
 	for (i=0;i<diskcnt;i++)
 	{
 		int disknum;
 		edMagnetic2_game game;
-		game=DMAGNETIC2_GAME_UNKNOWN;
+		game=DMAGNETIC2_GAME_NONE;
 		switch (volumeids[i])
 		{
 			// volumeid 0x68 was for "The Pawn"
@@ -915,7 +915,7 @@ int dMagnetic2_loader_appleii(
 			default:
 				return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
-		if (pMeta->game==DMAGNETIC2_GAME_UNKNOWN)
+		if (pMeta->game==DMAGNETIC2_GAME_NONE)
 		{
 			pMeta->game=game;
 		}
@@ -926,16 +926,16 @@ int dMagnetic2_loader_appleii(
 		}
 		diskoffs[disknum]=decodedoffs[i];
 	}
-	if (pMeta->game==DMAGNETIC2_GAME_UNKNOWN)
+	if (pMeta->game==DMAGNETIC2_GAME_NONE)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
-	pMeta->source=DMAGNETIC_SOURCE_APPLEII;
+	pMeta->source=DMAGNETIC2_SOURCE_APPLEII;
 	// at this point, the game is known
 	if (pMagBuf!=NULL)
 	{
 		int magsize;
-		if (dMagnetic2_loader_appleiixi_mkmag(pMagBuf,&magsize,pMeta->game,pTmpBuf,diskcnt,diskoffs)!=DMAGNETIC_OK)
+		if (dMagnetic2_loader_appleii_mkmag(pMagBuf,&magsize,pMeta->game,pTmpBuf,diskcnt,diskoffs)!=DMAGNETIC2_OK)
 		{
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
@@ -945,7 +945,7 @@ int dMagnetic2_loader_appleii(
 	if (pGfxBuf!=NULL)
 	{
 		int gfxsize;
-		if (dMagnetic2_loader_appleii_mkgfx(pGfxBuf,&gfxsize,pMeta->game,pTmpBuf,diskcnt,diskoffs)!=DMAGNETIC_OK)
+		if (dMagnetic2_loader_appleii_mkgfx(pGfxBuf,&gfxsize,pMeta->game,diskcnt,pTmpBuf,decodedoffs,decodedlens)!=DMAGNETIC2_OK)
 		{
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
