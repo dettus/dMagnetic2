@@ -41,7 +41,8 @@ SOURCEFILES=	\
 	dMagnetic2_loader.c	\
 	dMagnetic2_loader_appleii.c	\
 	dMagnetic2_loader_archimedes.c	\
-	dMagnetic2_loader_c64.c	\
+	dMagnetic2_loader_atarixl.c	\
+	dMagnetic2_loader_c64.c		\
 	dMagnetic2_loader_maggfx.c	\
 	dMagnetic2_loader_shared.c	\
 
