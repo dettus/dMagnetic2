@@ -46,8 +46,6 @@
 #define	MAX_SIZE_STRING2	4000	// actually, corruption has 3900 bytes
 #define	MAX_SIZE_DICT		8000	// actually, jinxter has 7281 bytes
 
-#define	MAX_SIZE_FILE5		28000	// actually, myth has 27205 bytes
-#define	MAX_SIZE_FILE6		25000	// actually, guild has 24116 bytes
 
 typedef struct _tGameInfo
 {
@@ -287,43 +285,6 @@ int dMagnetic2_loader_msdos_mkgfx(char* filename1,unsigned char* pTmpBuf,unsigne
 		size_disk2=n;
 	}
 
-	// TODO: FIND OUT WHAT THE FILES WITH THE ENDING 5 and 6 ARE. I AM GUESSING THEY ARE THE TITLE IMAGES
-	{
-		int idx0;
-		int size_file5;
-		int size_file6;
-
-		idx0=idx;
-
-		size_file5=0;
-		size_file6=0;
-		
-		// leave a little room here
-		idx+=16;
-		// TODO: the title screen is stored in the file with the ending 5 and 6 (I think...)
-		snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s5%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
-		// start by reading the index
-		f=fopen(pTmpBuf,"rb");
-		if (f!=NULL)
-		{
-			size_file5=fread(&pGfxBuf[idx],sizeof(char),MAX_SIZE_FILE5,f);
-			fclose(f);
-		}
-		idx+=size_file5;
-
-		snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s6%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
-		// start by reading the index
-		f=fopen(pTmpBuf,"rb");
-		if (f!=NULL)
-		{
-			size_file6=fread(&pGfxBuf[idx],sizeof(char),MAX_SIZE_FILE6,f);	
-			fclose(f);
-		}
-		idx+=size_file6;
-
-		WRITE_INT32BE(pGfxBuf,idx0+0,size_file5);
-		WRITE_INT32BE(pGfxBuf,idx0+4,size_file6);
-	}
 
 	WRITE_INT32BE(pGfxBuf, 4,size_index);
 	WRITE_INT32BE(pGfxBuf, 8,size_disk1);
