@@ -124,13 +124,15 @@ int dMagnetic2_loader_msdos_identify_game(int disk1size)
 	return gameidx;
 }
 
-int dMagnetic2_loader_msdos_mkmag(unsigned char* pTmpBuf,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int gameidx,char filename_postfix)
+int dMagnetic2_loader_msdos_mkmag(char* filename1,unsigned char* pTmpBuf,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int gameidx,char filename_postfix,int nodoc)
 {
 	int size_code=0;
 	int size_dict=0;
 	int size_string1=0;
 	int size_string2=0;
 	int idx;
+	int n;
+	FILE *f;
 
 	idx=42;		// leave some room for the header
 
@@ -146,7 +148,7 @@ int dMagnetic2_loader_msdos_mkmag(unsigned char* pTmpBuf,unsigned char* pMagBuf,
 	n=fread(pTmpBuf,sizeof(char),MAX_SIZE_CODE,f);
 	fclose(f);
 	// sometimes this file is huffed. if not, it starts with 0x49 0xfa
-	if (pTmpBuf[0]==0x49 && pTmpBuf[1]=0xfa)
+	if (pTmpBuf[0]==0x49 && pTmpBuf[1]==0xfa)
 	{
 		memcpy(&pMagBuf[idx],pTmpBuf,n);
 		size_code=n;	
@@ -197,13 +199,13 @@ int dMagnetic2_loader_msdos_mkmag(unsigned char* pTmpBuf,unsigned char* pMagBuf,
 	{
 		int i;
 		unsigned char* ptr=(unsigned char*)&pMagBuf[0];
-		for (i=0;i<magidx-4;i++)
+		for (i=0;i<idx-4;i++)
 		{
 			if (ptr[i+0]==0x62 && ptr[i+1]==0x02 && ptr[i+2]==0xa2 && ptr[i+3]==0x00) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
 			if (ptr[i+0]==0xa4 && ptr[i+1]==0x06 && ptr[i+2]==0xaa && ptr[i+3]==0xdf) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
 		}
 	}
-	if (dMagnetic2_loader_msdos_gameInfo[gameidx].game==GAME_MYTH && pMagBuf[0x314a]==0x66) pMagBuff[0x314a]=0x60;	// final touch
+	if (dMagnetic2_loader_msdos_gameInfo[gameidx].game==DMAGNETIC2_GAME_MYTH && pMagBuf[0x314a]==0x66) pMagBuf[0x314a]=0x60;	// final touch
 	dMagnetic2_loader_shared_addmagheader(pMagBuf,idx,dMagnetic2_loader_msdos_gameInfo[gameidx].version,size_code,size_string1,size_string2,size_dict,-1);
 	pMeta->real_magsize=idx;	
 
@@ -211,13 +213,14 @@ int dMagnetic2_loader_msdos_mkmag(unsigned char* pTmpBuf,unsigned char* pMagBuf,
 }
 	
 
-int dMagnetic2_loader_msdos_mkgfx(unsigned char* pTmpBuf,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta,int gameidx,char filename_postfix)
+int dMagnetic2_loader_msdos_mkgfx(char* filename1,unsigned char* pTmpBuf,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta,int gameidx,char filename_postfix)
 {
 	int n;
 	int idx;
 	int size_index;
 	int size_disk1;
 	int size_disk2;
+	FILE *f;
 
 	/////////////////////// GFX packing
 	// the header of the GFX is always 16 bytes.
@@ -318,8 +321,8 @@ int dMagnetic2_loader_msdos_mkgfx(unsigned char* pTmpBuf,unsigned char* pGfxBuf,
 		}
 		idx+=size_file6;
 
-		WRITE_INT32BE(gfxbuf,idx0+0,size_file5);
-		WRITE_INT32BE(gfxbuf,idx0+4,size_file6);
+		WRITE_INT32BE(pGfxBuf,idx0+0,size_file5);
+		WRITE_INT32BE(pGfxBuf,idx0+4,size_file6);
 	}
 
 	WRITE_INT32BE(pGfxBuf, 4,size_index);
@@ -343,6 +346,7 @@ int dMagnetic2_loader_msdos(
 	int n;
 	int gameidx;
 	char filename_postfix;	// some releases of the games have a . at the end of the filename. this can cause problems on some unix systems. 
+	FILE *f;
 	// check the important output buffers
 //	if (tmpsize<MAX_FILENAME_LEN)	
 	if (tmpsize<MAX_SIZE_CODE)	
@@ -371,7 +375,7 @@ int dMagnetic2_loader_msdos(
 	f=fopen(pTmpBuf,"rb");
 	if (f==NULL)
 	{
-		return DMAGNETIC2_SOURCE_UNKNOWN;
+		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
 	fseek(f,0L,SEEK_END);
 	n=(int)ftell(f);	// check the filesize
@@ -380,12 +384,12 @@ int dMagnetic2_loader_msdos(
 	gameidx=dMagnetic2_loader_msdos_identify_game(n);
 	if (gameidx==-1)
 	{
-		return DMAGNETIC2_SOURCE_UNKNOWN;
+		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
 
 	// next step: check if the particular release comes with a . at the end of filenames.
 	filename_postfix=0;		// lets assume that they do not.
-	snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s4%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,postfix);
+	snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s4%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
 	// try to open file file
 	f=fopen(pTmpBuf,"rb");
 	if (f==NULL)	// unable to open the file. must be because it ended with a .
@@ -406,7 +410,7 @@ int dMagnetic2_loader_msdos(
 	if (pMagBuf!=NULL)
 	{
 		int retval;
-		retval=dMagnetic2_loader_msdos_mkmag(pTmpBuf,pGfxBuf,pMeta,gameidx,filename_postfix);
+		retval=dMagnetic2_loader_msdos_mkmag(filename1,pTmpBuf,pGfxBuf,pMeta,gameidx,filename_postfix,nodoc);
 		if (retval!=DMAGNETIC2_OK)
 		{
 			return retval;
@@ -415,7 +419,7 @@ int dMagnetic2_loader_msdos(
 	if (pGfxBuf!=NULL)
 	{
 		int retval;
-		retval=dMagnetic2_loader_msdos_mkgfx(pTmpBuf,pGfxBuf,pMeta,gameidx,filename_postfix);
+		retval=dMagnetic2_loader_msdos_mkgfx(filename1,pTmpBuf,pGfxBuf,pMeta,gameidx,filename_postfix);
 		if (retval!=DMAGNETIC2_OK)
 		{
 			return retval;
