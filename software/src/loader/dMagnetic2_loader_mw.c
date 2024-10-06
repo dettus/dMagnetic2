@@ -46,6 +46,19 @@ typedef	struct _tGameInfo
 	int			rscsize;	// as does the size.
 } tGameInfo;
 
+typedef struct _tEntry
+{
+	int unknown;	// 2 bytes unknwon
+	int offset;	// 4 bytes offset
+	int length;	// 4 bytes length
+	char name[7];	// 6 bytes name + 0 termination
+	int type;	// 2 bytes "type"
+} tEntry;
+
+#define	TYPE_BINARY	4
+#define	TYPE_ANIMATION	6	// could also be a picture. first part.
+#define	TYPE_TREE	7	// second part of the animations/pictures.
+
 #define	GAME_IDX_WONDERLAND	0		// todo: the game identification should be defaulting to wonderland.
 const tGameInfo dMagnetic2_loader_mw_gameinfo[MAXGAMES]=
 {
@@ -154,7 +167,7 @@ int dMagnetic2_loader_mw_sizes(unsigned char* pTmpBuf,char* filename1,int *pSize
 	int gameidx_int;
 	char *pFilename;
 	FILE *f;
-	pFilename=&pTmpBuf[SIZE_RSC_FILES_MAX];	
+	pFilename=pTmpBuf;
 	gameidx_int=-1;
 	for (i=0;i<MAX_NUM_RSC_FILES;i++)
 	{
@@ -169,8 +182,8 @@ int dMagnetic2_loader_mw_sizes(unsigned char* pTmpBuf,char* filename1,int *pSize
 		n=0;
 		if (f!=NULL)
 		{
-			n=fread(pTmpBuf,sizeof(char),SIZE_RSC_FILE+1,f);
-			fclose(f);
+			fseek(f,0,SEEK_END);
+			n=(int)ftell(f);
 			if (n>SIZE_RSC_FILE)	// easy sanity check.
 			{
 				return DMAGNETIC2_UNKNOWN_SOURCE;
@@ -199,7 +212,7 @@ int dMagnetic2_loader_mw_readresource(unsigned char* pTmpBuf,char* filename1,int
 	int offset_in_rsc;
 	int rsc_file;
 	int output_idx;
-	pFilename=&pTmpBuf[SIZE_RSC_FILES_MAX];	
+	pFilename=pTmpBuf;
 
 	sum=0;
 	rsc_file=-1;
@@ -229,8 +242,103 @@ int dMagnetic2_loader_mw_readresource(unsigned char* pTmpBuf,char* filename1,int
 		// keep on reading in the next file, if necessary
 		length=length-n;
 		output_idx+=n;
-		rsc_file++;
-		offset_in_rsc=0;
+		rsc_file++;	// the file might continue in the next .rsc file.
+		offset_in_rsc=0;// at this position
+
+		// make sure that this loop terminates
+		if (rsc_file==MAX_NUM_RSC_FILES) length=0;
+		else if (sizes[rsc_file]==0) length=0;
+		
+	}
+	return DMAGNETIC2_OK;
+}
+int dMagnetic2_loader_mw_parsedirentry(unsigned char* tmp2buf,tEntry *pEntry)
+{
+	int i;
+	pEntry->unknown=READ_INT16LE(tmp2buf,0);
+	pEntry->offset=READ_INT32LE(tmp2buf,2);
+	pEntry->length=READ_INT32LE(tmp2buf,6);
+	for (i=0;i<6;i++)
+	{
+		pEntry->name[i]=tmp2buf[10+i];
+	}
+	pEntry->name[6]=0;
+	return DMAGNETIC2_OK;
+}
+
+int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int *sizes)
+{
+	unsigned char tmp2buf[32];
+	int diroffset;
+	int num_entries;
+	int retval;
+	int wonderland;
+	int i;
+	int codeoffs,codesize;
+	int string1offs,string1size;
+	int string2offs,string2size;
+	int dictoffs,dictsize;
+	
+
+	// step one: find the directory. It is stored in the very first 4 bytes.
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,0,tmp2buf,4);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	diroffset=READ_INT32LE(tmp2buf,0);
+
+	// now the position of the directory inside the .RSC files is known.	
+//int dMagnetic2_loader_mw_parsedirentry(unsigned char* tmp2buf,tEntry *pEntry)
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset,tmp2buf,2);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	num_entries=READ_INT16LE(tmp2buf,0);
+	diroffset+=2;
+
+	wonderland=0;
+	for (i=0;i<num_entries;i++)
+	{
+		tEntry entry;
+		retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset,tmp2buf,18);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+		retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry);
+		if (entry.type==TYPE_BINARY)
+		{
+			if (strncmp(&(entry.name[0]),"code",4)==0) wonderland=1;	// all other interesing files start with a prefix
+			if (strncmp(&(entry.name[0]),"code",4)==0 || strncmp(&(entry.name[1]),"code",4)==0) 
+			{
+				codeoffset=entry.offset;
+				codesize=entry.length;
+			}
+			if (strncmp(&(entry.name[0]),"text",4)==0 || strncmp(&(entry.name[1]),"text",4)==0) 
+			{
+				string1offset=entry.offset;
+				string1size=entry.length;
+			}
+// FIXME!!!!!! this is wrong
+			if (strncmp(&(entry.name[0]),"index",5)==0 || strncmp(&(entry.name[1]),"index",5)==0) 
+			{
+				string2offset=entry.offset;
+				string2size=entry.length;
+			}
+			if (strncmp(&(entry.name[0]),"wtab",4)==0 || strncmp(&(entry.name[1]),"wtab",4)==0) 
+			{
+				dictoffset=entry.offset;
+				dictsize=entry.length;
+			}
+			if (strncmp(&(entry.name[0]),"code",4)==0 || strncmp(&(entry.name[1]),"code",4)==0) 
+			{
+				codeoffset=entry.offset;
+				codesize=entry.length;
+			}
+		}
+		diroffset+=18;
 	}
 	return DMAGNETIC2_OK;
 }
@@ -247,7 +355,7 @@ int dMagnetic2_loader_mw(
 	int retval;
 	int gameidx;
 
-	if (tmpsize<SIZE_RSC_FILE+FILENAME_LENGTH_MAX)
+	if (tmpsize<FILENAME_LENGTH_MAX)
 	{
 		return DMAGNETIC2_ERROR_BUFFER_TOO_SMALL;
 	}
@@ -274,6 +382,18 @@ int dMagnetic2_loader_mw(
 	pMeta->game=dMagnetic2_loader_mw_gameinfo[gameidx].game;
 	pMeta->version=4;		// magnetic windows has always this verion
 	pMeta->source=DMAGNETIC_SOURCE_MW;
+
+
+
+	if (pMagBuf!=NULL)
+	{
+		int retval;
+		retval=dMagnetic2_loader_mkmag(pTmpBuf,filename1,pMagBuf,pMeta,sizes);
+		if (retval!=DMAGNETIC_OK)
+		{
+			return retval;
+		}
+	}
 
 	return DMAGNETIC2_OK;
 }
