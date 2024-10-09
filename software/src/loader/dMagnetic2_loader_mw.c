@@ -89,7 +89,7 @@ const tGameInfo dMagnetic2_loader_mw_gameinfo[MAXGAMES]=
 		.prefix2='f',			// names are ftwo.rsc or similar
 		.rscsize=4+362496+362496+173056+64175
 	}
-}
+};
 
 // the purpose of this function is to change the filename from TWO.RSC to THREE.RSC, for example.
 int dMagnetic2_loader_mw_substitute_tworsc(char* filename1,char *pFilename,int num,int *gameidx)
@@ -145,8 +145,8 @@ int dMagnetic2_loader_mw_substitute_tworsc(char* filename1,char *pFilename,int n
 		}
 	}
 
-	strncpy(pFilename,filename,FILENAME_LENGTH_MAX);
-	l=strlen(dMagnetic2_loader_mw_names[num]);
+	strncpy(pFilename,filename1,FILENAME_LENGTH_MAX);
+	l=strlen(dMagnetic2_loader_mw_names_upper[num]);
 	for (i=0;i<l+1;i++)
 	{
 		int p;
@@ -172,6 +172,7 @@ int dMagnetic2_loader_mw_sizes(unsigned char* pTmpBuf,char* filename1,int *pSize
 	FILE *f;
 	pFilename=pTmpBuf;
 	gameidx_int=-1;
+	sum=0;
 	for (i=0;i<MAX_NUM_RSC_FILES;i++)
 	{
 		int n;
@@ -199,14 +200,14 @@ int dMagnetic2_loader_mw_sizes(unsigned char* pTmpBuf,char* filename1,int *pSize
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
-	if (sum!=dMagnetic2_loader_mw_gameinfo[gameidx].rscsize)
+	if (sum!=dMagnetic2_loader_mw_gameinfo[gameidx_int].rscsize)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
 	*gameidx=gameidx_int;
 	return DMAGNETIC2_OK;
 }
-int dMagnetic2_loader_mw_readresource(unsigned char* pTmpBuf,char* filename1,int sizes,int offset,unsigned char* pOutput,int length)
+int dMagnetic2_loader_mw_readresource(unsigned char* pTmpBuf,char* filename1,int *sizes,int offset,unsigned char* pOutput,int length)
 {
 	int i;
 	char *pFilename;
@@ -228,15 +229,20 @@ int dMagnetic2_loader_mw_readresource(unsigned char* pTmpBuf,char* filename1,int
 			rsc_file=i;
 		}
 	}
-	if (rsc_file==-1 || orrset_in_rsc==-1)
+	if (rsc_file==-1 || offset_in_rsc==-1)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
-	outputidx=0;
+	output_idx=0;
 	while (length)
 	{
 		int n;
+		int retval;
 		retval=dMagnetic2_loader_mw_substitute_tworsc(filename1,pFilename,rsc_file,NULL);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
 		f=fopen(pFilename,"rb");
 		fseek(f,offset_in_rsc,SEEK_SET);
 		n=fread(&pOutput[output_idx],sizeof(char),length,f);
@@ -279,7 +285,7 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 	int i;
 	int codeoffs,codesize;
 	int text1offs,text1size;
-	int text2offs,text2size;
+	int text2size;
 	int dictoffs,dictsize;
 	int wtaboffs,wtabsize;
 	int sections_found;
@@ -307,7 +313,6 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 	wonderland=0;
 	codeoffs=-1;
 	text1offs=-1;
-	text2offs=-1;
 	dictoffs=-1;
 	wtaboffs=-1;
 
@@ -335,25 +340,25 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 			if (strncmp(&(entry.name[0]),"code",4)==0) wonderland=1;	// all other interesing files start with a prefix
 			if (strncmp(&(entry.name[0]),"code",4)==0 || strncmp(&(entry.name[1]),"code",4)==0) 
 			{
-				codeoffset=entry.offset;
+				codeoffs=entry.offset;
 				codesize=entry.length;
 				sections_found|=0x1;
 			}
 			if (strncmp(&(entry.name[0]),"text",4)==0 || strncmp(&(entry.name[1]),"text",4)==0) 
 			{
-				text1offset=entry.offset;
+				text1offs=entry.offset;
 				text1size=entry.length;
 				sections_found|=0x2;
 			}
 			if (strncmp(&(entry.name[0]),"index",5)==0 || strncmp(&(entry.name[1]),"index",5)==0) 
 			{
-				dictoffset=entry.offset;
+				dictoffs=entry.offset;
 				dictsize=entry.length;
 				sections_found|=0x4;
 			}
 			if (strncmp(&(entry.name[0]),"wtab",4)==0 || strncmp(&(entry.name[1]),"wtab",4)==0) 
 			{
-				wtaboffset=entry.offset;
+				wtaboffs=entry.offset;
 				wtabsize=entry.length;
 				sections_found|=0x8;
 			}
@@ -414,12 +419,16 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,magidx,4,codesize,text1size,text2size,wtabsize,text1size);
 	return retval;
 }
-int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int *sizes)
+int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta,int *sizes)
 {
 	int i;
 	int j;
 	int picturenum;
 	int pictureidx;
+	int retval;
+	int diroffset;
+	int num_entries;
+	int gfxdiridx;
 	unsigned char tmp2buf[DIR_ENTRY_SIZE];
 
 #define	MAXIMAGES	230	// actually 226, but who's counting..
@@ -518,13 +527,12 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 			}
 			if (match)		// have both parts of the picture been found?
 			{
-				int diridx;
 
 				// now, lets make a directory entry 
-				diridx=HEADER+picturenum*GFXDIRENTRYSIZE;
-				memcpy(&pGfxBuf[diridx+0],entry1.name,6);		   // 0.. 5 name
-				WRITE_INT32LE(pGfxBuf,diridx+ 6,pictureidx);		   // 6..10 offset
-				WRITE_INT32LE(pGfxBuf,diridx+10,size_animation+SIZE_TREE); // 10..13 length
+				gfxdiridx=HEADERSIZE+picturenum*GFXDIRENTRYSIZE;
+				memcpy(&pGfxBuf[gfxdiridx+0],entry1.name,6);		   // 0.. 5 name
+				WRITE_INT32LE(pGfxBuf,gfxdiridx+ 6,pictureidx);		   // 6..10 offset
+				WRITE_INT32LE(pGfxBuf,gfxdiridx+10,size_animation+SIZE_TREE); // 10..13 length
 				picturenum++;
 
 				// then: write the Tree, and the "animation" behind it.
@@ -552,9 +560,9 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 	// picturenum++;
 
 
-	WRITE_INT32LE(gfxbuf,HEADER+picturenum*GFXDIRENTRYSIZE,0x23232323);//diridx+=MARGIN;
-	WRITE_INT32LE(gfxbuf,pictureidx,0x42424242);
-	WRITE_INT16LE(gfxbuf,4,picturenum);	// the number of pictures in this file
+	WRITE_INT32LE(pGfxBuf,HEADERSIZE+picturenum*GFXDIRENTRYSIZE,0x23232323);//diridx+=MARGIN;
+	WRITE_INT32LE(pGfxBuf,pictureidx,0x42424242);
+	WRITE_INT16LE(pGfxBuf,4,picturenum);	// the number of pictures in this file
 
 	return DMAGNETIC2_OK;
 }
@@ -568,7 +576,6 @@ int dMagnetic2_loader_mw(
 		unsigned char* pGfxBuf,int* pRealGfxSize,
 		tdMagnetic2_game_meta *pMeta)
 {
-	char *pFilename;
 	int sizes[MAX_NUM_RSC_FILES];
 	int retval;
 	int gameidx;
@@ -592,22 +599,22 @@ int dMagnetic2_loader_mw(
 
 
 	// first: identify the game. and collect the size of the .rsc files.
-	retval=dMagnetic2_loader_mw_sizes(pTmpBuf,filename1,&sizes,&gameidx);	
+	retval=dMagnetic2_loader_mw_sizes(pTmpBuf,filename1,sizes,&gameidx);	
 	if (retval!=DMAGNETIC2_OK)
 	{
 		return retval;
 	}
 	pMeta->game=dMagnetic2_loader_mw_gameinfo[gameidx].game;
 	pMeta->version=4;		// magnetic windows has always this verion
-	pMeta->source=DMAGNETIC_SOURCE_MW;
+	pMeta->source=DMAGNETIC2_SOURCE_MW;
 
 
 
 	if (pMagBuf!=NULL)
 	{
 		int retval;
-		retval=dMagnetic2_loader_mkmag(pTmpBuf,filename1,pMagBuf,pMeta,sizes);
-		if (retval!=DMAGNETIC_OK)
+		retval=dMagnetic2_loader_mw_mkmag(pTmpBuf,filename1,pMagBuf,pMeta,sizes);
+		if (retval!=DMAGNETIC2_OK)
 		{
 			return retval;
 		}
@@ -616,8 +623,8 @@ int dMagnetic2_loader_mw(
 	if (pGfxBuf!=NULL)
 	{
 		int retval;
-		retval=dMagnetic2_loader_mkgfx(pTmpBuf,filename1,pGfxBuf,pMeta,sizes);
-		if (retval!=DMAGNETIC_OK)
+		retval=dMagnetic2_loader_mw_mkgfx(pTmpBuf,filename1,pGfxBuf,pMeta,sizes);
+		if (retval!=DMAGNETIC2_OK)
 		{
 			return retval;
 		}
