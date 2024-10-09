@@ -37,6 +37,7 @@
 
 #define	MAXGAMES	4
 #define	MAX_NUM_RSC_FILES	9	// actually 7, because there is no ZERO.RSC and wonderland has no ONE.RSC. But it goes up to EIGHT.RSC
+#define	DIR_ENTRY_SIZE	18
 
 typedef	struct _tGameInfo
 {
@@ -60,6 +61,8 @@ typedef struct _tEntry
 #define	TYPE_TREE	7	// second part of the animations/pictures.
 
 #define	GAME_IDX_WONDERLAND	0		// todo: the game identification should be defaulting to wonderland.
+
+
 const tGameInfo dMagnetic2_loader_mw_gameinfo[MAXGAMES]=
 {
 	{	
@@ -275,9 +278,12 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 	int wonderland;
 	int i;
 	int codeoffs,codesize;
-	int string1offs,string1size;
-	int string2offs,string2size;
+	int text1offs,text1size;
+	int text2offs,text2size;
 	int dictoffs,dictsize;
+	int wtaboffs,wtabsize;
+	int sections_found;
+	int magidx;
 	
 
 	// step one: find the directory. It is stored in the very first 4 bytes.
@@ -299,15 +305,31 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 	diroffset+=2;
 
 	wonderland=0;
+	codeoffs=-1;
+	text1offs=-1;
+	text2offs=-1;
+	dictoffs=-1;
+	wtaboffs=-1;
+
+	codesize=-1;
+	text1size=-1;
+	text2size=-1;
+	dictsize=-1;
+	wtabsize=-1;
+	sections_found=0;	// count the parts which have been found
 	for (i=0;i<num_entries;i++)
 	{
 		tEntry entry;
-		retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset,tmp2buf,18);
+		retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset,tmp2buf,DIR_ENTRY_SIZE);
 		if (retval!=DMAGNETIC2_OK)
 		{
 			return retval;
 		}
 		retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
 		if (entry.type==TYPE_BINARY)
 		{
 			if (strncmp(&(entry.name[0]),"code",4)==0) wonderland=1;	// all other interesing files start with a prefix
@@ -315,33 +337,229 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 			{
 				codeoffset=entry.offset;
 				codesize=entry.length;
+				sections_found|=0x1;
 			}
 			if (strncmp(&(entry.name[0]),"text",4)==0 || strncmp(&(entry.name[1]),"text",4)==0) 
 			{
-				string1offset=entry.offset;
-				string1size=entry.length;
+				text1offset=entry.offset;
+				text1size=entry.length;
+				sections_found|=0x2;
 			}
-// FIXME!!!!!! this is wrong
 			if (strncmp(&(entry.name[0]),"index",5)==0 || strncmp(&(entry.name[1]),"index",5)==0) 
-			{
-				string2offset=entry.offset;
-				string2size=entry.length;
-			}
-			if (strncmp(&(entry.name[0]),"wtab",4)==0 || strncmp(&(entry.name[1]),"wtab",4)==0) 
 			{
 				dictoffset=entry.offset;
 				dictsize=entry.length;
+				sections_found|=0x4;
 			}
-			if (strncmp(&(entry.name[0]),"code",4)==0 || strncmp(&(entry.name[1]),"code",4)==0) 
+			if (strncmp(&(entry.name[0]),"wtab",4)==0 || strncmp(&(entry.name[1]),"wtab",4)==0) 
 			{
-				codeoffset=entry.offset;
-				codesize=entry.length;
+				wtaboffset=entry.offset;
+				wtabsize=entry.length;
+				sections_found|=0x8;
 			}
 		}
-		diroffset+=18;
+		diroffset+=DIR_ENTRY_SIZE;	// advance the directory
 	}
+	if (sections_found!=0xf)	// some parts were missing.
+	{
+		return DMAGNETIC2_UNKNOWN_SOURCE;
+	}
+	magidx=42;	
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,codeoffs,&pMagBuf[magidx],codesize);
+	magidx+=codesize;
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,text1offs,&pMagBuf[magidx],text1size);
+	magidx+=text1size;
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,dictoffs,&pMagBuf[magidx],dictsize);
+	magidx+=dictsize;
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,wtaboffs,&pMagBuf[magidx],wtabsize);
+	magidx+=wtabsize;
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+
+	if (wonderland)		// finishing touch
+	{
+		if (READ_INT16BE(pMagBuf,0x67a2)==0xa62c)
+		{
+			pMagBuf[0x67a2]=0x4e;
+			pMagBuf[0x67a3]=0x75;
+		}
+	}
+
+	if (text1size>0x10000)
+	{
+		text2size=text1size+dictsize-0x10000;
+		text1size=0x10000;
+	} else {
+		text2size=text1size+dictsize-0xe000;
+		text1size=0xe000;
+	}
+	pMeta->real_magsize=magidx;
+	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,magidx,4,codesize,text1size,text2size,wtabsize,text1size);
+	return retval;
+}
+int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int *sizes)
+{
+	int i;
+	int j;
+	int picturenum;
+	int pictureidx;
+	unsigned char tmp2buf[DIR_ENTRY_SIZE];
+
+#define	MAXIMAGES	230	// actually 226, but who's counting..
+		
+	// step one: find the directory. It is stored in the very first 4 bytes.
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,0,tmp2buf,4);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	diroffset=READ_INT32LE(tmp2buf,0);
+
+	// now the position of the directory inside the .RSC files is known.	
+//int dMagnetic2_loader_mw_parsedirentry(unsigned char* tmp2buf,tEntry *pEntry)
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset,tmp2buf,2);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	num_entries=READ_INT16LE(tmp2buf,0);
+	diroffset+=2;
+
+	picturenum=0;
+#define	GFXNAMELEN	6
+#define	GFXDIRENTRYSIZE (GFXNAMELEN+4+4)	// name+offset+length
+#define	HEADERSIZE 4 	// MaP4
+#define	MARGIN	 4	// better safe than sorry
+	pictureidx=(MAXIMAGES+1+2)*(GFXDIRENTRYSIZE)+HEADERSIZE+MARGIN;		// reserve some bytes in the beginning of the gfx buffer for the directory. add two entries for the title screen at the end, when possible
+	gfxdiridx=HEADERSIZE;
+	memset(pGfxBuf,0,pictureidx);
+	for (i=0;i<num_entries;i++)
+	{
+		tEntry entry1;
+		tEntry entry2;
+		int offset_animation;
+		int size_animation;
+		int offset_tree;	
+#define	SIZE_TREE	609
+
+	
+		// read one entry from the directory
+		// 
+		retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset+i*DIR_ENTRY_SIZE,tmp2buf,DIR_ENTRY_SIZE);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+		retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry1);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+		offset_animation=0;
+		size_animation=0;
+		offset_tree=0;
+		if (entry1.type==TYPE_ANIMATION || entry1.type==TYPE_TREE)
+		{
+			int match;
+
+			match=0;
+			if (entry1.type==TYPE_ANIMATION)
+			{
+				offset_animation=entry1.offset;
+				size_animation=entry1.length;
+			} else {
+				offset_tree=entry1.offset;
+			}
+			
+			// find the second entry
+			for (j=0;j<i-1 && !match;j++)
+			{
+				retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset+i*DIR_ENTRY_SIZE,tmp2buf,DIR_ENTRY_SIZE);
+				if (retval!=DMAGNETIC2_OK)
+				{
+					return retval;
+				}
+				retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry1);
+				if (retval!=DMAGNETIC2_OK)
+				{
+					return retval;
+				}
+				if ((entry2.type==TYPE_ANIMATION || entry2.type==TYPE_TREE) && entry1.type!=entry2.type)
+				{
+					if (strncmp(entry1.name,entry2.name,6)==0)
+					{
+						match=1;
+						if (entry2.type==TYPE_ANIMATION)
+						{
+							offset_animation=entry2.offset;
+							size_animation=entry2.length;
+						} else {
+							offset_tree=entry2.offset;
+						}
+					}
+				}
+			}
+			if (match)		// have both parts of the picture been found?
+			{
+				int diridx;
+
+				// now, lets make a directory entry 
+				diridx=HEADER+picturenum*GFXDIRENTRYSIZE;
+				memcpy(&pGfxBuf[diridx+0],entry1.name,6);		   // 0.. 5 name
+				WRITE_INT32LE(pGfxBuf,diridx+ 6,pictureidx);		   // 6..10 offset
+				WRITE_INT32LE(pGfxBuf,diridx+10,size_animation+SIZE_TREE); // 10..13 length
+				picturenum++;
+
+				// then: write the Tree, and the "animation" behind it.
+
+				retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,offset_tree,&pGfxBuf[pictureidx],SIZE_TREE);
+				if (retval!=DMAGNETIC2_OK)
+				{
+					return retval;
+				}
+				retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,offset_animation,&pGfxBuf[pictureidx],size_animation);
+				if (retval!=DMAGNETIC2_OK)
+				{
+					return retval;
+				}
+				pictureidx+=SIZE_TREE+size_animation;
+			}
+		}
+	}
+	// TODO:
+	// add "titlev" and "titlee" files.
+	// load them @pictureidx, the directory entries are 
+	// diridx=HEADER+picturenum*GFXDIRENTRYSIZE;
+	// picturenum++;
+	// diridx=HEADER+picturenum*GFXDIRENTRYSIZE;
+	// picturenum++;
+
+
+	WRITE_INT32LE(gfxbuf,HEADER+picturenum*GFXDIRENTRYSIZE,0x23232323);//diridx+=MARGIN;
+	WRITE_INT32LE(gfxbuf,pictureidx,0x42424242);
+	WRITE_INT16LE(gfxbuf,4,picturenum);	// the number of pictures in this file
+
 	return DMAGNETIC2_OK;
 }
+
+
 
 int dMagnetic2_loader_mw(
 		char* filename1,
@@ -389,6 +607,16 @@ int dMagnetic2_loader_mw(
 	{
 		int retval;
 		retval=dMagnetic2_loader_mkmag(pTmpBuf,filename1,pMagBuf,pMeta,sizes);
+		if (retval!=DMAGNETIC_OK)
+		{
+			return retval;
+		}
+	}
+
+	if (pGfxBuf!=NULL)
+	{
+		int retval;
+		retval=dMagnetic2_loader_mkgfx(pTmpBuf,filename1,pGfxBuf,pMeta,sizes);
 		if (retval!=DMAGNETIC_OK)
 		{
 			return retval;
