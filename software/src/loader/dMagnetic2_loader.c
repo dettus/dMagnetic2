@@ -38,7 +38,7 @@ const unsigned char *dMagnetic2_game_names[8]={
 	"Wonderland"
 };
 
-const unsigned char *dMagnetic2_game_sources[9]={
+const unsigned char *dMagnetic2_game_sources[10]={
 	"unknown",
 	".mag/.gfx",
 	"Acron Archimedes",
@@ -46,6 +46,7 @@ const unsigned char *dMagnetic2_game_sources[9]={
 	"Magnetic Windows Resource Files",
 	"Commodore C64",
 	"Amstrad CPC",
+	"Spectrum +3",
 	"Atari XL",
 	"Apple II"
 };

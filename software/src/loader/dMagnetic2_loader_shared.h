@@ -28,10 +28,11 @@
 #define	DMAGNETIC2_LOADER_SHARED_H
 
 extern const unsigned char *dMagnetic2_game_names[8];
-extern const unsigned char *dMagnetic2_game_sources[9];
+extern const unsigned char *dMagnetic2_game_sources[10];
 
 int dMagnetic2_loader_shared_unhuffer(unsigned char* input,int length,unsigned char* output);
 int dMagnetic2_loader_shared_addmagheader(unsigned char* magbuf,int magsize,int version,int codesize,int string1size,int string2size,int dictsize,int huffmantreeidx);
 int dMagnetic2_loader_shared_descramble(unsigned char* inptr,unsigned char* outptr,int pivot,unsigned char *lastchar,int rle);
+int dMagnetic2_loader_shared_prbs_descrambler(unsigned char* outputbuf,int len,unsigned short startvalue,unsigned short increment);
 
 #endif

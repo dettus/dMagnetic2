@@ -149,42 +149,7 @@ const tGames dMagnetic2_loader_dsk_knownGames[NUM_GAMES]={
 		.expectedsuffixes_spectrum=(1<<FILESUFFIX1)|(1<<FILESUFFIX2)|(1<<FILESUFFIX3)|(1<<FILESUFFIX4)|(1<<FILESUFFIX5)
 	}
 };
-void dMagnetic2_loader_dsk_descrambler(unsigned char* outputbuf,int len,unsigned short startvalue)
-{
-	unsigned short value;
-	unsigned char key;
-	int i;
 
-	value=startvalue;
-	for (i=0;i<len;i++)
-	{
-		value=(value+((value<<8)+0x29))&0xffff;
-		key=(value^(value>>8))&0xff;
-		outputbuf[i]^=key;
-	}
-}
-int dMagnetic2_loader_dsk_readfile(unsigned char* inputbuf,unsigned char* outputbuf,int fileID,tDirEntry* pDirEntries,int entrycnt,int sectorsize)
-{
-	int i;
-	int outputidx;
-	outputidx=0;
-	for (i=0;i<entrycnt;i++)
-	{
-		int j;
-		if (pDirEntries[i].fileID==fileID)
-		{
-			for (j=0;j<MAXOFFSETSPERENTRY;j++)
-			{
-				if (pDirEntries[i].offsets[j]!=-1)
-				{
-					memcpy(&outputbuf[outputidx],&inputbuf[pDirEntries[i].offsets[j]],sectorsize);
-					outputidx+=sectorsize;
-				}
-			}
-		}
-	}
-	return outputidx;
-}
 
 int dMagnetic2_loader_dsk_parse_image_header(unsigned char* pDskImage,tDskInfo *pDskInfo,int amstrad0spectrum1)
 {
@@ -453,6 +418,262 @@ int dMagnetic2_loader_dsk_directory(unsigned char* pDskImage,tDskInfo *pDskInfo,
 	return DMAGNETIC2_OK;
 }
 
+int dMagnetic2_loader_dsk_readfile(unsigned char* pTmpBuf,tDskInfo* pDskInfo,int fileID,unsigned char* pOutput)
+{
+	int i;
+	int outputidx;
+
+	outputidx=0;
+	// try to find the fileID on all disk images
+	for (i=0;i<MAX_DISKS;i++)
+	{
+		unsigned char* pDskImage;
+		tDirEntry *pDir;
+		if (pDskInfo[i].size!=0)
+		{
+			int j;
+			pDskImage=&pTmpBuf[i*DSK_MAX_IMAGESIZE];
+			pDir=pDskInfo[i].direntries;
+			for (j=0;j<pDskInfo[i].entrycnt;j++)
+			{
+				if (pDir[j].fileID==fileID)
+				{
+					int k;
+					for (k=0;k<MAXOFFSETSPERENTRY;k++)
+					{
+						if (pDir[j].offsets[k]!=-1)
+						{
+							memcpy(&pOutput[outputidx],&pDskImage[pDir[j].offsets[k]],pDskInfo->sectorsize);
+							outputidx+=pDskInfo->sectorsize;
+						}
+					}
+				}
+			}
+		}
+	}
+	return outputidx;
+}
+
+int dMagnetic2_loader_dsk_spectrum_mag(unsigned char* pTmpBuf,tDskInfo* pDskInfo,int gameidx,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int nodoc)
+{
+	int outputidx;
+	int version;
+	int codesize;
+	int string1size;
+	int string2size;
+	int dictsize;
+	int retval;
+	unsigned char *pTmpPtr;
+
+
+	pTmpPtr=&pTmpBuf[2*DSK_MAX_IMAGESIZE];	// point to after the disk images
+	outputidx=42;
+	version=dMagnetic2_loader_dsk_knownGames[gameidx].version;
+
+	// start with the code in FILE1, which is huffman encoded
+	codesize=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,pTmpPtr);
+	if (codesize==0)
+	{
+		return DMAGNETIC2_UNKNOWN_SOURCE;
+	}
+	codesize=dMagnetic2_loader_shared_unhuffer(pTmpBuf,codesize,&pMagBuf[outputidx]);
+	outputidx+=codesize;
+
+	// the string1 section is in FILE3
+	string1size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX3,&pMagBuf[outputidx]);
+	if (string1size==0)
+	{
+		return DMAGNETIC2_UNKNOWN_SOURCE;
+	}
+	outputidx+=string1size;
+
+	// the string2 section is in FILE2, hufmanned
+	string2size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX2,pTmpPtr);
+	if (string2size==0)
+	{
+		return DMAGNETIC2_UNKNOWN_SOURCE;
+	}
+	string2size=dMagnetic2_loader_shared_unhuffer(pTmpBuf,string2size,&pMagBuf[outputidx]);
+	outputidx+=string2size;
+
+	// the dict section is in FILE4, hufmanned
+	dictsize=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX4,pTmpPtr);
+	if (dictsize==0)
+	{
+		return DMAGNETIC2_UNKNOWN_SOURCE;
+	}
+	dictsize=dMagnetic2_loader_shared_unhuffer(pTmpBuf,dictsize,&pMagBuf[outputidx]);
+	outputidx+=dictsize;
+
+	if (nodoc)
+	{
+		int i;
+		unsigned char* ptr=(unsigned char*)&pMagBuf[0];
+		for (i=0;i<outputidx-4;i++)
+		{
+			if (ptr[i+0]==0x62 && ptr[i+1]==0x02 && ptr[i+2]==0xa2 && ptr[i+3]==0x00) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
+			if (ptr[i+0]==0xa4 && ptr[i+1]==0x06 && ptr[i+2]==0xaa && ptr[i+3]==0xdf) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
+		}
+	}
+	if (version==3 && pMagBuf[0x2836]==0x66) pMagBuf[0x2836]=0x60;	// final patch for myth
+	pMeta->real_magsize=outputidx;
+
+	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,outputidx,version,codesize,string1size,string2size,dictsize,-1);
+	return retval;
+}
+
+
+int dMagnetic2_loader_dsk_amstrad_mag(unsigned char* pTmpBuf,tDskInfo* pDskInfo,int gameidx,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int nodoc)
+{
+	int outputidx;
+	int code1size;
+	int code2size;
+	int string1size;
+	int string2size;
+	int dictsize;
+	int retval;
+	unsigned char *pTmpPtr;
+	edMagnetic2_game game;
+
+
+	pTmpPtr=&pTmpBuf[2*DSK_MAX_IMAGESIZE];	// point to after the disk images
+	outputidx=42;
+	game=dMagnetic2_loader_dsk_knownGames[gameidx].game;
+	if (game==DMAGNETIC2_GAME_PAWN)
+	{
+		// in THE PAWN, the code section is packed	
+		code1size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,pTmpPtr);
+		if (code1size==0)
+		{
+			return DMAGNETIC2_UNKNOWN_SOURCE;
+		}
+		code1size=dMagnetic2_loader_shared_unhuffer(pTmpBuf,code1size,&pMagBuf[outputidx]);
+		outputidx+=code1size;
+		code2size=0;
+	} else {
+#define	MAGIC_STARTVALUE	0x1803
+#define	MAGIC_INCREMENT		0x29
+		int i;
+		// in other games, it is spread out over two files: FILE1 and FILE6
+		code1size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,&pMagBuf[outputidx]);
+		retval=dMagnetic2_loader_shared_prbs_descrambler(&pMagBuf[outputidx],code1size,MAGIC_STARTVALUE,MAGIC_INCREMENT);	// the first part is PRBS scrambled different than the second one
+		outputidx+=code1size;
+
+
+		code2size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,&pMagBuf[outputidx]);
+		// in the second part, each 128 byte block has its own start value
+		for (i=0;i<code2size;i+=128)
+		{
+			retval=dMagnetic2_loader_shared_prbs_descrambler(&pMagBuf[outputidx+i],128,code1size+i,MAGIC_INCREMENT);
+		}
+	}
+	outputidx+=code2size;
+	
+	string1size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX3,&pMagBuf[outputidx]);
+	outputidx+=string1size;
+	if (game==DMAGNETIC2_GAME_PAWN)
+	{
+		// in THE PAWN, the string2 section is packed
+		string2size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX2,pTmpPtr);
+		if (string2size==0)
+		{
+			return DMAGNETIC2_UNKNOWN_SOURCE;
+		}
+		string2size=dMagnetic2_loader_shared_unhuffer(pTmpBuf,string2size,&pMagBuf[outputidx]);
+	} else {
+		string2size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX2,&pMagBuf[outputidx]);
+	}
+	outputidx+=string2size;
+	// some games have a file with the suffix 8, and this is for the dict.
+	dictsize=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX8,&pMagBuf[outputidx]);
+	retval=dMagnetic2_loader_shared_prbs_descrambler(&pMagBuf[outputidx],dictsize,MAGIC_STARTVALUE,MAGIC_INCREMENT);
+	outputidx+=dictsize;
+	if (nodoc)
+	{
+		int i;
+		unsigned char* ptr=(unsigned char*)&pMagBuf[0];
+		for (i=0;i<outputidx-4;i++)
+		{
+			if (ptr[i+0]==0x62 && ptr[i+1]==0x02 && ptr[i+2]==0xa2 && ptr[i+3]==0x00) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
+			if (ptr[i+0]==0xa4 && ptr[i+1]==0x06 && ptr[i+2]==0xaa && ptr[i+3]==0xdf) {ptr[i+0]=0x4e;ptr[i+1]=0x71;}
+		}
+	}
+	pMeta->real_magsize=outputidx;
+
+	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,outputidx,dMagnetic2_loader_dsk_knownGames[gameidx].version,code1size+code2size,string1size,string2size,dictsize,-1);
+	return retval;
+}
+int dMagnetic2_loader_dsk_amstrad_gfx(unsigned char* pTmpBuf,tDskInfo* pDskInfo,int gameidx,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta)
+{
+	int i;
+	int outputidx;
+	int outputidx0;
+	edMagnetic2_game game;
+
+
+	game=dMagnetic2_loader_dsk_knownGames[gameidx].game; 
+	outputidx=0;
+
+	// this time, start with the header. MaP6
+	pGfxBuf[outputidx]='M';	outputidx+=1;
+	pGfxBuf[outputidx]='a';	outputidx+=1;
+	pGfxBuf[outputidx]='P';	outputidx+=1;
+	pGfxBuf[outputidx]='6';	outputidx+=1;
+
+	outputidx0=outputidx;
+	if (game==DMAGNETIC2_GAME_PAWN)
+	{
+		// THE PAWN uses one single file for the images and the index. 
+
+		// since it is not 32 bit aligned, add 2 extra bytes.
+		pGfxBuf[outputidx]='0';	outputidx+=1;
+		pGfxBuf[outputidx]='0';	outputidx+=1;
+		outputidx+=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX4,&pGfxBuf[outputidx]); 
+		// the beginning of the amstrad CPC image file starts with an index
+		// this could be used directly, but now the header has to be taken into account.
+		for (i=0;i<29;i++)	// go over the index for all 29 images
+		{
+			unsigned int x;
+			x=READ_INT32LE(pGfxBuf,outputidx0+2+i*4);
+			x+=6;
+			x&=0xffffff;
+			WRITE_INT32BE(pGfxBuf,outputidx0+i*4,x);		// make it big endian, move it two bytes forward.
+		}
+	} else {
+		int idxoffs;
+		int outputidx1;
+		// TODO: check if more than 0 bytes have been read
+		dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX4,&pGfxBuf[outputidx]); 	// the index is in this file
+		outputidx=4+4*32;		// leave room for the header and the index
+
+		outputidx0=outputidx;	
+		outputidx+=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX5,&pGfxBuf[outputidx]); 	// some pictures in this file
+		outputidx1=outputidx;	
+		outputidx+=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX7,&pGfxBuf[outputidx]); 	// some pictures in that file
+		idxoffs=4;
+
+		for (i=0;i<32;i++)	// loop over the whole index
+		{
+			unsigned int x;
+			x=READ_INT32LE(pGfxBuf,idxoffs);
+			if (x&0xff000000)	// MSB is set, so the picture is in FILE5
+			{
+				x&=0xffffff;
+				x+=outputidx0;	// the relative offset within the gfx buf
+			} else {		// MSB is not set, picture is in FILE7
+				x+=outputidx1;	// the relative offset within the gfx buf
+			}
+			if (x>=outputidx)	//  or it is not in there!
+			{
+				x=0;
+			}
+			WRITE_INT32BE(pGfxBuf,idxoffs,x);
+			idxoffs+=4;	
+		}
+	}
+	pMeta->real_gfxsize=outputidx;
+	return DMAGNETIC2_OK;
+}
 
 int dMagnetic2_loader_dsk(
 		char* filename1,char* filename2,
@@ -479,9 +700,9 @@ int dMagnetic2_loader_dsk(
 
 	memset(dskInfo,0,sizeof(tDskInfo));
 
-
+	#define	TODOSIZE	65536		// Some files are packed and need to be unhuffed. They are being loaded into the tmpbuffer
 	// check the important output buffers
-	if (tmpsize<2*DSK_MAX_IMAGESIZE+1)	// should be large enough for two disk images. and a spare byte for a trick to determine the correct file size
+	if (tmpsize<2*DSK_MAX_IMAGESIZE+TODOSIZE)	// should be large enough for two disk images. and a spare byte for a trick to determine the correct file size
 	{
 		return DMAGNETIC2_ERROR_BUFFER_TOO_SMALL;
 	}
@@ -550,7 +771,41 @@ int dMagnetic2_loader_dsk(
 			return retval;
 		}
 	}
+	if (gameidx>=0 && gameidx<NUM_GAMES)
+	{
+		return DMAGNETIC2_UNKNOWN_SOURCE;
+	}
 
+	pMeta->game=dMagnetic2_loader_dsk_knownGames[gameidx].game;		// TODO: Myth/Fish detection
+	pMeta->version=dMagnetic2_loader_dsk_knownGames[gameidx].version;
+	pMeta->source=amstrad0spectrum1?DMAGNETIC2_SOURCE_SPECTRUM:DMAGNETIC2_SOURCE_AMSTRAD_CPC;
+	if (pMagBuf!=NULL)
+	{
+		if (amstrad0spectrum1)
+		{
+			retval=dMagnetic2_loader_dsk_spectrum_mag(pTmpBuf,dskInfo,gameidx,pMagBuf,pMeta,nodoc);
+		} else {
+			retval=dMagnetic2_loader_dsk_amstrad_mag(pTmpBuf,dskInfo,gameidx,pMagBuf,pMeta,nodoc);
+		}
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+	}
+	if (pGfxBuf!=NULL)
+	{
+		if (amstrad0spectrum1)
+		{
+			retval=DMAGNETIC2_OK;		// no pictures. sorry!
+		} else {
+			retval=dMagnetic2_loader_dsk_amstrad_gfx(pTmpBuf,dskInfo,gameidx,pGfxBuf,pMeta);
+
+		}
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+	}
 
 	
 

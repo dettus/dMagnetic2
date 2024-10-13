@@ -87,6 +87,26 @@ int dMagnetic2_loader_shared_unhuffer(unsigned char* input,int length,unsigned c
 	}
 	return outputidx;
 }
+
+
+int dMagnetic2_loader_shared_prbs_descrambler(unsigned char* outputbuf,int len,unsigned short startvalue,unsigned short increment)
+{
+	unsigned short value;
+	unsigned char key;
+	int i;
+
+	value=startvalue;
+	for (i=0;i<len;i++)
+	{
+		value=(value+((value<<8)+increment))&0xffff;	// increment in spectrum/archimedes: 0x29
+		key=(value^(value>>8))&0xff;
+		outputbuf[i]^=key;
+	}
+	return DMAGNETIC2_OK;
+}
+
+
+
 int dMagnetic2_loader_shared_addmagheader(unsigned char* magbuf,int magsize,int version,int codesize,int string1size,int string2size,int dictsize,int huffmantreeidx)
 {
 	if (huffmantreeidx==-1)
