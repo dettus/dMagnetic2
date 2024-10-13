@@ -678,14 +678,14 @@ int dMagnetic2_loader_dsk_amstrad_gfx(unsigned char* pTmpBuf,tDskInfo* pDskInfo,
 int dMagnetic2_loader_dsk(
 		char* filename1,char* filename2,
 		unsigned char* pTmpBuf,int tmpsize,
-		unsigned char* pMagBuf,int* pRealMagSize,
-		unsigned char* pGfxBuf,int* pRealGfxSize,
+		unsigned char* pMagBuf,
+		unsigned char* pGfxBuf,
 		tdMagnetic2_game_meta *pMeta,
 		int amstrad0spectrum1,
 		int nodoc)
 {
 
-// TODO: find out, if the disk images come in in the correct order
+// TODO: find out, if the disk images come in in the correct order (is it important??)
 // TODO: autodetection, if amstrad or spectrum
 	int i;
 	int n;

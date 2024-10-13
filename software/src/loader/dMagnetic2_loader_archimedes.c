@@ -432,8 +432,8 @@ int dMagnetic2_loader_archimedes_mkgfx(unsigned char *dskimg,unsigned char* gfxb
 int dMagnetic2_loader_archimedes(
 		char* filename1,
 		unsigned char* pTmpBuf,int tmpsize,
-		unsigned char* pMagBuf,int* pRealMagSize,
-		unsigned char* pGfxBuf,int* pRealGfxSize,
+		unsigned char* pMagBuf,
+		unsigned char* pGfxBuf,
 		tdMagnetic2_game_meta *pMeta,
 		int nodoc)
 		
@@ -486,19 +486,17 @@ int dMagnetic2_loader_archimedes(
 
 	if (pMagBuf!=NULL)
 	{
-		if (dMagnetic2_loader_archimedes_mkmag(pTmpBuf,pMagBuf,pRealMagSize,gameId,offsets,lengths,nodoc)!=DMAGNETIC2_OK)
+		if (dMagnetic2_loader_archimedes_mkmag(pTmpBuf,pMagBuf,&pMeta->real_magsize,gameId,offsets,lengths,nodoc)!=DMAGNETIC2_OK)
 		{
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
-		pMeta->real_magsize=*pRealMagSize;
 	}
 	if (pGfxBuf!=NULL)
 	{
-		if (dMagnetic2_loader_archimedes_mkgfx(pTmpBuf,pGfxBuf,pRealGfxSize,gameId,offsets,lengths)!=DMAGNETIC2_OK)
+		if (dMagnetic2_loader_archimedes_mkgfx(pTmpBuf,pGfxBuf,&pMeta->real_gfxsize,gameId,offsets,lengths)!=DMAGNETIC2_OK)
 		{
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
-		pMeta->real_gfxsize=*pRealGfxSize;
 	}
 	
 

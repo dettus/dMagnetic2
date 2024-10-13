@@ -509,8 +509,8 @@ int dMagnetic2_loader_c64_readStrings(unsigned char* d64image,tFileEntry* pEntri
 int dMagnetic2_loader_c64(
 		char* filename1,char* filename2,
 		unsigned char* pTmpBuf,int tmpsize,
-		unsigned char* pMagBuf,int* pRealMagSize,
-		unsigned char* pGfxBuf,int* pRealGfxSize,
+		unsigned char* pMagBuf,
+		unsigned char* pGfxBuf,
 		tdMagnetic2_game_meta *pMeta,
 		int nodoc)
 {
@@ -651,7 +651,6 @@ int dMagnetic2_loader_c64(
 		}
 		if (pMeta->game==DMAGNETIC2_GAME_MYTH && pMagBuf[0x3080]==0x66) pMagBuf[0x3080]=0x60;	// final touch
 
-		*pRealMagSize=magidx;
 		pMeta->real_magsize=magidx;
 		/////////// MAG IS FINISHED ////////////////////////////////
 	}
@@ -702,7 +701,6 @@ int dMagnetic2_loader_c64(
 			}
 		}
 
-		*pRealGfxSize=gfxidx;
 		pMeta->real_gfxsize=gfxidx;
 
 		gfxidx=0;

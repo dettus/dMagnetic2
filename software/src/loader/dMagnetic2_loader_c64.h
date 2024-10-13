@@ -32,8 +32,8 @@
 int dMagnetic2_loader_c64(
 		char* filename1,char* filename2,
 		unsigned char* pTmpBuf,int tmpsize,
-		unsigned char* pMagBuf,int* pRealMagSize,
-		unsigned char* pGfxBuf,int* pRealGfxSize,
+		unsigned char* pMagBuf,
+		unsigned char* pGfxBuf,
 		tdMagnetic2_game_meta *pMeta,
 		int nodoc);
 

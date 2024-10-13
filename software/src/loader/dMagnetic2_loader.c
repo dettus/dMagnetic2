@@ -27,6 +27,16 @@
 #include "dMagnetic2_loader.h"
 #include "dMagnetic2_loader_shared.h"
 
+
+#include "dMagnetic2_loader_appleii.h"
+#include "dMagnetic2_loader_archimedes.h"
+#include "dMagnetic2_loader_atarixl.h"
+#include "dMagnetic2_loader_c64.h"
+#include "dMagnetic2_loader_dsk.h"
+#include "dMagnetic2_loader_maggfx.h"
+#include "dMagnetic2_loader_msdos.h"
+#include "dMagnetic2_loader_mw.h"
+
 const unsigned char *dMagnetic2_game_names[8]={
 	"unknown",
 	"The Pawn",
@@ -83,8 +93,9 @@ int dMagnetic2_loader_init(void *pHandle)
 
 	return DMAGNETIC2_OK;
 }
-int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filename3,unsigned char* pMagBuf,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta)
+int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filename3,unsigned char* pMagBuf,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta,int nodoc)
 {
+	int retval;
 	tdMagnetic2_loader_handle* pThis=(tdMagnetic2_loader_handle*)pHandle;
 	if (pThis==NULL)
 	{
@@ -96,6 +107,72 @@ int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filena
 	}
 	// the idea here is some sort of autodetection.
 	// there are several loaders. each one is tried, and one of them should return with a valid loaded game.
+
+
+	retval=DMAGNETIC2_UNKNOWN_SOURCE;
+
+	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
+	{
+		retval=dMagnetic2_loader_appleii(filename1,filename2,filename3,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+	}
+	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
+	{
+		retval=dMagnetic2_loader_archimedes(filename1,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+	}
+	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
+	{
+		retval=dMagnetic2_loader_archimedes(filename1,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+	}
+	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
+	{
+		retval=dMagnetic2_loader_atarixl(filename1,filename2,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+	}
+	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
+	{
+		retval=dMagnetic2_loader_c64(filename1,filename2,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+	}
+	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
+	{
+		retval=dMagnetic2_loader_dsk(filename1,filename2,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,0,nodoc);
+	}
+	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
+	{
+		retval=dMagnetic2_loader_dsk(filename1,filename2,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,1,nodoc);
+	}
+	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
+	{
+		retval=dMagnetic2_loader_maggfx(filename1,filename2,pMagBuf,pGfxBuf,pMeta);
+	}
+	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
+	{
+		retval=dMagnetic2_loader_mw(filename1,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta);
+	}
+	switch(pMeta->game)
+	{
+		case DMAGNETIC2_GAME_NONE:		strncpy(pMeta->game_name,"UNKNOWN",32);break;
+		case DMAGNETIC2_GAME_PAWN:		strncpy(pMeta->game_name,"The Pawn",32);break;
+		case DMAGNETIC2_GAME_GUILD:		strncpy(pMeta->game_name,"The Guild Of Thieves",32);break;
+		case DMAGNETIC2_GAME_JINXTER:		strncpy(pMeta->game_name,"Jinxter",32);break;
+		case DMAGNETIC2_GAME_CORRUPTION:	strncpy(pMeta->game_name,"Corruption",32);break;
+		case DMAGNETIC2_GAME_MYTH:		strncpy(pMeta->game_name,"Myth",32);break;
+		case DMAGNETIC2_GAME_FISH:		strncpy(pMeta->game_name,"Fish!",32);break;
+		case DMAGNETIC2_GAME_WONDERLAND:	strncpy(pMeta->game_name,"Wonderland",32);break;
+		default:				strncpy(pMeta->game_name,"TODO",32);break;
+	}
+	switch (pMeta->source)
+	{
+		case DMAGNETIC2_SOURCE_NONE:		strncpy(pMeta->source_name,"UNKNOWN",32);break;
+		case DMAGNETIC2_SOURCE_MAGGFX:		strncpy(pMeta->source_name,".mag/.gfx",32);break;
+		case DMAGNETIC2_SOURCE_ARCHIMEDES:	strncpy(pMeta->source_name,"Acron Archimedes",32);break;
+		case DMAGNETIC2_SOURCE_MSDOS:		strncpy(pMeta->source_name,"MS-DOS",32);break;
+		case DMAGNETIC2_SOURCE_MW:		strncpy(pMeta->source_name,"Magnetic Windows Resource File",32);break;
+		case DMAGNETIC2_SOURCE_C64:		strncpy(pMeta->source_name,"Commodore 64",32);break;
+		case DMAGNETIC2_SOURCE_AMSTRAD_CPC:	strncpy(pMeta->source_name,"Amstrad CPC",32);break;
+		case DMAGNETIC2_SOURCE_SPECTRUM:	strncpy(pMeta->source_name,"Spectrum +3",32);break;
+		case DMAGNETIC2_SOURCE_ATARIXL:		strncpy(pMeta->source_name,"Atari XL",32);break;
+		case DMAGNETIC2_SOURCE_APPLEII:		strncpy(pMeta->source_name,"Apple II",32);break;
+		default:				strncpy(pMeta->source_name,"TODO",32);break;
+	}
 	
 	return DMAGNETIC2_UNKNOWN_SOURCE;
 

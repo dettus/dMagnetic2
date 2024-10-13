@@ -729,8 +729,8 @@ int dMagnetic2_loader_appleii_mkgfx(unsigned char *gfxbuf,int* gfxsize,edMagneti
 int dMagnetic2_loader_appleii(
 		char* filename1,char* filename2,char* filename3,
 		unsigned char* pTmpBuf,int tmpsize,
-		unsigned char* pMagBuf,int* pRealMagSize,
-		unsigned char* pGfxBuf,int* pRealGfxSize,
+		unsigned char* pMagBuf,
+		unsigned char* pGfxBuf,
 		tdMagnetic2_game_meta *pMeta,
 		int nodoc)
 {

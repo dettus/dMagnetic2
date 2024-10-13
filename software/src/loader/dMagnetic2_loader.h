@@ -67,10 +67,12 @@ typedef struct _tdMagnetic2_game_meta
 	int version;
 	int real_magsize;
 	int real_gfxsize;
+	char game_name[32];
+	char source_name[32];
 } tdMagnetic2_game_meta;
 
 int dMagnetic2_loader_getsize(int * pBytes);
 int dMagnetic2_loader_init(void *pHandle);
 
-int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filename3,unsigned char* pMagBuf, unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta);
+int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filename3,unsigned char* pMagBuf, unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta,int nodoc);
 #endif

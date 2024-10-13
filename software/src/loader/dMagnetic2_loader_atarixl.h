@@ -24,19 +24,19 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef	DMAGNETIC2_LOADER_ARCHIMEDES_H
-#define	DMAGNETIC2_LOADER_ARCHIMEDES_H
+#ifndef	DMAGNETIC2_LOADER_ATARIXL_H
+#define	DMAGNETIC2_LOADER_ATARIXL_H
 
 #include "dMagnetic2_loader.h"
 
-
-int dMagnetic2_loader_archimedes(
-		char* filename1,
+int dMagnetic2_loader_atarixl(
+		char* filename1,char* filename2,
 		unsigned char* pTmpBuf,int tmpsize,
 		unsigned char* pMagBuf,
 		unsigned char* pGfxBuf,
 		tdMagnetic2_game_meta *pMeta,
 		int nodoc);
+
 
 #endif
 

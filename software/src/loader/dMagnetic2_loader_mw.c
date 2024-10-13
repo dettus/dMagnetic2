@@ -572,8 +572,8 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 int dMagnetic2_loader_mw(
 		char* filename1,
 		unsigned char* pTmpBuf,int tmpsize,
-		unsigned char* pMagBuf,int* pRealMagSize,
-		unsigned char* pGfxBuf,int* pRealGfxSize,
+		unsigned char* pMagBuf,
+		unsigned char* pGfxBuf,
 		tdMagnetic2_game_meta *pMeta)
 {
 	int sizes[MAX_NUM_RSC_FILES];

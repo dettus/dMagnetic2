@@ -43,8 +43,8 @@ void dMagnetic2_loader_maggfx_detect_game(unsigned char *pMagBuf,tdMagnetic2_gam
 
 int dMagnetic2_loader_maggfx(
 		char* filename1,char* filename2,
-		unsigned char* pMagBuf,int* pRealMagSize,
-		unsigned char* pGfxBuf,int* pRealGfxSize,
+		unsigned char* pMagBuf,
+		unsigned char* pGfxBuf,
 		tdMagnetic2_game_meta *pMeta)
 		
 {
@@ -144,7 +144,6 @@ int dMagnetic2_loader_maggfx(
 		fclose(f);
 		pMeta->real_magsize=n;
 		dMagnetic2_loader_maggfx_detect_game(pMagBuf,pMeta);
-		*pRealMagSize=n;
 	}
 	f=NULL;
 	if (detected_gfx==1)
@@ -160,7 +159,6 @@ int dMagnetic2_loader_maggfx(
 		n=fread(pMagBuf,sizeof(char),DMAGNETIC2_MAX_GFXSIZE,f);
 		fclose(f);
 		pMeta->real_gfxsize=n;
-		*pRealGfxSize=n;
 	}
 	return DMAGNETIC2_OK;	
 

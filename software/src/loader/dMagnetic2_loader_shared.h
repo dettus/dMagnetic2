@@ -27,8 +27,6 @@
 #ifndef DMAGNETIC2_LOADER_SHARED_H
 #define	DMAGNETIC2_LOADER_SHARED_H
 
-extern const unsigned char *dMagnetic2_game_names[8];
-extern const unsigned char *dMagnetic2_game_sources[10];
 
 int dMagnetic2_loader_shared_unhuffer(unsigned char* input,int length,unsigned char* output);
 int dMagnetic2_loader_shared_addmagheader(unsigned char* magbuf,int magsize,int version,int codesize,int string1size,int string2size,int dictsize,int huffmantreeidx);

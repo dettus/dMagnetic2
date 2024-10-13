@@ -350,8 +350,8 @@ int dMagnetic2_loader_atarixl_mkgfx(unsigned char* pTmpBuf,unsigned char* gfxbuf
 int dMagnetic2_loader_atarixl(
 		char* filename1,char* filename2,
 		unsigned char* pTmpBuf,int tmpsize,
-		unsigned char* pMagBuf,int* pRealMagSize,
-		unsigned char* pGfxBuf,int* pRealGfxSize,
+		unsigned char* pMagBuf,
+		unsigned char* pGfxBuf,
 		tdMagnetic2_game_meta *pMeta,
 		int nodoc)
 {
