@@ -38,9 +38,7 @@ void dMagnetic2_loader_maggfx_detect_game(unsigned char *pMagBuf,tdMagnetic2_gam
 	pMeta->source=DMAGNETIC2_SOURCE_MAGGFX;
 	pMeta->version=READ_INT16BE(pMagBuf,12);		// the verion is stored in bytes 12..13 of the header
 	pMeta->game=DMAGNETIC2_GAME_TODO;			// not yet implemented
-	strncpy(pMeta->gamename,"TODO",32);
 	pMeta->source=DMAGNETIC2_SOURCE_MAGGFX;
-	strncpy(pMeta->sourcename,dMagnetic2_game_sources[DMAGNETIC2_SOURCE_C64],32);
 }
 
 int dMagnetic2_loader_maggfx(
@@ -63,8 +61,6 @@ int dMagnetic2_loader_maggfx(
 
 	pMeta->game=DMAGNETIC2_GAME_NONE;
 	pMeta->source=DMAGNETIC2_SOURCE_NONE;
-	pMeta->gamename[0]=0;
-	pMeta->sourcename[0]=0;
 	pMeta->version=-1;
 	pMeta->real_magsize=0;
 	pMeta->real_gfxsize=0;

@@ -457,8 +457,6 @@ int dMagnetic2_loader_archimedes(
 
 	pMeta->game=DMAGNETIC2_GAME_NONE;
 	pMeta->source=DMAGNETIC2_SOURCE_NONE;
-	pMeta->gamename[0]=0;
-	pMeta->sourcename[0]=0;
 	pMeta->version=-1;
 	pMeta->real_magsize=0;
 	pMeta->real_gfxsize=0;

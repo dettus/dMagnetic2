@@ -156,8 +156,6 @@ edMagnetic2_game dMagnetic2_loader_c64_detectgame(unsigned char* diskram,tdMagne
 			pMeta->game=dMagnetic2_loader_c64_gameinfo[i].game;
 			pMeta->source=DMAGNETIC2_SOURCE_C64;
 			pMeta->version=dMagnetic2_loader_c64_gameinfo[i].version;
-			strncpy(pMeta->gamename,dMagnetic2_game_names[dMagnetic2_loader_c64_gameinfo[i].game],32);
-			strncpy(pMeta->sourcename,dMagnetic2_game_sources[DMAGNETIC2_SOURCE_C64],32);
 			*pSidecnt_expected=dMagnetic2_loader_c64_gameinfo[i].sides;
 			*ppPictureorder=dMagnetic2_loader_c64_gameinfo[i].pictureorder;
 			return DMAGNETIC2_OK;
@@ -541,8 +539,6 @@ int dMagnetic2_loader_c64(
 
 	pMeta->game=DMAGNETIC2_GAME_NONE;
 	pMeta->source=DMAGNETIC2_SOURCE_NONE;
-	pMeta->gamename[0]=0;
-	pMeta->sourcename[0]=0;
 	pMeta->version=-1;
 	pMeta->real_magsize=0;
 	pMeta->real_gfxsize=0;

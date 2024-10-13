@@ -64,8 +64,6 @@ typedef struct _tdMagnetic2_game_meta
 {
 	edMagnetic2_game game;
 	edMagnetic2_source source;
-	char gamename[32];
-	char sourcename[32];
 	int version;
 	int real_magsize;
 	int real_gfxsize;
