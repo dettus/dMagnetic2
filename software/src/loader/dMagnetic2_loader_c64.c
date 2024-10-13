@@ -583,7 +583,6 @@ int dMagnetic2_loader_c64(
 			return DMAGNETIC2_UNKNOWN_SOURCE;	// it cannot be a .D64 file. So not a C64 game.
 		}
 	}
-
 	// now the images are in memory. now we can parse them.
 	// first, find out which game it is
 	retval=dMagnetic2_loader_c64_detectgame(d64image,pMeta,&sidecnt_expected,&pPictureorder);

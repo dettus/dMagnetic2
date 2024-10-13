@@ -174,6 +174,6 @@ int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filena
 		default:				strncpy(pMeta->source_name,"TODO",32);break;
 	}
 	
-	return DMAGNETIC2_UNKNOWN_SOURCE;
+	return DMAGNETIC2_OK;
 
 }
