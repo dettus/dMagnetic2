@@ -258,7 +258,7 @@ int dMagnetic2_loader_msdos_mkgfx(char* filename1,unsigned char* pTmpBuf,unsigne
 	}
 	n=fread(&pGfxBuf[idx],sizeof(char),dMagnetic2_loader_msdos_gameInfo[gameidx].disk1size+1,f);
 	fclose(f);
-	if (n!=dMagnetic2_loader_msdos_gameInfo[gameidx].disk1size+1)
+	if (n!=dMagnetic2_loader_msdos_gameInfo[gameidx].disk1size)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
@@ -277,7 +277,7 @@ int dMagnetic2_loader_msdos_mkgfx(char* filename1,unsigned char* pTmpBuf,unsigne
 		}
 		n=fread(&pGfxBuf[idx],sizeof(char),dMagnetic2_loader_msdos_gameInfo[gameidx].disk2size+1,f);
 		fclose(f);
-		if (n!=dMagnetic2_loader_msdos_gameInfo[gameidx].disk2size+1)
+		if (n!=dMagnetic2_loader_msdos_gameInfo[gameidx].disk2size)
 		{
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
@@ -299,8 +299,8 @@ int dMagnetic2_loader_msdos_mkgfx(char* filename1,unsigned char* pTmpBuf,unsigne
 int dMagnetic2_loader_msdos(
 		char* filename1,
 		unsigned char* pTmpBuf,int tmpsize,
-		unsigned char* pMagBuf,int* pRealMagSize,
-		unsigned char* pGfxBuf,int* pRealGfxSize,
+		unsigned char* pMagBuf,
+		unsigned char* pGfxBuf,
 		tdMagnetic2_game_meta *pMeta,
 		int nodoc)
 {

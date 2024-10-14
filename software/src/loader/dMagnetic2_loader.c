@@ -145,6 +145,10 @@ int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filena
 	}
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
+		retval=dMagnetic2_loader_msdos(filename1,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+	}
+	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
+	{
 		retval=dMagnetic2_loader_mw(filename1,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta);
 	}
 	switch(pMeta->game)
