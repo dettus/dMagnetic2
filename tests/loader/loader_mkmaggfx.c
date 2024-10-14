@@ -63,7 +63,7 @@ int main(int argc,char** argv)
 
 	printf("  ;Filename1;Filename2;Filename3;");
 	printf("malloc_size;");
-	printf("retval;game_name;source_name;version;magsize;gfxsize;\n");
+	printf("retval;game_name;source_name;version;magsize;gfxsize;pass/fail\n");
 	printf("CSV;");
 	if (filename1!=NULL) printf("%s;",filename1); else printf(";");
 	if (filename2!=NULL) printf("%s;",filename2); else printf(";");
@@ -91,6 +91,12 @@ int main(int argc,char** argv)
 	printf("%d;",meta.version);
 	printf("%d;",meta.real_magsize);
 	printf("%d;",meta.real_gfxsize);
+	if (retval==DMAGNETIC2_OK)
+	{
+		printf("PASS;");
+	} else {
+		printf("FAIL;");
+	}
 	printf("\n");
 	if (retval==DMAGNETIC2_OK)
 	{
