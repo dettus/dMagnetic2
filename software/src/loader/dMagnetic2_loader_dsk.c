@@ -234,7 +234,7 @@ int dMagnetic2_loader_dsk_parse_image_header(unsigned char* pDskImage,tDskInfo *
 			}
 			idx+=1;
 
-			sectornum=pDskImage[idx];	// 0x15: the number of sectors
+			sectornum=pDskImage[idx]; idx+=1;	// 0x15: the number of sectors
 			idx+=2;				// 0x16: gap3 length, 0x17: filler byte
 
 			if (sectornum>=MAX_SECTORNUMPERTRACK)	// too many sectors
@@ -263,7 +263,7 @@ int dMagnetic2_loader_dsk_parse_image_header(unsigned char* pDskImage,tDskInfo *
 					return DMAGNETIC2_UNKNOWN_SOURCE;
 				}
 				sectorids[j]=pDskImage[idx];	idx+=1;		// 0x02: sector id. THIS is important
-				idx+=5;		// skip over 0x04..0x07
+				idx+=5;		// skip over 0x03..0x07
 			}
 			// sorting the sector ids. bring them in order
 			for (j=0;j<sectornum-1;j++)
@@ -284,7 +284,7 @@ int dMagnetic2_loader_dsk_parse_image_header(unsigned char* pDskImage,tDskInfo *
 			{
 				pDskInfo->offsets[pDskInfo->sectorcnt++]=idx0+SIZE_TRACKHEADER+order[j]*sectorsize;
 			}
-			idx+=pDskInfo->tracksize[i];
+			idx=idx0+pDskInfo->tracksize[i];
 		}
 	}
 
@@ -737,7 +737,7 @@ int dMagnetic2_loader_dsk(
 	}
 	if (filename2!=NULL)
 	{
-		f=fopen(filename1,"rb");
+		f=fopen(filename2,"rb");
 		if (f==NULL)
 		{
 			return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
