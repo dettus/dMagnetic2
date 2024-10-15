@@ -136,9 +136,9 @@ int dMagnetic2_loader_msdos_mkmag(char* filename1,unsigned char* pTmpBuf,unsigne
 
 
 	// start by reading the code section in the file ending with 1
-	snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s1%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
+	snprintf((char*)pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s1%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
 	// start by reading the index
-	f=fopen(pTmpBuf,"rb");
+	f=fopen((char*)pTmpBuf,"rb");
 	if (f==NULL)
 	{
 		return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
@@ -156,9 +156,9 @@ int dMagnetic2_loader_msdos_mkmag(char* filename1,unsigned char* pTmpBuf,unsigne
 	idx+=size_code;
 
 	// the strings are stores in the files ending with 3 and 2
-	snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s3%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
+	snprintf((char*)pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s3%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
 	// start by reading the index
-	f=fopen(pTmpBuf,"rb");
+	f=fopen((char*)pTmpBuf,"rb");
 	if (f==NULL)
 	{
 		return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
@@ -167,9 +167,9 @@ int dMagnetic2_loader_msdos_mkmag(char* filename1,unsigned char* pTmpBuf,unsigne
 	fclose(f);
 	idx+=size_string1;
 
-	snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s2%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
+	snprintf((char*)pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s2%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
 	// start by reading the index
-	f=fopen(pTmpBuf,"rb");
+	f=fopen((char*)pTmpBuf,"rb");
 	if (f==NULL)
 	{
 		return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
@@ -181,9 +181,9 @@ int dMagnetic2_loader_msdos_mkmag(char* filename1,unsigned char* pTmpBuf,unsigne
 	size_dict=0;
 	if (dMagnetic2_loader_msdos_gameInfo[gameidx].version>=2)	// directories for those games are huffed
 	{
-		snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s0%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
+		snprintf((char*)pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s0%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
 		// start by reading the index
-		f=fopen(pTmpBuf,"rb");
+		f=fopen((char*)pTmpBuf,"rb");
 		if (f==NULL)
 		{
 			return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
@@ -233,9 +233,9 @@ int dMagnetic2_loader_msdos_mkgfx(char* filename1,unsigned char* pTmpBuf,unsigne
 
 	idx=0;
 	pGfxBuf[idx++]='M';pGfxBuf[idx++]='a';pGfxBuf[idx++]='P';pGfxBuf[idx++]='3';
-	snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s4%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
+	snprintf((char*)pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s4%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
 	// start by reading the index
-	f=fopen(pTmpBuf,"rb");
+	f=fopen((char*)pTmpBuf,"rb");
 	if (f==NULL)
 	{
 		return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
@@ -250,8 +250,8 @@ int dMagnetic2_loader_msdos_mkgfx(char* filename1,unsigned char* pTmpBuf,unsigne
 	size_index=n;
 
 
-	snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/DISK1.PIX",filename1);
-	f=fopen(pTmpBuf,"rb");
+	snprintf((char*)pTmpBuf,MAX_FILENAME_LEN-1,"%s/DISK1.PIX",filename1);
+	f=fopen((char*)pTmpBuf,"rb");
 	if (f==NULL)
 	{
 		return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
@@ -269,8 +269,8 @@ int dMagnetic2_loader_msdos_mkgfx(char* filename1,unsigned char* pTmpBuf,unsigne
 	size_disk2=0;
 	if (dMagnetic2_loader_msdos_gameInfo[gameidx].disk2size)	// MYTH stores its pictures in a single file.
 	{
-		snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/DISK2.PIX",filename1);
-		f=fopen(pTmpBuf,"rb");
+		snprintf((char*)pTmpBuf,MAX_FILENAME_LEN-1,"%s/DISK2.PIX",filename1);
+		f=fopen((char*)pTmpBuf,"rb");
 		if (f==NULL)
 		{
 			return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
@@ -330,8 +330,8 @@ int dMagnetic2_loader_msdos(
 	// for msdos, the game is stored in a directory. 
 	// the directory has files. 
 	// todo: check if filename1 is a directory.
-	snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/DISK1.PIX",filename1);
-	f=fopen(pTmpBuf,"rb");
+	snprintf((char*)pTmpBuf,MAX_FILENAME_LEN-1,"%s/DISK1.PIX",filename1);
+	f=fopen((char*)pTmpBuf,"rb");
 	if (f==NULL)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
@@ -348,9 +348,9 @@ int dMagnetic2_loader_msdos(
 
 	// next step: check if the particular release comes with a . at the end of filenames.
 	filename_postfix=0;		// lets assume that they do not.
-	snprintf(pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s4%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
+	snprintf((char*)pTmpBuf,MAX_FILENAME_LEN-1,"%s/%s4%c",filename1,dMagnetic2_loader_msdos_gameInfo[gameidx].prefix,filename_postfix);
 	// try to open file file
-	f=fopen(pTmpBuf,"rb");
+	f=fopen((char*)pTmpBuf,"rb");
 	if (f==NULL)	// unable to open the file. must be because it ended with a .
 	{
 		filename_postfix='.';	// lets assume that all files which need to be read have this postfix.

@@ -37,7 +37,7 @@
 #include "dMagnetic2_loader_msdos.h"
 #include "dMagnetic2_loader_mw.h"
 
-const unsigned char *dMagnetic2_game_names[8]={
+const char *dMagnetic2_game_names[8]={
 	"unknown",
 	"The Pawn",
 	"The Guild Of Thieves",
@@ -48,7 +48,7 @@ const unsigned char *dMagnetic2_game_names[8]={
 	"Wonderland"
 };
 
-const unsigned char *dMagnetic2_game_sources[10]={
+const char *dMagnetic2_game_sources[10]={
 	"unknown",
 	".mag/.gfx",
 	"Acron Archimedes",

@@ -170,7 +170,7 @@ int dMagnetic2_loader_mw_sizes(unsigned char* pTmpBuf,char* filename1,int *pSize
 	int gameidx_int;
 	char *pFilename;
 	FILE *f;
-	pFilename=pTmpBuf;
+	pFilename=(char*)pTmpBuf;
 	gameidx_int=-1;
 	sum=0;
 	for (i=0;i<MAX_NUM_RSC_FILES;i++)
@@ -216,7 +216,7 @@ int dMagnetic2_loader_mw_readresource(unsigned char* pTmpBuf,char* filename1,int
 	int offset_in_rsc;
 	int rsc_file;
 	int output_idx;
-	pFilename=pTmpBuf;
+	pFilename=(char*)pTmpBuf;
 
 	sum=0;
 	rsc_file=-1;
