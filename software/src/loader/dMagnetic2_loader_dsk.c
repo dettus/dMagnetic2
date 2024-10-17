@@ -84,24 +84,6 @@ typedef struct _tDirEntry
 	int offsetscnt;
 	int offsets[MAXOFFSETSPERENTRY];	// translated offsets
 } tDirEntry;
-// some information about the disk images
-typedef struct _tDskInfo
-{
-	int size; // between 194816-195635
-	int sectorcnt;
-	int offsets[MAX_SECTORNUMPERDISK];
-	int directory_sector;
-	int blocksize;
-	int sectorsize;
-	int extended1not0;
-	int tracknum;
-	int sidenum;
-	int tracksize[MAX_TRACKNUM];
-	
-
-	int entrycnt;
-} tDskInfo;
-
 
 typedef struct _tNewDskInfo
 {
@@ -165,228 +147,32 @@ const tGames dMagnetic2_loader_dsk_knownGames[NUM_GAMES]={
 	}
 };
 
-
-int dMagnetic2_loader_dsk_parse_image_header(unsigned char* pDskImage,tDskInfo *pDskInfo,int amstrad0spectrum1)
-{
-	int i;
-	int idx;
-	
-	// 0x00-0x21: "MV..."                        "Extended"
-	// 0x22.0x2f: creator ID
-	// 0x30: number of tracks
-	// 0x31: number of sides
-	// 0x32..33: size of the tracks             unused
-	// 0x34..0xff: unused                       track size table
-
-	if (pDskImage[0]=='M')	
-	{
-		pDskInfo->extended1not0=0;
-	} else if (pDskImage[0]=='E')	
-	{
-		pDskInfo->extended1not0=1;
-	} else {
-		return DMAGNETIC2_UNKNOWN_SOURCE;
-	}
-
-	pDskInfo->tracknum=pDskImage[0x30];
-	pDskInfo->sidenum=pDskImage[0x31];
-
-	if (pDskInfo->tracknum>=MAX_TRACKNUM)
-	{
-		return DMAGNETIC2_UNKNOWN_SOURCE;
-	}
-
-	if (pDskInfo->extended1not0)
-	{
-		for (i=0;i<pDskInfo->tracknum;i++)
-		{
-			pDskInfo->tracksize[i]=pDskImage[0x34+i]*256;				
-		}
-	} else {
-		for (i=0;i<pDskInfo->tracknum;i++)
-		{
-			pDskInfo->tracksize[i]=READ_INT16LE(pDskImage,0x32);
-		}
-	}
-	idx=SIZE_FILEHEADER;
-	pDskInfo->sectorcnt=0;
-	for (i=0;i<pDskInfo->tracknum*pDskInfo->sidenum;i++)
-	{
-		int sectorids[MAX_SECTORNUMPERTRACK]={0};
-		int order[MAX_SECTORNUMPERTRACK]={0};
-		int idx0;
-		int track0,side0;
-		int j;
-		int sectornum;
-		int sectorsize;
-			
-		idx0=idx;
-		if (pDskInfo->tracksize[i]!=0)
-		{
-			// 0x00-0x0b: Magic Word "Track..."
-			// 0x0c-0x0f: unused
-			if (strncmp("Track",(char*)&pDskImage[idx],5)!=0)
-			{
-				return DMAGNETIC2_UNKNOWN_SOURCE;
-			}
-			idx+=0x10;
-			track0=pDskImage[idx];	idx+=1;	// 0x10: track0
-			side0=pDskImage[idx];	idx+=1;	// 0x11: side0
-			idx+=2;				// 0x12..0x13: unused
-
-			if ((track0*pDskInfo->sidenum+side0)!=i)	// a little sanity check
-			{
-				return DMAGNETIC2_UNKNOWN_SOURCE;
-			}
-
-			switch((int)pDskImage[idx]&0xf)	// 0x14: The sectorsize for this track
-			{
-				case 0: sectorsize= 128;break;		
-				case 1: sectorsize= 256;break;		
-				case 2: sectorsize= 512;break;
-				case 3: sectorsize=1024;break;
-				case 4: sectorsize=2048;break;
-				default: return DMAGNETIC2_UNKNOWN_SOURCE;
-			}
-			idx+=1;
-
-			sectornum=pDskImage[idx]; idx+=1;	// 0x15: the number of sectors
-			idx+=2;				// 0x16: gap3 length, 0x17: filler byte
-
-			if (sectornum>=MAX_SECTORNUMPERTRACK)	// too many sectors
-			{
-				return DMAGNETIC2_UNKNOWN_SOURCE;
-			}
-
-			// after the track header comes the sector header
-			// 0x00: track number
-			// 0x01: side number
-			// 0x02: sector ID
-			// 0x03: sector size
-			// 0x04..0x05: fdx status
-			// 0x06..0x07: unused
-
-			for (j=0;j<sectornum;j++)
-			{
-				int track1;
-				int side1;
-
-				order[j]=j;
-				track1=pDskImage[idx];		idx+=1;		// 0x00: track number
-				side1=pDskImage[idx];		idx+=1;		// 0x01: sector number
-				if (track0!=track1 || side0!=side1)	// sanity check failed
-				{
-					return DMAGNETIC2_UNKNOWN_SOURCE;
-				}
-				sectorids[j]=pDskImage[idx];	idx+=1;		// 0x02: sector id. THIS is important
-				idx+=5;		// skip over 0x03..0x07
-			}
-			// sorting the sector ids. bring them in order
-			for (j=0;j<sectornum-1;j++)
-			{
-				int k;
-				for (k=j+1;k<sectornum;k++)
-				{
-					if (sectorids[order[j]]>sectorids[order[k]])
-					{
-						// swap them
-						order[j]^=order[k];
-						order[k]^=order[j];
-						order[j]^=order[k];
-					}
-				}
-			}
-			for (j=0;j<sectornum;j++)
-			{
-				pDskInfo->offsets[pDskInfo->sectorcnt++]=idx0+SIZE_TRACKHEADER+order[j]*sectorsize;
-			}
-			idx=idx0+pDskInfo->tracksize[i];
-			pDskInfo->sectorsize=sectorsize;
-		}
-	}
-
-// TODO: auto detection amstrad or spectrum?
-	if (amstrad0spectrum1)
-	{
-		int sectorspertrack;
-		int reservedtracks;
-
-		// Within the Spectrum Disks, the first track contains the following information:
-		// 
-		//Byte 0          Disk type
-		//                     0 = Standard PCW range DD SS ST (and +3)
-		//                     1 = Standard CPC range DD SS ST system format
-		//                     2 = Standard CPC range DD SS ST data only format
-		//                     3 = Standard PCW range DD DS DT
-		//                     All other values reserved
-		//Byte 1          Bits 0...1 Sidedness
-		//                     0 = Single sided
-		//                     1 = Double sided (alternating sides)
-		//                     2 = Double sided (successive sides)
-		//                Bits 2...6 Reserved (set to 0)
-		//                Bit 7 Double track
-		//Byte 2          Number of tracks per side
-		//Byte 3          Number of sectors per track
-		//Byte 4          Log2(sector size) - 7
-		//Byte 5          Number of reserved tracks
-		//Byte 6          Log2(block size / 128)
-		//Byte 7          Number of directory blocks
-		//Byte 8          Gap length (read/write)
-		//Byte 9          Gap length (format)
-		//Bytes 10...14   Reserved
-		//Byte 15         Checksum (used only if disk is bootable)
-
-		// most of this information is redundant/unnecessary.
-		// except for the ones needed to find the track containing the directory
-
-		sectorspertrack=pDskImage[pDskInfo->offsets[0]+0x03];
-		reservedtracks=pDskImage[pDskInfo->offsets[0]+0x05];
-		switch (pDskImage[pDskInfo->offsets[0]+0x06])
-		{
-			case 0:	pDskInfo->blocksize= 128;break;
-			case 1:	pDskInfo->blocksize= 256;break;
-			case 2:	pDskInfo->blocksize= 512;break;
-			case 3:	pDskInfo->blocksize=1024;break;
-			case 4:	pDskInfo->blocksize=2048;break;
-			default: break;		// probably not a spectrum image
-		}
-		pDskInfo->directory_sector=sectorspertrack*reservedtracks;
-	} else {
-		pDskInfo->directory_sector=0;
-		pDskInfo->blocksize=MAXBLOCKSIZE;
-	}
-	return DMAGNETIC2_OK;
-}
-
-#if 0
-int dMagnetic2_loader_dsk_readfile(unsigned char* pTmpBuf,tDskInfo* pDskInfo,int fileID,unsigned char* pOutput)
+int dMagnetic2_loader_dsk_readfile(unsigned char* pTmpBuf,tNewDskInfo* pDskInfo,int fileID,unsigned char* pOutput)
 {
 	int i;
 	int outputidx;
 
 	outputidx=0;
-	// try to find the fileID on all disk images
-	for (i=0;i<MAX_DISKS;i++)
+	for (i=0;i<MAX_DISKS;i++)	// look on all the disks
 	{
-		unsigned char* pDskImage;
-		tDirEntry *pDir;
-		if (pDskInfo[i].size!=0)
+		int j;
+		int sectorsize;
+		sectorsize=pDskInfo[i].sectorsize;
+		for (j=0;j<pDskInfo[i].entrycnt;j++)	// in all the directories
 		{
-			int j;
-			pDskImage=&pTmpBuf[i*DSK_MAX_IMAGESIZE];
-			pDir=pDskInfo[i].direntries;
-			for (j=0;j<pDskInfo[i].entrycnt;j++)
+			tDirEntry *pDir;
+			pDir=&(pDskInfo[i].direntries[j]);
+			if (pDir->fileID==fileID)	// for the matching fileid
 			{
-				if (pDir[j].fileID==fileID)
+				int k;
+				for (k=0;k<pDir->offsetscnt;k++)	// copy all the sectors from this entry
 				{
-					int k;
-					for (k=0;k<MAXOFFSETSPERENTRY;k++)
+					int offset;
+					offset=pDir->offsets[k];
+					if (offset!=-1)		// only copy the valid ones
 					{
-						if (pDir[j].offsets[k]!=-1)
-						{
-							memcpy(&pOutput[outputidx],&pDskImage[pDir[j].offsets[k]],pDskInfo->sectorsize);
-							outputidx+=pDskInfo->sectorsize;
-						}
+						memcpy(&pOutput[outputidx],&pTmpBuf[offset],sectorsize);
+						outputidx+=sectorsize;
 					}
 				}
 			}
@@ -395,7 +181,7 @@ int dMagnetic2_loader_dsk_readfile(unsigned char* pTmpBuf,tDskInfo* pDskInfo,int
 	return outputidx;
 }
 
-int dMagnetic2_loader_dsk_spectrum_mag(unsigned char* pTmpBuf,tDskInfo* pDskInfo,int gameidx,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int nodoc)
+int dMagnetic2_loader_dsk_spectrum_mag(unsigned char* pTmpBuf,tNewDskInfo* pDskInfo,int gameidx,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int nodoc)
 {
 	int outputidx;
 	int version;
@@ -464,7 +250,7 @@ int dMagnetic2_loader_dsk_spectrum_mag(unsigned char* pTmpBuf,tDskInfo* pDskInfo
 }
 
 
-int dMagnetic2_loader_dsk_amstrad_mag(unsigned char* pTmpBuf,tDskInfo* pDskInfo,int gameidx,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int nodoc)
+int dMagnetic2_loader_dsk_amstrad_mag(unsigned char* pTmpBuf,tNewDskInfo* pDskInfo,int gameidx,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int nodoc)
 {
 	int outputidx;
 	int code1size;
@@ -544,7 +330,7 @@ int dMagnetic2_loader_dsk_amstrad_mag(unsigned char* pTmpBuf,tDskInfo* pDskInfo,
 	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,outputidx,dMagnetic2_loader_dsk_knownGames[gameidx].version,code1size+code2size,string1size,string2size,dictsize,-1);
 	return retval;
 }
-int dMagnetic2_loader_dsk_amstrad_gfx(unsigned char* pTmpBuf,tDskInfo* pDskInfo,int gameidx,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta)
+int dMagnetic2_loader_dsk_amstrad_gfx(unsigned char* pTmpBuf,tNewDskInfo* pDskInfo,int gameidx,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta)
 {
 	int i;
 	int outputidx;
@@ -616,7 +402,6 @@ int dMagnetic2_loader_dsk_amstrad_gfx(unsigned char* pTmpBuf,tDskInfo* pDskInfo,
 	return DMAGNETIC2_OK;
 }
 
-#endif
 
 
 
@@ -744,14 +529,14 @@ int dMagnetic2_loader_dsk_find_sector_offsets(unsigned char* pImage,tNewDskInfo*
 					}
 				}
 			}
-			for (j=0;j<sectornum-1;j++)
+			for (j=0;j<sectornum;j++)
 			{
 				pDskInfo->offsets[sectorcnt]=idx0+pDskInfo->baseoffset+SIZE_TRACKHEADER+order[j]*sectorsize;
 				sectorcnt++;
 			}
+			idx=idx0+tracksize;	// advance to the next track
 		}
 
-		idx=idx0+tracksize;	// advance to the next track
 	}
 	return DMAGNETIC2_OK;
 }
@@ -871,14 +656,12 @@ int dMagnetic2_loader_dsk_directory_new(unsigned char* pImage,tNewDskInfo* pDskI
 				if (validfilename)	// when the name matches the game
 				{
 					int n;
-					printf("%s<< ",pDir->name);
 					// one "block" from the directory entry contains n sectors
 					n=blocksize/pDskInfo->sectorsize;
 					pDir->offsetscnt=MAXBLOCKS*n;
 					for (k=0;k<MAXBLOCKS;k++)
 					{
 						int m;
-						printf("%d ",pDir->blocks[k]);
 						if (pDir->blocks[k]==0)
 						{
 							for (m=0;m<n;m++)
@@ -892,10 +675,8 @@ int dMagnetic2_loader_dsk_directory_new(unsigned char* pImage,tNewDskInfo* pDskI
 								sector=pDir->blocks[k]*n+m+directorysector;
 								pDir->offsets[k*n+m]=pDskInfo->offsets[sector];		// calculate the "real" offset
 							}
-
 						}							
 					}
-					printf("\n");
 					pDskInfo->entrycnt++;	// only count the filenames which are part of the game
 				}
 			}
@@ -926,14 +707,12 @@ int dMagnetic2_loader_dsk(
 	int retval;
 	int diskcnt;
 	int gameidx;
-	tDskInfo	dskInfo[MAX_DISKS];
-	tNewDskInfo	newDskInfo[MAX_DISKS];
+	tNewDskInfo	dskInfo[MAX_DISKS];
 	
 	FILE *f;
 
 
-	memset(dskInfo,0,sizeof(tDskInfo));
-	memset(newDskInfo,0,sizeof(tNewDskInfo));
+	memset(dskInfo,0,sizeof(tNewDskInfo));
 
 	#define	TODOSIZE	65536		// Some files are packed and need to be unhuffed. They are being loaded into the tmpbuffer
 	// check the important output buffers
@@ -965,8 +744,8 @@ int dMagnetic2_loader_dsk(
 	n=fread(&pTmpBuf[0],sizeof(char),DSK_MAX_IMAGESIZE+1,f);
 	fclose(f);
 	dskInfo[diskcnt].size=n;	
-	newDskInfo[diskcnt].baseoffset=0;
-	newDskInfo[diskcnt].size=n;
+	dskInfo[diskcnt].baseoffset=0;
+	dskInfo[diskcnt].size=n;
 	diskcnt++;
 	if (n>DSK_MAX_IMAGESIZE || n<DSK_MIN_IMAGESIZE)
 	{
@@ -982,8 +761,8 @@ int dMagnetic2_loader_dsk(
 		n=fread(&pTmpBuf[DSK_MAX_IMAGESIZE],sizeof(char),DSK_MAX_IMAGESIZE+1,f);
 		fclose(f);
 		dskInfo[diskcnt].size=n;
-		newDskInfo[diskcnt].baseoffset=DSK_MAX_IMAGESIZE;
-		newDskInfo[diskcnt].size=n;
+		dskInfo[diskcnt].baseoffset=DSK_MAX_IMAGESIZE;
+		dskInfo[diskcnt].size=n;
 		diskcnt++;
 		if (n>DSK_MAX_IMAGESIZE || n<DSK_MIN_IMAGESIZE)
 		{
@@ -993,52 +772,20 @@ int dMagnetic2_loader_dsk(
 	// at this point, either one or both of the image files are in memory
 	for (i=0;i<diskcnt;i++)
 	{
-		retval=dMagnetic2_loader_dsk_find_sector_offsets(&pTmpBuf[i*DSK_MAX_IMAGESIZE],&newDskInfo[i]);
+		retval=dMagnetic2_loader_dsk_find_sector_offsets(&pTmpBuf[i*DSK_MAX_IMAGESIZE],&dskInfo[i]);
 		if (retval!=DMAGNETIC2_OK)
 		{
 			return retval;
 		}
 
-		retval=dMagnetic2_loader_dsk_directory_new(&pTmpBuf[i*DSK_MAX_IMAGESIZE],&newDskInfo[i],amstrad0spectrum1,&gameidx);
+		retval=dMagnetic2_loader_dsk_directory_new(&pTmpBuf[i*DSK_MAX_IMAGESIZE],&dskInfo[i],amstrad0spectrum1,&gameidx);
 		if (retval!=DMAGNETIC2_OK)
 		{
 			return retval;
 		}
-		{
-			int j;
-			printf("\n");
-			for (j=0;j<newDskInfo[i].entrycnt;j++)
-			{
-				int k;
-				printf("%s> ",newDskInfo[i].direntries[j].name);
-				printf("%d> ",newDskInfo[i].direntries[j].fileID);
-			
-				for (k=0;k<newDskInfo[i].direntries[j].offsetscnt;k++)
-				{	
-					printf("%08X ",newDskInfo[i].direntries[j].offsets[k]);
-				}
-				printf("\n");
-			}
-		}
-
-//
-//		retval=dMagnetic2_loader_dsk_parse_image_header(&pTmpBuf[i*DSK_MAX_IMAGESIZE],&dskInfo[i],amstrad0spectrum1);
-//		if (retval!=DMAGNETIC2_OK)
-//		{
-//			return retval;
-//		}
-//		if (dskInfo[i].sectorsize==0)
-//		{
-//			return DMAGNETIC2_UNKNOWN_SOURCE;
-//		}
-//		retval=dMagnetic2_loader_dsk_directory(&pTmpBuf[i*DSK_MAX_IMAGESIZE],&dskInfo[i],&gameidx);
-//		if (retval!=DMAGNETIC2_OK)
-//		{
-//			return retval;
-//		}
 	}
-#if 0
-	if (gameidx>=0 && gameidx<NUM_GAMES)
+
+	if (gameidx<0 || gameidx>=NUM_GAMES)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
@@ -1073,7 +820,6 @@ int dMagnetic2_loader_dsk(
 			return retval;
 		}
 	}
-	#endif
 	
 
 	return DMAGNETIC2_OK;
