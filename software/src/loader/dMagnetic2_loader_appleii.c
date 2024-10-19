@@ -699,7 +699,8 @@ int dMagnetic2_loader_appleii_mkgfx(unsigned char *gfxbuf,int* gfxsize,edMagneti
 		for (i=0;i<PICTURENUM;i++)
 		{
 			unsigned int offs;
-			offs=4+MAXPICTURES*4;
+//			offs=4+MAXPICTURES*4;
+			offs=0;
 
 
 			offs+=((tracks[i+CODESECTIONS]&0x1f)<<12);
