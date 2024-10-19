@@ -426,8 +426,7 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta,int *sizes)
 {
 	int i;
-	int j;
-	int picturenum;
+	int imagecnt1,imagecnt2;
 	int pictureidx;
 	int retval;
 	int diroffset;
@@ -455,24 +454,24 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 	num_entries=READ_INT16LE(tmp2buf,0);
 	diroffset+=2;
 
-	picturenum=0;
 #define	GFXNAMELEN	6
 #define	GFXDIRENTRYSIZE (GFXNAMELEN+4+4)	// name+offset+length
 #define	HEADERSIZE 4 	// MaP4
 #define	MARGIN	 4	// better safe than sorry
+#define	SIZE_TREE	609
 	pictureidx=(MAXIMAGES+1+2)*(GFXDIRENTRYSIZE)+HEADERSIZE+MARGIN;		// reserve some bytes in the beginning of the gfx buffer for the directory. add two entries for the title screen at the end, when possible
-	gfxdiridx=HEADERSIZE;
+	gfxdiridx=HEADERSIZE+2;
 	memset(pGfxBuf,0,pictureidx);
+
+
+	// the pictures are stored in two parts in the rsc file: the tree, and the actual picture, called "Animation". 
+	// for the GFX buffer, those two parts are being combined into a single entry.
+
+	// pass 1: loop over all the directory entries. find the "animations" 
+	imagecnt1=0;
 	for (i=0;i<num_entries;i++)
 	{
-		tEntry entry1;
-		tEntry entry2;
-		int offset_animation;
-		int size_animation;
-		int offset_tree;	
-#define	SIZE_TREE	609
-
-	
+		tEntry entry;
 		// read one entry from the directory
 		// 
 		retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset+i*DIR_ENTRY_SIZE,tmp2buf,DIR_ENTRY_SIZE);
@@ -480,80 +479,94 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 		{
 			return retval;
 		}
-		retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry1);
+		retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry);
 		if (retval!=DMAGNETIC2_OK)
 		{
 			return retval;
 		}
-		offset_animation=0;
-		size_animation=0;
-		offset_tree=0;
-		if (entry1.type==TYPE_ANIMATION || entry1.type==TYPE_TREE)
+		if (entry.type==TYPE_ANIMATION)	// this is a picture
 		{
-			int match;
+			// prepare the gfx dir entry
+			memcpy(&pGfxBuf[gfxdiridx+0],entry.name,6);	
+			WRITE_INT32LE(pGfxBuf,gfxdiridx+ 6,pictureidx);	// the offset within the gfx buffer
+			WRITE_INT32LE(pGfxBuf,gfxdiridx+10,SIZE_TREE+entry.length);	// the size within the gfxbuffer. The tree is always 609 bytes 
+			gfxdiridx+=GFXDIRENTRYSIZE;
 
-			match=0;
-			if (entry1.type==TYPE_ANIMATION)
+			// load the actual picture from the RSC
+			// leave some room at the beginning for the tree (which is being added in the second pass)
+			retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,entry.offset,&pGfxBuf[SIZE_TREE+pictureidx],entry.length);
+			if (retval!=DMAGNETIC2_OK)
 			{
-				offset_animation=entry1.offset;
-				size_animation=entry1.length;
-			} else {
-				offset_tree=entry1.offset;
+				return retval;
 			}
-			
-			// find the second entry
-			for (j=0;j<i && !match;j++)
+			pictureidx+=SIZE_TREE;
+			pictureidx+=entry.length;
+			imagecnt1++;
+		}
+	}
+	WRITE_INT32LE(pGfxBuf,gfxdiridx,0x23232323);
+	WRITE_INT32LE(pGfxBuf,pictureidx,0x42424242);
+
+	// pass 2: loop over all the directory entries. find the "trees" 
+	imagecnt2=0;
+	gfxdiridx=HEADERSIZE+2;
+	for (i=0;i<num_entries;i++)
+	{
+		tEntry entry;
+		// read one entry from the directory
+		// 
+		retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset+i*DIR_ENTRY_SIZE,tmp2buf,DIR_ENTRY_SIZE);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+		retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+		if (entry.type==TYPE_TREE)	// found a tree
+		{
+			int j;
+			int idx;
+			int offset;
+			imagecnt2++;
+
+			// find the matching image
+			idx=-1;
+			offset=-1;
+			for (j=0;j<imagecnt1 && idx==-1;j++)
 			{
-				retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset+j*DIR_ENTRY_SIZE,tmp2buf,DIR_ENTRY_SIZE);
-				if (retval!=DMAGNETIC2_OK)
+				char name[7];
+				int diridx;
+
+				diridx=gfxdiridx+j*GFXDIRENTRYSIZE;
+				memcpy(name,&pGfxBuf[diridx],6);
+				name[6]=0;
+
+				if (strncmp(name,entry.name,6)==0)	// the name matches
 				{
-					return retval;
-				}
-				retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry2);
-				if (retval!=DMAGNETIC2_OK)
-				{
-					return retval;
-				}
-				if ((entry2.type==TYPE_ANIMATION || entry2.type==TYPE_TREE) && entry1.type!=entry2.type)
-				{
-					if (strncmp(entry1.name,entry2.name,7)==0)
-					{
-						match=1;
-						if (entry2.type==TYPE_ANIMATION)
-						{
-							offset_animation=entry2.offset;
-							size_animation=entry2.length;
-						} else {
-							offset_tree=entry2.offset;
-						}
-					}
+					idx=diridx;
+					offset=READ_INT32LE(pGfxBuf,diridx+6);
 				}
 			}
-			if (match)		// have both parts of the picture been found?
+			if (idx==-1)
 			{
-				// now, lets make a directory entry 
-				gfxdiridx=HEADERSIZE+picturenum*GFXDIRENTRYSIZE;
-				memcpy(&pGfxBuf[gfxdiridx+0],entry1.name,6);		   // 0.. 5 name
-				WRITE_INT32LE(pGfxBuf,gfxdiridx+ 6,pictureidx);		   // 6..10 offset
-				WRITE_INT32LE(pGfxBuf,gfxdiridx+10,size_animation+SIZE_TREE); // 10..13 length
-				picturenum++;
-
-				// then: write the Tree, and the "animation" behind it.
-
-				retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,offset_tree,&pGfxBuf[pictureidx],SIZE_TREE);
-				if (retval!=DMAGNETIC2_OK)
-				{
-					return retval;
-				}
-				retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,offset_animation,&pGfxBuf[pictureidx],size_animation);
-				if (retval!=DMAGNETIC2_OK)
-				{
-					return retval;
-				}
-				pictureidx+=SIZE_TREE+size_animation;
+				return DMAGNETIC2_UNKNOWN_SOURCE;
+			}
+			// load the actual tree from the RSC
+			retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,entry.offset,&pGfxBuf[offset],entry.length);
+			if (retval!=DMAGNETIC2_OK)
+			{
+				return retval;
 			}
 		}
 	}
+	if (imagecnt1!=imagecnt2)
+	{
+		return DMAGNETIC2_UNKNOWN_SOURCE;
+	}
+	
 	// TODO:
 	// add "titlev" and "titlee" files.
 	// load them @pictureidx, the directory entries are 
@@ -562,10 +575,11 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 	// diridx=HEADER+picturenum*GFXDIRENTRYSIZE;
 	// picturenum++;
 
-
-	WRITE_INT32LE(pGfxBuf,HEADERSIZE+picturenum*GFXDIRENTRYSIZE,0x23232323);//diridx+=MARGIN;
-	WRITE_INT32LE(pGfxBuf,pictureidx,0x42424242);
-	WRITE_INT16LE(pGfxBuf,4,picturenum);	// the number of pictures in this file
+	pGfxBuf[0]='M';
+	pGfxBuf[1]='a';
+	pGfxBuf[2]='P';
+	pGfxBuf[3]='4';
+	WRITE_INT16LE(pGfxBuf,4,imagecnt1);
 	pMeta->real_gfxsize=pictureidx;
 
 	return DMAGNETIC2_OK;
