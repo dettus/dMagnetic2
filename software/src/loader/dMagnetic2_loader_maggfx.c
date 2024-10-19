@@ -156,7 +156,7 @@ int dMagnetic2_loader_maggfx(
 	}
 	if (f)
 	{
-		n=fread(pMagBuf,sizeof(char),DMAGNETIC2_MAX_GFXSIZE,f);
+		n=fread(pGfxBuf,sizeof(char),DMAGNETIC2_MAX_GFXSIZE,f);
 		fclose(f);
 		pMeta->real_gfxsize=n;
 	}

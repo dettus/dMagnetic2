@@ -84,6 +84,8 @@ int main(int argc,char** argv)
 		return 1;
 	}
 
+	printf("magbuf@%p\n",&magbuf[0]);
+	printf("gfxbuf@%p\n",&gfxbuf[0]);
 	retval=dMagnetic2_loader(hLoader,filename1,filename2,filename3,magbuf,gfxbuf,&meta,0);
 	printf("%d;",retval);
 	printf("%s;",meta.game_name);
