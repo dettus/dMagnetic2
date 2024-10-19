@@ -504,11 +504,42 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 			imagecnt1++;
 		}
 	}
+	imagecnt2=0;
+	{
+#define	MAX_TITLE_FILESIZE	120000		// actually 112016
+		int i;
+		FILE *f;
+		char *pFilename;
+		char *names[2]={"titlev","titlee"};
+		int substs[2]={MAX_NUM_RSC_FILES+0,MAX_NUM_RSC_FILES+1};
+		pFilename=(char*)pTmpBuf;
+
+		for (i=0;i<2;i++)
+		{
+			dMagnetic2_loader_mw_substitute_tworsc(filename1,pTmpBuf,substs[i],NULL);
+			f=fopen(pFilename,"rb");
+			if (f!=NULL)
+			{
+				int n;
+				n=fread(&pGfxBuf[pictureidx],sizeof(char),MAX_TITLE_FILESIZE,f);
+				fclose(f);
+
+				if (n!=0)
+				{
+					memcpy(&pGfxBuf[gfxdiridx+0],names[i],6);	
+					WRITE_INT32LE(pGfxBuf,gfxdiridx+ 6,pictureidx);	// the offset within the gfx buffer
+					WRITE_INT32LE(pGfxBuf,gfxdiridx+10,n);	// the size within the gfxbuffer. 
+					imagecnt1++;
+					imagecnt2++;
+					gfxdiridx+=GFXDIRENTRYSIZE;
+				}
+			}
+		}
+	}
 	WRITE_INT32LE(pGfxBuf,gfxdiridx,0x23232323);
-	WRITE_INT32LE(pGfxBuf,pictureidx,0x42424242);
+
 
 	// pass 2: loop over all the directory entries. find the "trees" 
-	imagecnt2=0;
 	gfxdiridx=HEADERSIZE+2;
 	for (i=0;i<num_entries;i++)
 	{
@@ -574,6 +605,9 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 	// picturenum++;
 	// diridx=HEADER+picturenum*GFXDIRENTRYSIZE;
 	// picturenum++;
+
+
+	WRITE_INT32LE(pGfxBuf,pictureidx,0x42424242);
 
 	pGfxBuf[0]='M';
 	pGfxBuf[1]='a';
