@@ -99,8 +99,8 @@ int dMagnetic2_loader_mw_substitute_tworsc(char* filename1,char *pFilename,int n
 	int location;
 	int uppercase;
 
-	const char *dMagnetic2_loader_mw_names_upper[MAX_NUM_RSC_FILES+2]={"ZERO","ONE","TWO","THREE","FOUR","FIVE","SIX","SEVEN","EIGHT","TITLE.VGA","TITLE.EGA"};
-	const char *dMagnetic2_loader_mw_names_lower[MAX_NUM_RSC_FILES+2]={"zero","one","two","three","four","five","six","seven","eight","title.vga","title.ega"};
+	const char *dMagnetic2_loader_mw_names_upper[MAX_NUM_RSC_FILES+2]={"ZERO.RSC","ONE.RSC","TWO.RSC","THREE.RSC","FOUR.RSC","FIVE.RSC","SIX.RSC","SEVEN.RSC","EIGHT.RSC","TITLE.VGA","TITLE.EGA"};
+	const char *dMagnetic2_loader_mw_names_lower[MAX_NUM_RSC_FILES+2]={"zero.rsc","one.rsc","two.rsc","three.rsc","four.rsc","five.rsc","six.rsc","seven.rsc","eight.rsc","title.vga","title.ega"};
 
 	if (num<0 || num>=MAX_NUM_RSC_FILES+2)
 	{
@@ -109,7 +109,7 @@ int dMagnetic2_loader_mw_substitute_tworsc(char* filename1,char *pFilename,int n
 
 	l=strlen(filename1);
 	location=-1;
-	for (i=0;i<l-7;i++)
+	for (i=0;i<l-6;i++)
 	{
 		// at the same time: check the capitalization
 		if (filename1[i+0]=='t' && filename1[i+1]=='w' && filename1[i+2]=='o' && filename1[i+3]=='.')
@@ -144,7 +144,7 @@ int dMagnetic2_loader_mw_substitute_tworsc(char* filename1,char *pFilename,int n
 			*gameidx=GAME_IDX_WONDERLAND;
 		}
 	}
-
+	
 	strncpy(pFilename,filename1,FILENAME_LENGTH_MAX);
 	l=strlen(dMagnetic2_loader_mw_names_upper[num]);
 	for (i=0;i<l+1;i++)
@@ -156,6 +156,7 @@ int dMagnetic2_loader_mw_substitute_tworsc(char* filename1,char *pFilename,int n
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
 		pFilename[p]=uppercase?dMagnetic2_loader_mw_names_upper[num][i]:dMagnetic2_loader_mw_names_lower[num][i];
+		pFilename[p+1]=0;
 	}
 
 	return DMAGNETIC2_OK;	
@@ -181,7 +182,6 @@ int dMagnetic2_loader_mw_sizes(unsigned char* pTmpBuf,char* filename1,int *pSize
 		{
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
-	
 		f=fopen(pFilename,"rb");
 		n=0;
 		if (f!=NULL)
@@ -228,6 +228,7 @@ int dMagnetic2_loader_mw_readresource(unsigned char* pTmpBuf,char* filename1,int
 			offset_in_rsc=offset-sum;
 			rsc_file=i;
 		}
+		sum+=sizes[i];
 	}
 	if (rsc_file==-1 || offset_in_rsc==-1)
 	{
@@ -272,6 +273,7 @@ int dMagnetic2_loader_mw_parsedirentry(unsigned char* tmp2buf,tEntry *pEntry)
 		pEntry->name[i]=tmp2buf[10+i];
 	}
 	pEntry->name[6]=0;
+	pEntry->type=READ_INT16LE(tmp2buf,16);
 	return DMAGNETIC2_OK;
 }
 
@@ -498,21 +500,21 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 			}
 			
 			// find the second entry
-			for (j=0;j<i-1 && !match;j++)
+			for (j=0;j<i && !match;j++)
 			{
-				retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset+i*DIR_ENTRY_SIZE,tmp2buf,DIR_ENTRY_SIZE);
+				retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset+j*DIR_ENTRY_SIZE,tmp2buf,DIR_ENTRY_SIZE);
 				if (retval!=DMAGNETIC2_OK)
 				{
 					return retval;
 				}
-				retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry1);
+				retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry2);
 				if (retval!=DMAGNETIC2_OK)
 				{
 					return retval;
 				}
 				if ((entry2.type==TYPE_ANIMATION || entry2.type==TYPE_TREE) && entry1.type!=entry2.type)
 				{
-					if (strncmp(entry1.name,entry2.name,6)==0)
+					if (strncmp(entry1.name,entry2.name,7)==0)
 					{
 						match=1;
 						if (entry2.type==TYPE_ANIMATION)
@@ -527,7 +529,6 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 			}
 			if (match)		// have both parts of the picture been found?
 			{
-
 				// now, lets make a directory entry 
 				gfxdiridx=HEADERSIZE+picturenum*GFXDIRENTRYSIZE;
 				memcpy(&pGfxBuf[gfxdiridx+0],entry1.name,6);		   // 0.. 5 name
@@ -563,6 +564,7 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 	WRITE_INT32LE(pGfxBuf,HEADERSIZE+picturenum*GFXDIRENTRYSIZE,0x23232323);//diridx+=MARGIN;
 	WRITE_INT32LE(pGfxBuf,pictureidx,0x42424242);
 	WRITE_INT16LE(pGfxBuf,4,picturenum);	// the number of pictures in this file
+	pMeta->real_gfxsize=pictureidx;
 
 	return DMAGNETIC2_OK;
 }
