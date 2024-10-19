@@ -292,6 +292,7 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 	int wtaboffs,wtabsize;
 	int sections_found;
 	int magidx;
+	int huffmanidx;
 	
 
 	// step one: find the directory. It is stored in the very first 4 bytes.
@@ -408,7 +409,8 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 			pMagBuf[0x67a3]=0x75;
 		}
 	}
-
+	
+	huffmanidx=text1size;
 	if (text1size>0x10000)
 	{
 		text2size=text1size+dictsize-0x10000;
@@ -418,7 +420,7 @@ int dMagnetic2_loader_mw_mkmag(unsigned char* pTmpBuf,char* filename1,unsigned c
 		text1size=0xe000;
 	}
 	pMeta->real_magsize=magidx;
-	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,magidx,4,codesize,text1size,text2size,wtabsize,text1size);
+	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,magidx,4,codesize,text1size,text2size,wtabsize,huffmanidx);
 	return retval;
 }
 int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta,int *sizes)
