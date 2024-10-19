@@ -185,10 +185,10 @@ int dMagnetic2_loader_dsk_spectrum_mag(unsigned char* pTmpBuf,tNewDskInfo* pDskI
 {
 	int outputidx;
 	int version;
-	int codesize;
-	int string1size;
-	int string2size;
-	int dictsize;
+	int size_code;
+	int size_string1;
+	int size_string2;
+	int size_dict;
 	int retval;
 	unsigned char *pTmpPtr;
 
@@ -198,39 +198,40 @@ int dMagnetic2_loader_dsk_spectrum_mag(unsigned char* pTmpBuf,tNewDskInfo* pDskI
 	version=dMagnetic2_loader_dsk_knownGames[gameidx].version;
 
 	// start with the code in FILE1, which is huffman encoded
-	codesize=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,pTmpPtr);
-	if (codesize==0)
+	size_code=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,pTmpPtr);
+	if (size_code==0)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
-	codesize=dMagnetic2_loader_shared_unhuffer(pTmpBuf,codesize,&pMagBuf[outputidx]);
-	outputidx+=codesize;
+	size_code=dMagnetic2_loader_shared_unhuffer(pTmpPtr,size_code,&pMagBuf[outputidx]);
+	outputidx+=size_code;
+	
 
 	// the string1 section is in FILE3
-	string1size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX3,&pMagBuf[outputidx]);
-	if (string1size==0)
+	size_string1=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX3,&pMagBuf[outputidx]);
+	if (size_string1==0)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
-	outputidx+=string1size;
+	outputidx+=size_string1;
 
 	// the string2 section is in FILE2, hufmanned
-	string2size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX2,pTmpPtr);
-	if (string2size==0)
+	size_string2=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX2,pTmpPtr);
+	if (size_string2==0)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
-	string2size=dMagnetic2_loader_shared_unhuffer(pTmpBuf,string2size,&pMagBuf[outputidx]);
-	outputidx+=string2size;
+	size_string2=dMagnetic2_loader_shared_unhuffer(pTmpPtr,size_string2,&pMagBuf[outputidx]);
+	outputidx+=size_string2;
 
 	// the dict section is in FILE4, hufmanned
-	dictsize=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX4,pTmpPtr);
-	if (dictsize==0)
+	size_dict=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX4,pTmpPtr);
+	if (size_dict==0)
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
-	dictsize=dMagnetic2_loader_shared_unhuffer(pTmpBuf,dictsize,&pMagBuf[outputidx]);
-	outputidx+=dictsize;
+	size_dict=dMagnetic2_loader_shared_unhuffer(pTmpPtr,size_dict,&pMagBuf[outputidx]);
+	outputidx+=size_dict;
 
 	if (nodoc)
 	{
@@ -245,7 +246,7 @@ int dMagnetic2_loader_dsk_spectrum_mag(unsigned char* pTmpBuf,tNewDskInfo* pDskI
 	if (version==3 && pMagBuf[0x2836]==0x66) pMagBuf[0x2836]=0x60;	// final patch for myth
 	pMeta->real_magsize=outputidx;
 
-	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,outputidx,version,codesize,string1size,string2size,dictsize,-1);
+	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,outputidx,version,size_code,size_string1,size_string2,size_dict,-1);
 	return retval;
 }
 
@@ -253,11 +254,11 @@ int dMagnetic2_loader_dsk_spectrum_mag(unsigned char* pTmpBuf,tNewDskInfo* pDskI
 int dMagnetic2_loader_dsk_amstrad_mag(unsigned char* pTmpBuf,tNewDskInfo* pDskInfo,int gameidx,unsigned char* pMagBuf,tdMagnetic2_game_meta *pMeta,int nodoc)
 {
 	int outputidx;
-	int code1size;
-	int code2size;
-	int string1size;
-	int string2size;
-	int dictsize;
+	int size_code1;
+	int size_code2;
+	int size_string1;
+	int size_string2;
+	int size_dict;
 	int retval;
 	unsigned char *pTmpPtr;
 	edMagnetic2_game game;
@@ -269,52 +270,52 @@ int dMagnetic2_loader_dsk_amstrad_mag(unsigned char* pTmpBuf,tNewDskInfo* pDskIn
 	if (game==DMAGNETIC2_GAME_PAWN)
 	{
 		// in THE PAWN, the code section is packed	
-		code1size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,pTmpPtr);
-		if (code1size==0)
+		size_code1=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,pTmpPtr);
+		if (size_code1==0)
 		{
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
-		code1size=dMagnetic2_loader_shared_unhuffer(pTmpBuf,code1size,&pMagBuf[outputidx]);
-		outputidx+=code1size;
-		code2size=0;
+		size_code1=dMagnetic2_loader_shared_unhuffer(pTmpBuf,size_code1,&pMagBuf[outputidx]);
+		outputidx+=size_code1;
+		size_code2=0;
 	} else {
 #define	MAGIC_STARTVALUE	0x1803
 #define	MAGIC_INCREMENT		0x29
 		int i;
 		// in other games, it is spread out over two files: FILE1 and FILE6
-		code1size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,&pMagBuf[outputidx]);
-		retval=dMagnetic2_loader_shared_prbs_descrambler(&pMagBuf[outputidx],code1size,MAGIC_STARTVALUE,MAGIC_INCREMENT);	// the first part is PRBS scrambled different than the second one
-		outputidx+=code1size;
+		size_code1=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,&pMagBuf[outputidx]);
+		retval=dMagnetic2_loader_shared_prbs_descrambler(&pMagBuf[outputidx],size_code1,MAGIC_STARTVALUE,MAGIC_INCREMENT);	// the first part is PRBS scrambled different than the second one
+		outputidx+=size_code1;
 
 
-		code2size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX1,&pMagBuf[outputidx]);
+		size_code2=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX6,&pMagBuf[outputidx]);
 		// in the second part, each 128 byte block has its own start value
-		for (i=0;i<code2size;i+=128)
+		for (i=0;i<size_code2;i+=128)
 		{
-			retval=dMagnetic2_loader_shared_prbs_descrambler(&pMagBuf[outputidx+i],128,code1size+i,MAGIC_INCREMENT);
+			retval=dMagnetic2_loader_shared_prbs_descrambler(&pMagBuf[outputidx+i],128,size_code1+i,MAGIC_INCREMENT);
 		}
 	}
-	outputidx+=code2size;
+	outputidx+=size_code2;
 	
-	string1size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX3,&pMagBuf[outputidx]);
-	outputidx+=string1size;
+	size_string1=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX3,&pMagBuf[outputidx]);
+	outputidx+=size_string1;
 	if (game==DMAGNETIC2_GAME_PAWN)
 	{
 		// in THE PAWN, the string2 section is packed
-		string2size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX2,pTmpPtr);
-		if (string2size==0)
+		size_string2=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX2,pTmpPtr);
+		if (size_string2==0)
 		{
 			return DMAGNETIC2_UNKNOWN_SOURCE;
 		}
-		string2size=dMagnetic2_loader_shared_unhuffer(pTmpBuf,string2size,&pMagBuf[outputidx]);
+		size_string2=dMagnetic2_loader_shared_unhuffer(pTmpBuf,size_string2,&pMagBuf[outputidx]);
 	} else {
-		string2size=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX2,&pMagBuf[outputidx]);
+		size_string2=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX2,&pMagBuf[outputidx]);
 	}
-	outputidx+=string2size;
+	outputidx+=size_string2;
 	// some games have a file with the suffix 8, and this is for the dict.
-	dictsize=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX8,&pMagBuf[outputidx]);
-	retval=dMagnetic2_loader_shared_prbs_descrambler(&pMagBuf[outputidx],dictsize,MAGIC_STARTVALUE,MAGIC_INCREMENT);
-	outputidx+=dictsize;
+	size_dict=dMagnetic2_loader_dsk_readfile(pTmpBuf,pDskInfo,FILESUFFIX8,&pMagBuf[outputidx]);
+	retval=dMagnetic2_loader_shared_prbs_descrambler(&pMagBuf[outputidx],size_dict,MAGIC_STARTVALUE,MAGIC_INCREMENT);
+	outputidx+=size_dict;
 	if (nodoc)
 	{
 		int i;
@@ -327,7 +328,7 @@ int dMagnetic2_loader_dsk_amstrad_mag(unsigned char* pTmpBuf,tNewDskInfo* pDskIn
 	}
 	pMeta->real_magsize=outputidx;
 
-	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,outputidx,dMagnetic2_loader_dsk_knownGames[gameidx].version,code1size+code2size,string1size,string2size,dictsize,-1);
+	retval=dMagnetic2_loader_shared_addmagheader(pMagBuf,outputidx,dMagnetic2_loader_dsk_knownGames[gameidx].version,size_code1+size_code2,size_string1,size_string2,size_dict,-1);
 	return retval;
 }
 int dMagnetic2_loader_dsk_amstrad_gfx(unsigned char* pTmpBuf,tNewDskInfo* pDskInfo,int gameidx,unsigned char* pGfxBuf,tdMagnetic2_game_meta *pMeta)
