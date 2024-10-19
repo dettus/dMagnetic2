@@ -240,6 +240,9 @@ int dMagnetic2_loader_msdos_mkgfx(char* filename1,unsigned char* pTmpBuf,unsigne
 	{
 		return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
 	}
+	idx+=4;		// leave some room for the size of the index
+	idx+=4;		// leave some room for the size of the DISK1.PIX file
+	idx+=4;		// leave some room for the size of the DISK2.PIX file
 	n=fread(&pGfxBuf[idx],sizeof(char),256+1,f);	
 	fclose(f);
 	if (n!=256)		// check if the expected filesize matches
@@ -369,7 +372,7 @@ int dMagnetic2_loader_msdos(
 	if (pMagBuf!=NULL)
 	{
 		int retval;
-		retval=dMagnetic2_loader_msdos_mkmag(filename1,pTmpBuf,pGfxBuf,pMeta,gameidx,filename_postfix,nodoc);
+		retval=dMagnetic2_loader_msdos_mkmag(filename1,pTmpBuf,pMagBuf,pMeta,gameidx,filename_postfix,nodoc);
 		if (retval!=DMAGNETIC2_OK)
 		{
 			return retval;
