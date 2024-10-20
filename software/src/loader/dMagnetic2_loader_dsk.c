@@ -689,6 +689,14 @@ int dMagnetic2_loader_dsk_directory_new(unsigned char* pImage,tNewDskInfo* pDskI
 	}
 	return DMAGNETIC2_OK;	
 }
+#define	TODOSIZE	65536		// Some files are packed and need to be unhuffed. They are being loaded into the tmpbuffer
+
+int dMagnetic2_loader_dsk_getsize(int *pBytes)
+{
+// should be large enough for a disk image. and a spare byte for a trick to determine the correct file size	
+	*pBytes=2*DSK_MAX_IMAGESIZE+TODOSIZE;// should be large enough for two disk images. and a spare byte for a trick to determine the correct file size
+	return DMAGNETIC2_OK;
+}
 
 
 int dMagnetic2_loader_dsk(
@@ -715,7 +723,6 @@ int dMagnetic2_loader_dsk(
 
 	memset(dskInfo,0,sizeof(tNewDskInfo));
 
-	#define	TODOSIZE	65536		// Some files are packed and need to be unhuffed. They are being loaded into the tmpbuffer
 	// check the important output buffers
 	if (tmpsize<2*DSK_MAX_IMAGESIZE+TODOSIZE)	// should be large enough for two disk images. and a spare byte for a trick to determine the correct file size
 	{

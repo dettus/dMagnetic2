@@ -28,7 +28,7 @@
 #define	DMAGNETIC2_LOADER_C64_H
 
 #include "dMagnetic2_loader.h"
-
+int dMagnetic2_loader_c64_getsize(int *pBytes);
 int dMagnetic2_loader_c64(
 		char* filename1,char* filename2,
 		unsigned char* pTmpBuf,int tmpsize,

@@ -28,6 +28,7 @@
 #define	DMAGNETIC2_LOADER_ARCHIMEDES_H
 
 #include "dMagnetic2_loader.h"
+int dMagnetic2_loader_archimedes_getsize(int *pBytes);
 
 
 int dMagnetic2_loader_archimedes(

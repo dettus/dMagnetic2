@@ -28,7 +28,7 @@
 #define	DMAGNETIC2_LOADER_ATARIXL_H
 
 #include "dMagnetic2_loader.h"
-
+int dMagnetic2_loader_atarixl_getsize(int *pBytes);
 int dMagnetic2_loader_atarixl(
 		char* filename1,char* filename2,
 		unsigned char* pTmpBuf,int tmpsize,

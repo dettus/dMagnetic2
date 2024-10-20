@@ -29,6 +29,7 @@
 
 
 #include "dMagnetic2_loader.h"
+int dMagnetic2_loader_mw_getsize(int *pBytes);
 
 int dMagnetic2_loader_mw(
 		char* filename1,

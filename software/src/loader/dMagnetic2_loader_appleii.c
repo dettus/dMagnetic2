@@ -726,7 +726,18 @@ int dMagnetic2_loader_appleii_mkgfx(unsigned char *gfxbuf,int* gfxsize,edMagneti
 	return DMAGNETIC2_OK;
 }
 
+#define	SIZE_WOZIMAGE	241435
+#define	SIZE_NIBIMAGE	232960
+#define	SIZE_2MGIMAGE	143424
+#define	SIZE_DSKIMAGE	143360
+#define	MAX_IMAGEFILESIZE	(SIZE_WOZIMAGE)
 
+int dMagnetic2_loader_appleii_getsize(int *pBytes)
+{
+// should be large enough for three disk images. and a spare byte for a trick to determine the correct file size
+	*pBytes=NIBTRACKSIZE+3*MAX_IMAGEFILESIZE+1;
+	return DMAGNETIC2_OK;
+}
 int dMagnetic2_loader_appleii(
 		char* filename1,char* filename2,char* filename3,
 		unsigned char* pTmpBuf,int tmpsize,
@@ -735,11 +746,6 @@ int dMagnetic2_loader_appleii(
 		tdMagnetic2_game_meta *pMeta,
 		int nodoc)
 {
-#define	SIZE_WOZIMAGE	241435
-#define	SIZE_NIBIMAGE	232960
-#define	SIZE_2MGIMAGE	143424
-#define	SIZE_DSKIMAGE	143360
-#define	MAX_IMAGEFILESIZE	(SIZE_WOZIMAGE)
 	int diskoffs[MAXDISKS]={0};
 	int disklens[MAXDISKS]={0};
 	int decodedoffs[MAXDISKS]={0};

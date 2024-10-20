@@ -28,7 +28,7 @@
 #define	DMAGNETIC2_LOADER_MAGGFX_H
 
 #include "dMagnetic2_loader.h"
-
+int dMagnetic2_loader_maggfx_getsize(int *pBytes);
 int dMagnetic2_loader_maggfx(
 		char* filename1,char* filename2,
 		unsigned char* pMagBuf,

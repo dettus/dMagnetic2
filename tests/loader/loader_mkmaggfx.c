@@ -41,7 +41,9 @@ int main(int argc,char** argv)
 	tdMagnetic2_game_meta	meta;
 
 	void* hLoader;
-	int size;
+	void* pTmpBuf;
+	int size_handle;
+	int size_tmpbuf;
 	int retval;
 	FILE *f;
 
@@ -62,7 +64,7 @@ int main(int argc,char** argv)
 	}
 
 	printf("  ;Filename1;Filename2;Filename3;");
-	printf("malloc_size;");
+	printf("malloc_size handle;malloc_size tmpbuf;");
 	printf("retval;game_name;source_name;version;magsize;gfxsize;pass/fail\n");
 	printf("CSV;");
 	if (filename1!=NULL) printf("%s;",filename1); else printf(";");
@@ -70,22 +72,22 @@ int main(int argc,char** argv)
 	if (filename3!=NULL) printf("%s;",filename3); else printf(";");
 
 	
-	retval=dMagnetic2_loader_getsize(&size);
+	retval=dMagnetic2_loader_getsize(&size_handle,&size_tmpbuf);
 	if (retval!=DMAGNETIC2_OK)
 	{
 		return 1;
 	}
-	hLoader=malloc(size);
-	printf("%d;",size);
+	hLoader=malloc(size_handle);
+	printf("%d;",size_handle);
+	pTmpBuf=malloc(size_tmpbuf);
+	printf("%d;",size_tmpbuf);
 
-	retval=dMagnetic2_loader_init(hLoader);
+	retval=dMagnetic2_loader_init(hLoader,pTmpBuf);
 	if (retval!=DMAGNETIC2_OK)
 	{
 		return 1;
 	}
 
-	printf("magbuf@%p\n",&magbuf[0]);
-	printf("gfxbuf@%p\n",&gfxbuf[0]);
 	retval=dMagnetic2_loader(hLoader,filename1,filename2,filename3,magbuf,gfxbuf,&meta,0);
 	printf("%d;",retval);
 	printf("%s;",meta.game_name);

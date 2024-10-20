@@ -29,6 +29,7 @@
 
 
 #include "dMagnetic2_loader.h"
+int dMagnetic2_loader_msdos_getsize(int *pBytes);
 
 int dMagnetic2_loader_msdos(
 		char* filename1,

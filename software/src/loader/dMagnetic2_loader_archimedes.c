@@ -427,7 +427,12 @@ int dMagnetic2_loader_archimedes_mkgfx(unsigned char *dskimg,unsigned char* gfxb
 }
 
 
-
+int dMagnetic2_loader_archimedes_getsize(int *pBytes)
+{
+// should be large enough for a disk image. and a spare byte for a trick to determine the correct file size	
+	*pBytes=ADFS_IMAGESIZE+1;
+	return DMAGNETIC2_OK;
+}
 
 int dMagnetic2_loader_archimedes(
 		char* filename1,
@@ -450,7 +455,7 @@ int dMagnetic2_loader_archimedes(
 	{
 		return DMAGNETIC2_ERROR_NULLPTR;
 	}
-	if (tmpsize<ADFS_IMAGESIZE+1)	// should be large enough for two disk images. and a spare byte for a trick to determine the correct file size
+	if (tmpsize<ADFS_IMAGESIZE+1)	
 	{
 		return DMAGNETIC2_ERROR_BUFFER_TOO_SMALL;
 	}

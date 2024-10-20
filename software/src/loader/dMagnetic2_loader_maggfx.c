@@ -41,6 +41,11 @@ void dMagnetic2_loader_maggfx_detect_game(unsigned char *pMagBuf,tdMagnetic2_gam
 	pMeta->source=DMAGNETIC2_SOURCE_MAGGFX;
 }
 
+int dMagnetic2_loader_maggfx_getsize(int *pBytes)
+{
+	*pBytes=0;	// no tmp buffer needed
+	return DMAGNETIC2_OK;
+}
 int dMagnetic2_loader_maggfx(
 		char* filename1,char* filename2,
 		unsigned char* pMagBuf,

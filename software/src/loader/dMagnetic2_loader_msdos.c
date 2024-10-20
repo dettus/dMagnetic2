@@ -46,6 +46,8 @@
 #define	MAX_SIZE_STRING2	4000	// actually, corruption has 3900 bytes
 #define	MAX_SIZE_DICT		8000	// actually, jinxter has 7281 bytes
 
+#define	MAX_SIZE_READ		MAX_SIZE_STRING1
+
 
 typedef struct _tGameInfo
 {
@@ -188,7 +190,7 @@ int dMagnetic2_loader_msdos_mkmag(char* filename1,unsigned char* pTmpBuf,unsigne
 		{
 			return DMAGNETIC2_UNABLE_TO_OPEN_FILE;
 		}
-		n=fread(pTmpBuf,sizeof(char),MAX_SIZE_CODE,f);
+		n=fread(pTmpBuf,sizeof(char),MAX_SIZE_DICT,f);
 		size_dict=dMagnetic2_loader_shared_unhuffer(pTmpBuf,n,&pMagBuf[idx]);
 	}	
 	idx+=size_dict;
@@ -299,6 +301,11 @@ int dMagnetic2_loader_msdos_mkgfx(char* filename1,unsigned char* pTmpBuf,unsigne
 
 }
 
+int dMagnetic2_loader_msdos_getsize(int *pBytes)
+{
+	*pBytes=MAX_FILENAME_LEN+MAX_SIZE_READ;
+	return DMAGNETIC2_OK;
+}
 int dMagnetic2_loader_msdos(
 		char* filename1,
 		unsigned char* pTmpBuf,int tmpsize,

@@ -68,7 +68,7 @@ const char *dMagnetic2_game_sources[10]={
 typedef struct _tdMagnetic2_loader_handle
 {
 	unsigned int magic;
-	unsigned char tmpbuf[MAX_TMP_SIZE];
+	unsigned char *pTmpBuf;
 } tdMagnetic2_loader_handle;
 
 #include <stdlib.h>
@@ -76,12 +76,57 @@ typedef struct _tdMagnetic2_loader_handle
 #include "dMagnetic2_errorcodes.h"
 #include "dMagnetic2_loader.h"
 
-int dMagnetic2_loader_getsize(int *pBytes)
+int dMagnetic2_loader_getsize(int *size_handle,int *size_tmpbuf)
 {
-	*pBytes=sizeof(tdMagnetic2_loader_handle);
+	int max;
+	int size_tmp;
+	*size_handle=sizeof(tdMagnetic2_loader_handle);
+	max=0;
+	dMagnetic2_loader_appleii_getsize(&size_tmp);
+	if (max<size_tmp)
+	{
+		max=size_tmp;
+	}
+	dMagnetic2_loader_archimedes_getsize(&size_tmp);
+	if (max<size_tmp)
+	{
+		max=size_tmp;
+	}
+	dMagnetic2_loader_atarixl_getsize(&size_tmp);
+	if (max<size_tmp)
+	{
+		max=size_tmp;
+	}
+	dMagnetic2_loader_c64_getsize(&size_tmp);
+	if (max<size_tmp)
+	{
+		max=size_tmp;
+	}
+	dMagnetic2_loader_dsk_getsize(&size_tmp);
+	if (max<size_tmp)
+	{
+		max=size_tmp;
+	}
+	dMagnetic2_loader_maggfx_getsize(&size_tmp);
+	if (max<size_tmp)
+	{
+		max=size_tmp;
+	}
+	dMagnetic2_loader_msdos_getsize(&size_tmp);
+	if (max<size_tmp)
+	{
+		max=size_tmp;
+	}
+	dMagnetic2_loader_mw_getsize(&size_tmp);
+	if (max<size_tmp)
+	{
+		max=size_tmp;
+	}
+	*size_tmpbuf=max;
+	
 	return DMAGNETIC2_OK;
 }
-int dMagnetic2_loader_init(void *pHandle)
+int dMagnetic2_loader_init(void *pHandle,void* pTmpBuf)
 {
 	tdMagnetic2_loader_handle* pThis=(tdMagnetic2_loader_handle*)pHandle;
 	if (pThis==NULL)
@@ -90,6 +135,7 @@ int dMagnetic2_loader_init(void *pHandle)
 	}
 	memset(pThis,0,sizeof(tdMagnetic2_loader_handle));
 	pThis->magic=MAGIC;
+	pThis->pTmpBuf=(unsigned char*)pTmpBuf;
 
 	return DMAGNETIC2_OK;
 }
@@ -113,31 +159,27 @@ int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filena
 
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
-		retval=dMagnetic2_loader_appleii(filename1,filename2,filename3,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+		retval=dMagnetic2_loader_appleii(filename1,filename2,filename3,pThis->pTmpBuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
 	}
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
-		retval=dMagnetic2_loader_archimedes(filename1,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+		retval=dMagnetic2_loader_archimedes(filename1,pThis->pTmpBuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
 	}
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
-		retval=dMagnetic2_loader_archimedes(filename1,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+		retval=dMagnetic2_loader_atarixl(filename1,filename2,pThis->pTmpBuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
 	}
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
-		retval=dMagnetic2_loader_atarixl(filename1,filename2,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+		retval=dMagnetic2_loader_c64(filename1,filename2,pThis->pTmpBuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
 	}
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
-		retval=dMagnetic2_loader_c64(filename1,filename2,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+		retval=dMagnetic2_loader_dsk(filename1,filename2,pThis->pTmpBuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,0,nodoc);
 	}
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
-		retval=dMagnetic2_loader_dsk(filename1,filename2,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,0,nodoc);
-	}
-	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
-	{
-		retval=dMagnetic2_loader_dsk(filename1,filename2,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,1,nodoc);
+		retval=dMagnetic2_loader_dsk(filename1,filename2,pThis->pTmpBuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,1,nodoc);
 	}
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
@@ -145,11 +187,11 @@ int dMagnetic2_loader(void *pHandle,char* filename1,char* filename2,char* filena
 	}
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
-		retval=dMagnetic2_loader_msdos(filename1,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
+		retval=dMagnetic2_loader_msdos(filename1,pThis->pTmpBuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta,nodoc);
 	}
 	if (retval==DMAGNETIC2_UNKNOWN_SOURCE)
 	{
-		retval=dMagnetic2_loader_mw(filename1,pThis->tmpbuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta);
+		retval=dMagnetic2_loader_mw(filename1,pThis->pTmpBuf,MAX_TMP_SIZE,pMagBuf,pGfxBuf,pMeta);
 	}
 	switch(pMeta->game)
 	{

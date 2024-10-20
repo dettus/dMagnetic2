@@ -28,7 +28,7 @@
 #define	DMAGNETIC2_LOADER_DSK_H
 
 #include "dMagnetic2_loader.h"
-
+int dMagnetic2_loader_dsk_getsize(int *pBytes);
 int dMagnetic2_loader_dsk(
 		char* filename1,char* filename2,
 		unsigned char* pTmpBuf,int tmpsize,

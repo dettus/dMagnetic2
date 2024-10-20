@@ -345,6 +345,12 @@ int dMagnetic2_loader_atarixl_mkgfx(unsigned char* pTmpBuf,unsigned char* gfxbuf
 	return DMAGNETIC2_OK;
 }
 
+int dMagnetic2_loader_atarixl_getsize(int *pBytes)
+{
+	*pBytes=2*DISK_SIZE+1;// should be large enough for two disk images. and a spare byte for a trick to determine the correct file size
+	return DMAGNETIC2_OK;
+}
+
 
 
 int dMagnetic2_loader_atarixl(
@@ -362,7 +368,7 @@ int dMagnetic2_loader_atarixl(
 	int disk2offs;
 	
 	// check the important output buffers
-	if (tmpsize<2*DISK_SIZE+1)	// should be large enough for two disk images. and a spare byte for a trick to determine the correct file size
+	if (tmpsize<2*DISK_SIZE+1)	
 	{
 		return DMAGNETIC2_ERROR_BUFFER_TOO_SMALL;
 	}

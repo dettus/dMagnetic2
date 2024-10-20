@@ -619,7 +619,12 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 	return DMAGNETIC2_OK;
 }
 
-
+int dMagnetic2_loader_mw_getsize(int *pBytes)
+{
+// should be large enough for a disk image. and a spare byte for a trick to determine the correct file size	
+	*pBytes=SIZE_RSC_FILE+1+FILENAME_LENGTH_MAX;	// large enough to load a full rsc file and some tricks with the filename
+	return DMAGNETIC2_OK;
+}
 
 int dMagnetic2_loader_mw(
 		char* filename1,

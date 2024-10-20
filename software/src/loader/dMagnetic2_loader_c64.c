@@ -506,6 +506,13 @@ int dMagnetic2_loader_c64_readStrings(unsigned char* d64image,tFileEntry* pEntri
 	*dictsize	=cnt[2];
 	return DMAGNETIC2_OK;
 }
+int dMagnetic2_loader_c64_getsize(int *pBytes)
+{
+// should be large enough for a disk image. and a spare byte for a trick to determine the correct file size	
+	*pBytes=2*D64_IMAGESIZE+1;// should be large enough for two disk images. and a spare byte for a trick to determine the correct file size
+	return DMAGNETIC2_OK;
+}
+
 int dMagnetic2_loader_c64(
 		char* filename1,char* filename2,
 		unsigned char* pTmpBuf,int tmpsize,
