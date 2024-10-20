@@ -42,19 +42,19 @@
 
 int dMagnetic2_engine_get_size(int *pBytes);
 int dMagnetic2_engine_init(void *pHandle);
-int dMagnetic2_engine_set_mag(void *pHandle,int size,unsigned char* pMag);
+int dMagnetic2_engine_set_mag(void *pHandle,unsigned char* pMagBuf);
 //int dMagnetic2_engine_set_sections(void* pHandle,int memsize,unsigned char *pMem,int dictsize,unsigned char *pDict, int string1size,unsigned char *pString1,int string2size,unsigned char* pString2);
 
 
 // API functions for running the game
 int dMagnetic2_engine_process(void *pHandle,int singlestep,int* pStatus);	// singlestep=0: run until input is required
-int dMagnetic2_engine_set_input(void *pHandle,int len,char* pInput);
+int dMagnetic2_engine_new_input(void *pHandle,int len,char* pInput,int *pCnt);	
 int dMagnetic2_engine_get_text(void* pHandle,char** ppText);
 int dMagnetic2_engine_get_title(void* pHandle,char** ppTitle);
 int dMagnetic2_engine_get_picture(void* pHandle,char** ppPicname,int *pPicnum);
 int dMagnetic2_engine_get_filename(void* pHandle,char** ppFilename);
-int dMagnetic2_engine_save_game(void* pHandle,int *pSize,unsigned char* pContext);
-int dMagnetic2_engine_load_game(void* pHandle,int pSize,unsigned char* pContext);
+int dMagnetic2_engine_save_game(void* pHandle,int *pSize,void* pContext);
+int dMagnetic2_engine_load_game(void* pHandle,int pSize,void* pContext);
 
 // API functions for configuration
 int dMagnetic2_engine_configure(void* pHandle,int* todo);
