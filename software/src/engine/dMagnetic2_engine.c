@@ -25,9 +25,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-#include "dMagnetic2.h"
+#include "dMagnetic2_errorcodes.h"
+#include "dMagnetic2_engine.h"
 #include "dMagnetic2_shared.h"
-#include "dMagnetic2_vm68k.h"
+#include "dMagnetic2_engine_shared.h"
+#include "dMagnetic2_engine_vm68k.h"
 #include <string.h>
 
 
@@ -95,14 +97,14 @@ int dMagnetic2_engine_set_mag(void *pHandle,unsigned char* pMagBuf)
 {
 	tdMagnetic2_engine_handle* pThis=(tdMagnetic2_engine_handle*)pHandle;
 
-	dMagnetic2_vm68k_init(&pThis->game_context.vm68k,pMagBuf);
+	dMagnetic2_engine_vm68k_init(&(pThis->game_context.vm68k),pMagBuf);
 //	dMagnetic2_linea_init(&pThis->game_context.linea,pMagBuf);
 	return DMAGNETIC2_OK;
 	
 		
 }
 
-int dMagnetic2_engine_new_input(void *pHandle,int len,char* pInput,input *pCnt)
+int dMagnetic2_engine_new_input(void *pHandle,int len,char* pInput,int *pCnt)
 {
 	tdMagnetic2_engine_handle* pThis=(tdMagnetic2_engine_handle*)pHandle;
 	int i;
@@ -152,7 +154,7 @@ int dMagnetic2_engine_get_title(void *pHandle,char** ppTitle)
 		return DMAGNETIC2_ERROR_WRONG_HANDLE;
 	}
 
-	*ppText=&(pThis->titlebuf[0]);
+	*ppTitle=&(pThis->titlebuf[0]);
 	pThis->titlelevel=0;
 	pThis->status_flags&=~DMAGNETIC2_ENGINE_STATUS_NEW_TITLE;
 	
@@ -186,4 +188,4 @@ int dMagnetic2_engine_get_filename(void *pHandle,char** ppFilename)
 	
 	return DMAGNETIC2_OK;
 	
-}}
+}

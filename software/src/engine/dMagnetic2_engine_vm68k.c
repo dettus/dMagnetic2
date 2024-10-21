@@ -24,8 +24,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "dMagnetic2_errorcodes.h"
+#include "dMagnetic2_engine_vm68k.h"
+#include "dMagnetic2_shared.h"
+#include <string.h>
 
-int dMagnetic2_engine_vm68k_init(tdMagnetic2_engine_vm68k* pVM68k,unsigned char *pMagBuf)
+int dMagnetic2_engine_vm68k_init(tVM68k* pVM68k,unsigned char *pMagBuf)
 {
 	// lets start with the header.
 	// @0   4 bytes "MaSc"
@@ -48,12 +52,12 @@ int dMagnetic2_engine_vm68k_init(tdMagnetic2_engine_vm68k* pVM68k,unsigned char 
 
 	int version;
 	int codesize;
-	int string1size;
-	int string2size;
-	int dictsize;
-	int decsize;
-	int undosize;
-	int undopc;
+//	int string1size;
+//	int string2size;
+//	int dictsize;
+//	int decsize;
+//	int undosize;
+//	int undopc;
 	int idx;
 	int i;
 
@@ -64,12 +68,12 @@ int dMagnetic2_engine_vm68k_init(tdMagnetic2_engine_vm68k* pVM68k,unsigned char 
 
 	version=pMagBuf[13];	
 	codesize=READ_INT32BE(pMagBuf,14);
-	string1size=READ_INT32BE(pMagBuf,18);
-	string2size=READ_INT32BE(pMagBuf,22);
-	dictsize=READ_INT32BE(pMagBuf,26);
-	decsize=READ_INT32BE(pMagBuf,30);
-	undosize=READ_INT32BE(pMagBuf,34);
-	undopc=READ_INT32BE(pMagBuf,38);
+//	string1size=READ_INT32BE(pMagBuf,18);
+//	string2size=READ_INT32BE(pMagBuf,22);
+//	dictsize=READ_INT32BE(pMagBuf,26);
+//	decsize=READ_INT32BE(pMagBuf,30);
+//	undosize=READ_INT32BE(pMagBuf,34);
+//	undopc=READ_INT32BE(pMagBuf,38);
 
 	idx=42;
 	pVM68k->memsize=sizeof(pVM68k->memory);
@@ -82,10 +86,11 @@ int dMagnetic2_engine_vm68k_init(tdMagnetic2_engine_vm68k* pVM68k,unsigned char 
 		pVM68k->a[i]=0;
 		pVM68k->d[i]=0;
 	}
+	pVM68k->a[7]=pVM68k->memsize-4;	// the stack pointer goes to the end of the memory
 	pVM68k->version=version;
-	
-	
-
 	return DMAGNETIC2_OK;
 }
+
+
+
 
