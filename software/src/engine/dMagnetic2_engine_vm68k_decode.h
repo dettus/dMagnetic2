@@ -24,15 +24,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef	DMAGNETIC2_ENGINE_VM68K_LOADSTORE_H
-#define	DMAGNETIC2_ENGINE_VM68K_LOADSTORE_H
-int dMagnetic2_engine_vm68k_getbytesize(tVM68k_types size);
-int dMagnetic2_engine_vm68k_resolve_ea(tVM68k* pVM68k,tVM68k_next *pNext,tVM68k_types size,
-	tVM68k_addrmodes addrmode,tVM68k_ubyte reg,
-	tVM68k_uword legal,tVM68k_slong* ea);
-int dMagnetic2_engine_vm68k_fetchoperand(tVM68k* pVM68k,tVM68k_bool extendsign,tVM68k_types size,tVM68k_slong ea,tVM68k_ulong* operand);
-int dMagnetic2_engine_vm68k_calculateflags(tVM68k_next* pNext,tVM68k_ubyte flagmask,tVM68k_types size,tVM68k_ulong operand1,tVM68k_ulong operand2,tVM68k_uint64 result);
-int dMagnetic2_engine_vm68k_calculateflags2(tVM68k_next* pNext,tVM68k_ubyte flagmask,tVM68k_instruction instruction,tVM68k_types datatype,tVM68k_ulong operand1,tVM68k_ulong operand2,tVM68k_uint64 result);
-int dMagnetic2_engine_vm68k_storeresult(tVM68k* pVM68k,tVM68k_next* pNext,tVM68k_types size,tVM68k_slong ea,tVM68k_ulong result);
+
+#ifndef	DMAGNETIC2_ENGINE_VM68K_DECODE_H
+#define	DMAGNETIC2_ENGINE_VM68K_DECODE_H
+#include "dMagnetic2_engine_shared.h"
+
+tVM68k_instruction dMagnetic2_engine_vm68k_decode(tVM68k_uword opcode);
 
 #endif
+

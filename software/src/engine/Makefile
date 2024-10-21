@@ -32,6 +32,7 @@ CFLAGS+=-Wall
 PROJ_HOME=../../
 
 INCFLAGS=	\
+	-I.	\
 	-I$(PROJ_HOME)/include	\
 	-I$(PROJ_HOME)/src	\
 	-I$(PROJ_HOME)/src/shared	\
@@ -40,6 +41,7 @@ INCFLAGS=	\
 SOURCEFILES=	\
 	dMagnetic2_engine.c	\
 	dMagnetic2_engine_vm68k.c	\
+	dMagnetic2_engine_vm68k_decode.c	\
 	dMagnetic2_engine_vm68k_loadstore.c	\
 
 OBJFILES=${SOURCEFILES:.c=.o}

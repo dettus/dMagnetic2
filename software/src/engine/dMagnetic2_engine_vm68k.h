@@ -31,6 +31,9 @@
 
 int dMagnetic2_engine_vm68k_init(tVM68k* pVM68k,unsigned char *pMagBuf);
 
+int dMagnetic2_engine_vm68k_getNextOpcode(tVM68k* pVM68k,tVM68k_uword* opcode);
+int dMagnetic2_engine_vm68k_singlestep(tVM68k* pVM68k,tVM68k_uword opcode);
+
 #endif
 
 
