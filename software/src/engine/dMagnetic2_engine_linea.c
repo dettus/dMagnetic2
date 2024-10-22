@@ -25,51 +25,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "dMagnetic2_errorcodes.h"
+#include "dMagnetic2_engine_linea.h"
 #include "dMagnetic2_engine_vm68k.h"
 #include "dMagnetic2_shared.h"
 #include <stdio.h>
 #include <string.h>
 
 #define	MAGIC	0x42696e61      // ="Lina"
-
-typedef	struct _tVMLineA
-{
-	unsigned int magic;
-	int version;
-
-	unsigned char *pMagBuf;
-// the pointers to the interesting sections inside the mag buf
-	tVM68k_ubyte*	pStrings1;
-	tVM68k_ulong	string1size;
-	tVM68k_ulong	string2size;
-	tVM68k_ubyte*	pDict;
-	tVM68k_ulong	dictsize;
-	tVM68k_ulong	decsize;
-	tVM68k_ubyte*	pStringHuffman;
-	tVM68k_ubyte*	pUndo;
-	tVM68k_ulong	undosize;
-	tVM68k_slong	undopc;
-
-///////////// some pointers for the shared communication
-	tVM68k	*pVM68k;
-	char* pInputBuf;
-	int* pInputLevel;
-
-	char* pTextBuf;
-	int* pTextLevel;
-
-	char* pTitleBuf;
-	int* pTitleLevel;
-
-	char* pPicnameBuf;
-	int* pPicnameLevel;
-	int* pPictureNum;
-
-	char* pFilenameBuf;
-	int* pFilenameLevel;
-
-} tVMLineA;
-
 int dMagnetic2_engine_linea_init(tVMLineA* pVMLineA,unsigned char *pMagBuf)
 {
 	int codesize;
@@ -158,3 +120,9 @@ int dMagnetic2_engine_linea_link_communication(tVMLineA* pVMLineA,
 
 	return DMAGNETIC2_OK;
 }
+
+
+
+
+
+
