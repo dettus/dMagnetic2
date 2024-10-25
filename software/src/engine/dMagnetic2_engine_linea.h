@@ -37,10 +37,10 @@ typedef	struct _tVMLineA
 	int version;
 
 // text conversion data
-	int jinxterslide;
 	char lastchar;
 	int headlineflagged;
 	int capital;
+	int jinxterslide;		// workaround for the sliding puzzle in jinxter
 
 	unsigned char *pMagBuf;
 // the pointers to the interesting sections inside the mag buf
@@ -72,6 +72,24 @@ typedef	struct _tVMLineA
 
 	char* pFilenameBuf;
 	int* pFilenameLevel;
+
+
+// persistent memory for some A0xx instructions.
+	tVM68k_slong	random_state;
+	tVM68k_bool  random_mode;
+	tVM68k_uword	properties_offset;
+	tVM68k_uword	linef_subroutine;			// version >0
+	tVM68k_uword	linef_tab;				// version >1
+	tVM68k_uword	linef_tabsize;				// version >1
+	tVM68k_uword	properties_tab;				// version >2
+	tVM68k_uword	properties_size;			// version >2
+	tVM68k_slong	interrupted_byteidx;
+	tVM68k_ubyte	interrupted_bitidx;
+
+// input level reader
+	int input_level;
+	int input_used;
+
 } tVMLineA;
 
 
@@ -84,5 +102,6 @@ int dMagnetic2_engine_linea_link_communication(tVMLineA* pVMLineA,
 	char* picnamebuf,int *pPicnameLevel,int *pPictureNum,
 	char* filenamebuf,int *pFilenameLevel,
 );
+int dMagnetic2_engine_linea_istrap(tVM68k_ushort *pOpcode);
 
 #endif
