@@ -226,10 +226,9 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 					*pStatus|=(DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT);	// set the status flag
 					pVMLineA->input_level=0;	// prepare the read from the buffer
 					pVMLineA->input_used=0;
+					pVM68k->pcr-=2;			// go back one instruction
 				} else { 	// read from the input buffer
-					char c;
 
-					c=pVMLineA->pInputBuf[pVMLineA->input_used];
 					// take one byte from the input buffer, and send it to the CPU
 					pVM68k->d[1]=pVMLineA->pInputBuf[pVMLineA->input_used];
 					pVMLineA->input_level=*(pVMLineA->pInputLevel);
@@ -240,6 +239,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 						pVMLineA->input_used=0;
 						*pVMLineA->pInputLevel=0;	// mark the buffer as empty
 						*pStatus&=~(DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT);// remove the status flag
+						dMagnetic2_engine_linea_getrandom(pVMLineA);	// advance the random generator
 					}
 				}
 			}
@@ -1206,9 +1206,11 @@ int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_uword opcode,un
 	{
 		// first: advance the random generator. but only for certain opcodes
 		if (
-			(opcode&0xff)<0xdd
+			(opcode!=0xa000) && 
+			((opcode&0xff)<0xdd
 			||(version<4 && (opcode&0xff)<0xe4)
 			||(version<2 && (opcode&0xff)<0xed)
+			)
 		)
 		{
 			(void)dMagnetic2_engine_linea_getrandom(pVMLineA);

@@ -44,7 +44,6 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 	int titlelevel;
 
 
-
 	textlevel=*(pVMLineA->pTextLevel);
 	titlelevel=*(pVMLineA->pTitleLevel);
 	// one line, ending with a dash -
@@ -60,6 +59,13 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 	} else if (c==0x5e && pVMLineA->lastchar==0x2d) {
 		pVMLineA->jinxterslide=1;
 	}
+	
+	// prevent double newlines
+//	if (pVMLineA->jinxterslide==0 && (c=='\n' || c==0x5e) && (pVMLineA->lastchar==0 || pVMLineA->lastchar=='\n'))
+//	{
+//		return DMAGNETIC2_OK;
+//	}
+
 
 	if (flag_headline && !pVMLineA->headlineflagged) 	// this starts a headline
 	{

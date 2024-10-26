@@ -138,9 +138,6 @@ int dMagnetic2_engine_new_input(void *pHandle,int len,char* pInput,int *pCnt)
 	{
 		if (pThis->inputlevel<DMAGNETIC2_SIZE_INPUTBUF)
 		{
-			char c;
-			c=pInput[i];
-//			if (c>='a' && c<='z') c&=0x5f;				// make it uppercase
 			pThis->inputbuf[pThis->inputlevel]=pInput[i];
 			pThis->inputlevel++;
 			cnt++;
