@@ -26,6 +26,7 @@
 //
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "dMagnetic2_engine.h"
 
 
@@ -34,6 +35,7 @@ unsigned char magbuf[1<<20];
 int main(int argc,char** argv)
 {
 	FILE *f;
+	char inputbuf[256];
 	void *handle;
 	unsigned int status;
 	int i;
@@ -62,19 +64,50 @@ int main(int argc,char** argv)
 	dMagnetic2_engine_set_mag(handle,magbuf);
 	
 
-	printf("================================================================================\n");
+	printf("=[ single step ]================================================================\n");
 	for (i=0;i<10;i++)
 	{
 		retval=dMagnetic2_engine_process(handle,1,&status);
 		printf("step %2d --> status %02X  retval:%d\n",i,status,retval);
 		fflush(stdout);
 	}
-	printf("================================================================================\n");
-	retval=dMagnetic2_engine_process(handle,0,&status);
-	printf("       --> status %02X  retval:%d\n",status,retval);
-	fflush(stdout);
-	
-	
+	printf("=[ running ]====================================================================\n");
+	do
+	{
+		retval=dMagnetic2_engine_process(handle,0,&status);
+		printf("       --> status %02X  retval:%d\n",status,retval);
+		fflush(stdout);
+		if (status&DMAGNETIC2_ENGINE_STATUS_NEW_TITLE)
+		{
+			char *pTitle;
+			printf("\x1b[1;37;41mTITLE");
+			retval=dMagnetic2_engine_get_title(handle,&pTitle);
+			printf("[%s]\x1b[0m retval:%d\n",pTitle,retval);	
+		}
+		if (status&DMAGNETIC2_ENGINE_STATUS_NEW_TEXT)
+		{
+			char *pText;
+			printf("\x1b[1;37;42mNEW TEXT");
+			retval=dMagnetic2_engine_get_text(handle,&pText);
+			printf("[%s]\x1b[0m retval:%d\n",pText,retval);	
+		}
+		if (status&DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE)
+		{
+			char *pPicname;
+			int picnum;
+			printf("\x1b[1;37;43mNEW PICTURE");
+			retval=dMagnetic2_engine_get_picture(handle,&pPicname,&picnum);
+			printf("[%s]/%d\x1b[0m retval:%d\n",pPicname,picnum,retval);
+		}
+		if (status&DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT)
+		{
+			int cnt;
+			printf("\x1b[1;37;44mWAITING FOR INPUT\x1b[0m");
+			fgets(inputbuf,sizeof(inputbuf),stdin);
+			retval=dMagnetic2_engine_new_input(handle,strlen(inputbuf),inputbuf,&cnt);
+			printf("--> retval:%d cnt:%d\n",retval,cnt);
+		}
+	} while (!feof(stdin) && !(status&(DMAGNETIC2_ENGINE_STATUS_QUIT|DMAGNETIC2_ENGINE_STATUS_RESTART)));	
 	return 0;
 }
 

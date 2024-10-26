@@ -73,7 +73,7 @@ int dMagnetic2_engine_linea_init(tVMLineA* pVMLineA,unsigned char *pMagBuf)
 	// @38  4 bytes undopc
 
 
-	if (pMagBuf[0]!='M' || pMagBuf[1]!='a' || pMagBuf[2]!='S' || pMagBuf[3]!='s')
+	if (pMagBuf[0]!='M' || pMagBuf[1]!='a' || pMagBuf[2]!='S' || pMagBuf[3]!='c')
 	{
 		return DMAGNETIC2_UNKNOWN_SOURCE;
 	}
@@ -227,17 +227,20 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 					pVMLineA->input_level=0;	// prepare the read from the buffer
 					pVMLineA->input_used=0;
 				} else { 	// read from the input buffer
+					char c;
+
+					c=pVMLineA->pInputBuf[pVMLineA->input_used];
 					// take one byte from the input buffer, and send it to the CPU
 					pVM68k->d[1]=pVMLineA->pInputBuf[pVMLineA->input_used];
 					pVMLineA->input_level=*(pVMLineA->pInputLevel);
 					pVMLineA->input_used++;
-				}
-				if (pVMLineA->input_level==pVMLineA->input_used && (*(pVMLineA->pInputLevel)!=0)) // the buffer has been fully read
-				{
-					pVMLineA->input_level=0;	// prepare the next read
-					pVMLineA->input_used=0;
-					*pVMLineA->pInputLevel=0;	// mark the buffer as empty
-					*pStatus&=~(DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT);// remove the status flag
+					if (pVMLineA->input_level==pVMLineA->input_used && (*(pVMLineA->pInputLevel)!=0)) // the buffer has been fully read
+					{
+						pVMLineA->input_level=0;	// prepare the next read
+						pVMLineA->input_used=0;
+						*pVMLineA->pInputLevel=0;	// mark the buffer as empty
+						*pStatus&=~(DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT);// remove the status flag
+					}
 				}
 			}
 			break;
@@ -1153,7 +1156,7 @@ int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_uword opcode)
 		WRITE_INT32BE(pVM68k->memory,pVM68k->a[7],pVM68k->pcr);
 
 		// jump to the preconfigured address
-		pVM68k->pcr=(pVMLineA->linef_subroutine)&pVM68k->memsize;
+		pVM68k->pcr=(pVMLineA->linef_subroutine)%pVM68k->memsize;
 	} else {
 		int idx;
 		int base;
@@ -1177,7 +1180,7 @@ int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_uword opcode)
 			WRITE_INT32BE(pVM68k->memory,pVM68k->a[7],pVM68k->pcr);
 
 			// jump to the preconfigured address
-			pVM68k->pcr=(pVMLineA->linef_subroutine)&pVM68k->memsize;
+			pVM68k->pcr=(pVMLineA->linef_subroutine)%pVM68k->memsize;
 		}
 	}
 	return DMAGNETIC2_OK;
@@ -1212,7 +1215,6 @@ int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_uword opcode,un
 		} 
 		retval=dMagnetic2_engine_linea_trapa(pVMLineA,opcode,pStatus);
 	} else if ((opcode&0xf000)==0xf000) {
-		printf("\x1b[1;37m TRAPF\x1b[0m\n");
 		retval=dMagnetic2_engine_linea_trapf(pVMLineA,opcode);
 	}
 	return retval;

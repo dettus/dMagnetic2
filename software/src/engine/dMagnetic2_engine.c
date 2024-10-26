@@ -93,22 +93,31 @@ int dMagnetic2_engine_init(void *pHandle)
 int dMagnetic2_engine_set_mag(void *pHandle,unsigned char* pMagBuf)
 {
 	tdMagnetic2_engine_handle* pThis=(tdMagnetic2_engine_handle*)pHandle;
+	int retval;
 	if (pThis->magic!=MAGIC)
 	{
 		return DMAGNETIC2_ERROR_WRONG_HANDLE;
 	}
 
 
-	dMagnetic2_engine_vm68k_init(&(pThis->game_context.vm68k),pMagBuf);
-	dMagnetic2_engine_linea_init(&(pThis->game_context.linea),pMagBuf);
-	dMagnetic2_engine_linea_link_communication(&(pThis->game_context.linea),&(pThis->game_context.vm68k),
+	retval=dMagnetic2_engine_vm68k_init(&(pThis->game_context.vm68k),pMagBuf);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	retval=dMagnetic2_engine_linea_init(&(pThis->game_context.linea),pMagBuf);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	retval=dMagnetic2_engine_linea_link_communication(&(pThis->game_context.linea),&(pThis->game_context.vm68k),
 		pThis->inputbuf,&(pThis->inputlevel),
 		pThis->outputbuf,&(pThis->outputlevel),
 		pThis->titlebuf,&(pThis->titlelevel),
 		pThis->picnamebuf,&(pThis->picnamelevel),&(pThis->picturenum),
 		pThis->filenamebuf,&(pThis->filenamelevel)
 	);
-	return DMAGNETIC2_OK;
+	return retval;
 	
 		
 }
@@ -129,12 +138,18 @@ int dMagnetic2_engine_new_input(void *pHandle,int len,char* pInput,int *pCnt)
 	{
 		if (pThis->inputlevel<DMAGNETIC2_SIZE_INPUTBUF)
 		{
+			char c;
+			c=pInput[i];
+//			if (c>='a' && c<='z') c&=0x5f;				// make it uppercase
 			pThis->inputbuf[pThis->inputlevel]=pInput[i];
 			pThis->inputlevel++;
 			cnt++;
 		}
 	}
-
+	if (len)
+	{
+		pThis->status_flags&=~DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT;	// no longer waiting for input
+	}
 	*pCnt=cnt;	// report back the number of character that have been read
 	return DMAGNETIC2_OK;
 }
