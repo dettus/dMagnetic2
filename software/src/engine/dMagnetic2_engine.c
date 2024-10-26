@@ -222,7 +222,9 @@ int dMagnetic2_engine_process(void *pHandle,int singlestep,int *pStatus)
 			}
 		}
 	}
-	while (retval==DMAGNETIC2_OK && (!singlestep  || ((pThis->status_flags&DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT)==0))); 
+	while (	!singlestep
+		&& (retval==DMAGNETIC2_OK)
+		&& ((pThis->status_flags&DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT)==0));
 	
 
 	*pStatus=(pThis->status_flags);

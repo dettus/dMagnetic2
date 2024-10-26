@@ -104,6 +104,9 @@ int dMagnetic2_engine_linea_init(tVMLineA* pVMLineA,unsigned char *pMagBuf)
 	pVMLineA->undopc=undopc;
 	pVMLineA->decsize=decsize;
 
+
+
+
 	return DMAGNETIC2_OK;	
 }
 int dMagnetic2_engine_linea_link_communication(tVMLineA* pVMLineA,
@@ -133,6 +136,7 @@ int dMagnetic2_engine_linea_link_communication(tVMLineA* pVMLineA,
 	pVMLineA->pFilenameBuf=filenamebuf;
 	pVMLineA->pFilenameLevel=pFilenameLevel;
 
+	pVMLineA->random_state=12345;
 
 	return DMAGNETIC2_OK;
 }
@@ -1208,6 +1212,7 @@ int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_uword opcode,un
 		} 
 		retval=dMagnetic2_engine_linea_trapa(pVMLineA,opcode,pStatus);
 	} else if ((opcode&0xf000)==0xf000) {
+		printf("\x1b[1;37m TRAPF\x1b[0m\n");
 		retval=dMagnetic2_engine_linea_trapf(pVMLineA,opcode);
 	}
 	return retval;
