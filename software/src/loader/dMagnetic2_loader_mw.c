@@ -687,3 +687,118 @@ int dMagnetic2_loader_mw(
 
 	return DMAGNETIC2_OK;
 }
+
+#ifdef	EXPERIMENTAL_CODE
+////////////////////////// some extra code
+int dMagnetic2_loader_mw_printdir(char* filename1,
+	unsigned char* pTmpBuf,int tmpsize)
+{
+	unsigned char tmp2buf[DIR_ENTRY_SIZE];
+	int retval;
+	int gameidx;
+	int sizes[10];
+	int i;
+	int diroffset;
+	int num_entries;
+
+	retval=dMagnetic2_loader_mw_sizes(pTmpBuf,filename1,sizes,&gameidx);
+
+	// step one: find the directory. It is stored in the very first 4 bytes.
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,0,tmp2buf,4);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	diroffset=READ_INT32LE(tmp2buf,0);
+
+	// now the position of the directory inside the .RSC files is known.	
+//int dMagnetic2_loader_mw_parsedirentry(unsigned char* tmp2buf,tEntry *pEntry)
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset,tmp2buf,2);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	num_entries=READ_INT16LE(tmp2buf,0);
+	diroffset+=2;
+
+	for (i=0;i<num_entries;i++)
+	{
+		tEntry entry;
+		retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset,tmp2buf,DIR_ENTRY_SIZE);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+		retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+		printf("%4d>  %04X @%08x  %6d bytes [%-6s].%d\n",i,entry.unknown,entry.offset,entry.length,entry.name,(int)entry.type);
+		diroffset+=(DIR_ENTRY_SIZE);
+	}
+	return retval;	
+}
+
+int dMagnetic2_loader_mw_extractall(char* filename1,
+	unsigned char* pTmpBuf,int tmpsize)
+{
+	unsigned char tmp2buf[DIR_ENTRY_SIZE];
+	int retval;
+	int gameidx;
+	int sizes[10];
+	int i;
+	int diroffset;
+	int num_entries;
+
+	retval=dMagnetic2_loader_mw_sizes(pTmpBuf,filename1,sizes,&gameidx);
+
+	// step one: find the directory. It is stored in the very first 4 bytes.
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,0,tmp2buf,4);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	diroffset=READ_INT32LE(tmp2buf,0);
+
+	// now the position of the directory inside the .RSC files is known.	
+//int dMagnetic2_loader_mw_parsedirentry(unsigned char* tmp2buf,tEntry *pEntry)
+	retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset,tmp2buf,2);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	num_entries=READ_INT16LE(tmp2buf,0);
+	diroffset+=2;
+
+	for (i=0;i<num_entries;i++)
+	{
+		tEntry entry;
+		retval=dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,diroffset,tmp2buf,DIR_ENTRY_SIZE);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+		retval=dMagnetic2_loader_mw_parsedirentry(tmp2buf,&entry);
+		if (retval!=DMAGNETIC2_OK)
+		{
+			return retval;
+		}
+		printf("%4d>  %04X @%08x  %6d bytes [%-6s].%d\n",i,entry.unknown,entry.offset,entry.length,entry.name,(int)entry.type);
+		{
+			FILE *f;
+			char filename[20];
+			dMagnetic2_loader_mw_readresource(pTmpBuf,filename1,sizes,entry.offset,&pTmpBuf[500000],entry.length);
+
+
+			snprintf(filename,20,"extract_%s.%02d",entry.name,(int)entry.type);
+			f=fopen(filename,"wb");
+			fwrite(&pTmpBuf[500000],sizeof(char),entry.length,f);
+			fclose(f);
+		}
+		diroffset+=(DIR_ENTRY_SIZE);
+	}
+	return retval;	
+}
+
+#endif

@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # 
 # BSD 2-Clause License
 # 
@@ -24,7 +26,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
+# 
+(
+  cd ../software/src/loader
+  make clean
+  make
+)
 
-cc -O3 -o colorprint.app colorprint.c
-cc -O3 -I ../software/src/loader/ -L ../software/src/loader/ -o unhuffer.app unhuffer.c -ldmagnetic2_loader
+cc -g -o colorprint.app colorprint.c
+cc -g -o unhuffer.app unhuffer.c -I../software/src -I../software/include -I../software/src/loader -L../software/src/loader -ldmagnetic2_loader
+cc -g -o rsc_extractor.app rsc_extractor.c -I../software/src -I../software/include -I../software/src/loader -L../software/src/loader -ldmagnetic2_loader
 
