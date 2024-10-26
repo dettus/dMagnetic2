@@ -104,4 +104,7 @@ int dMagnetic2_engine_linea_link_communication(tVMLineA* pVMLineA,
 );
 int dMagnetic2_engine_linea_istrap(tVM68k_ushort *pOpcode);
 
+#define	DMAGNETIC2_LINEA_NO_PICTURE		-1
+#define	DMAGNETIC2_LINEA_PICTURE_NAME		-2
+
 #endif
