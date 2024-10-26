@@ -133,7 +133,7 @@ int dMagnetic2_engine_linea_link_communication(tVMLineA* pVMLineA,
 	return DMAGNETIC2_OK;
 }
 
-int dMagnetic2_engine_linea_istrap(tVM68k_ushort *pOpcode)
+int dMagnetic2_engine_linea_istrap(tVM68k_uword *pOpcode)
 {
 	tVM68k_uword inst;
 
@@ -197,7 +197,7 @@ tVM68k_ulong dMagnetic2_engine_linea_getrandom(tVMLineA* pVMLineA)
 }
 
 
-int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_ushort opcode,unsigned int *pStatus)
+int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigned int *pStatus)
 {
 	int version;
 	int retval;
@@ -1128,7 +1128,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_ushort opcode,unsign
 
 
 }
-int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_ushort opcode)
+int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_uword opcode)
 {
 	// version 1 introduced configurable subroutines.
 	// in version 2, the became programmable
@@ -1176,7 +1176,7 @@ int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_ushort opcode)
 	return DMAGNETIC2_OK;
 }
 
-int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_ushort opcode,unsigned int *pStatus)
+int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigned int *pStatus)
 {
 	int retval;
 	int version;
@@ -1204,9 +1204,9 @@ int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_ushort opcode,u
 		{
 			(void)dMagnetic2_engine_linea_getrandom(pVMLineA);
 		} 
-		retval=dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_ushort opcode);
+		retval=dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode);
 	} else if (opcode&0xf000==0xf000) {
-		retval=dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_ushort opcode);
+		retval=dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_uword opcode);
 	}
 	return retval;
 

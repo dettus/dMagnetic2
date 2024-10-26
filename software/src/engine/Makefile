@@ -40,6 +40,7 @@ INCFLAGS=	\
 
 SOURCEFILES=	\
 	dMagnetic2_engine.c	\
+	dMagnetic2_engine_linea_textconversion.c	\
 	dMagnetic2_engine_vm68k.c	\
 	dMagnetic2_engine_vm68k_decode.c	\
 	dMagnetic2_engine_vm68k_loadstore.c	\

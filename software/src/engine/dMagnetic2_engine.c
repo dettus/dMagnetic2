@@ -44,13 +44,13 @@ typedef struct _tdMagnetic2_game_context
 typedef struct _tdMagnetic2_engine_handle
 {
 	unsigned int magic;
-	char inputbuf[SIZE_INPUTBUF];
+	char inputbuf[DMAGNETIC2_SIZE_INPUTBUF];
 	// add one byte for 0 termination
-	char outputbuf[SIZE_OUTPUTBUF+1];
-	char titlebuf[SIZE_TITLEBUF+1];
-	char picnamebuf[SIZE_PICNAMEBUF+1];
+	char outputbuf[DMAGNETIC2_SIZE_OUTPUTBUF+1];
+	char titlebuf[DMAGNETIC2_SIZE_TITLEBUF+1];
+	char picnamebuf[DMAGNETIC2_SIZE_PICNAMEBUF+1];
 	int picturenum;
-	char filenamebuf[SIZE_FILENAMEBUF+1];
+	char filenamebuf[DMAGNETIC2_SIZE_FILENAMEBUF+1];
 
 
 	
@@ -112,7 +112,7 @@ int dMagnetic2_engine_new_input(void *pHandle,int len,char* pInput,int *pCnt)
 	cnt=0;
 	for (i=0;i<len;i++)
 	{
-		if (pThis->inputlevel<SIZE_INPUTBUF)
+		if (pThis->inputlevel<DMAGNETIC2_SIZE_INPUTBUF)
 		{
 			pThis->inputbuf[pThis->inputlevel]=pInput[i];
 			pThis->inputlevel++;

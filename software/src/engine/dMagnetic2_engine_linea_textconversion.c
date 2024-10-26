@@ -25,12 +25,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "dMagnetic2_errorcodes.h"
+#include "dMagnetic2_engine.h"
 #include "dMagnetic2_engine_linea.h"
 #include "dMagnetic2_engine_vm68k.h"
 #include "dMagnetic2_shared.h"
 #include <stdio.h>
 #include <string.h>
-int dMagnetic2_engine_line_flush(tVMLineA* pVMLineA)
+int dMagnetic2_engine_linea_flush(tVMLineA* pVMLineA)
 {
 	// TODO
 	return DMAGNETIC2_OK;
@@ -51,7 +52,7 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 	// it is needed for a sliding puzzle in JINXTER.
 	if (pVMLineA->jinxterslide)
 	{
-		if ((c>='a' && c<='z') || (c>='A' && c<='Z') || (c==0x5a && pLineA->lastchar=='\n'))
+		if ((c>='a' && c<='z') || (c>='A' && c<='Z') || (c==0x5a && pVMLineA->lastchar=='\n'))
 		{
 			// The sliding puzzle ends with the phrase "As the blocks slide into their final position". Or with two newlines.
 			pVMLineA->jinxterslide=0;
@@ -73,14 +74,14 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 		pVMLineA->capital=1;	// obviously, this starts with a capital letter
 		for (i=0;i<titlelevel;i++)
 		{
-			if (pVMLineA->headlinebuf[i]<' ')
+			if (pVMLineA->pTitleBuf[i]<' ')
 			{
-				pVMLineA->headlinebuf[i]=0;
+				pVMLineA->pTitleBuf[i]=0;
 				titlelevel--;
 			}
 		}
 	}
-	pLineA->headlineflagged=flag_headline;
+	pVMLineA->headlineflagged=flag_headline;
 
 	//newline=0;
 	if (c==0xff)	// mark the next letter as Capital
@@ -116,7 +117,7 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 			{
 				pVMLineA->capital=1;
 			}
-			if (((c2>='a' && c2<='z') || (c2>='A' && c2<='Z')) && (pLineA->capital||flag_headline)) 	// the first letter must be written as uppercase. As well as the headline.
+			if (((c2>='a' && c2<='z') || (c2>='A' && c2<='Z')) && (pVMLineA->capital||flag_headline)) 	// the first letter must be written as uppercase. As well as the headline.
 			{
 				pVMLineA->capital=0;	// ONLY the first character
 				c2&=0x5f;	// upper case
@@ -129,12 +130,12 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 				// after those letters comes an extra space.otherwise,it would look weird.
 				if (flag_headline) 
 				{
-					if (titlelevel<MAXHEADLINEBUFFER-1)
-						pVMLineA->headlinebuf[titlelevel++]=' ';
+					if (titlelevel<DMAGNETIC2_SIZE_TITLEBUF-1)
+						pVMLineA->pTitleBuf[titlelevel++]=' ';
 				} else {
-					if (textlevel<MAXTEXTBUFFER-1)
+					if (textlevel<DMAGNETIC2_SIZE_OUTPUTBUF-1)
 					{
-						pVMLineA->textbuf[textlevel++]=' ';
+						pVMLineA->pTextBuf[textlevel++]=' ';
 					}
 				}
 			}
@@ -149,19 +150,19 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 				{
 					if (flag_headline) 
 					{
-						if (titlelevel<MAXHEADLINEBUFFER-1)
+						if (titlelevel<DMAGNETIC2_SIZE_TITLEBUF-1)
 						{
 							if ((c2&0x7f)>=' ')
 							{
-								pVMLineA->headlinebuf[titlelevel++]=c2&0x7f;
+								pVMLineA->pTitleBuf[titlelevel++]=c2&0x7f;
 							} else {
-								pVMLineA->headlinebuf[titlelevel++]=0;
+								pVMLineA->pTitleBuf[titlelevel++]=0;
 							}
 						}
-					} else if (textlevel<MAXTEXTBUFFER-1) {
-						if (textlevel<MAXTEXTBUFFER-1)
+					} else if (textlevel<DMAGNETIC2_SIZE_OUTPUTBUF-1) {
+						if (textlevel<DMAGNETIC2_SIZE_OUTPUTBUF-1)
 						{
-							pVMLineA->textbuf[textlevel++]=c2;
+							pVMLineA->pTextBuf[textlevel++]=c2;
 						}
 
 						//					if (c2=='\n') newline=1;
@@ -172,7 +173,7 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 		} else if (c2) {
 			if (c2==0x5e) c2='\n';
 			if (c2=='_') c2=' ';
-			pVMLineA->textbuf[textlevel++]=c2;
+			pVMLineA->pTextBuf[textlevel++]=c2;
 			pVMLineA->lastchar=c2;
 		}
 	}
@@ -185,11 +186,11 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 	{
 		*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_TEXT;
 	}
-	pVMLineA->headlinebuf[titlelevel]=0;
-	pVMLineA->textbuf[textlevel]=0;
+	pVMLineA->pTitleBuf[titlelevel]=0;
+	pVMLineA->pTextBuf[textlevel]=0;
 	*(pVMLineA->pTextLevel)=textlevel;
 	*(pVMLineA->pTitleLevel)=titlelevel;
-	if (titlelevel>=(MAXHEADLINEBUFFER-1) || textlevel>=(MAXTEXTBUFFER-1))
+	if (titlelevel>=(DMAGNETIC2_SIZE_TITLEBUF-1) || textlevel>=(DMAGNETIC2_SIZE_OUTPUTBUF-1))
 	{
 		dMagnetic2_engine_linea_flush(pVMLineA);	// the buffers are full, and flushing them is required
 	}
