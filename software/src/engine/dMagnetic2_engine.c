@@ -33,12 +33,6 @@
 #include <string.h>
 
 
-#define	SIZE_INPUTBUF		256
-#define	SIZE_OUTPUTBUF		4096
-#define	SIZE_TITLEBUF		128
-#define	SIZE_PICNAMEBUF		6
-#define	SIZE_FILENAMEBUF	64
-
 #define	MAGIC		0x28844
 
 

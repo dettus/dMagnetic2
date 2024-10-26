@@ -31,6 +31,18 @@
 #include <stdio.h>
 #include <string.h>
 
+
+typedef struct _tProperties
+{
+	tVM68k_ubyte unknown1[5];
+	tVM68k_ubyte flags1;
+	tVM68k_ubyte flags2;
+	tVM68k_ubyte unknown2;
+	tVM68k_uword parentobject;
+	tVM68k_ubyte unknown3[2];
+	tVM68k_uword endflags;
+} tProperties;
+
 #define	MAGIC	0x42696e61      // ="Lina"
 int dMagnetic2_engine_linea_init(tVMLineA* pVMLineA,unsigned char *pMagBuf)
 {
@@ -138,6 +150,51 @@ int dMagnetic2_engine_linea_istrap(tVM68k_ushort *pOpcode)
 	// check if the highest 4 bits are =0xA (TrapA) or =0xF (TrapF)
 	return ((inst&0xf000)==0xa000) || ((inst&0xf000)==0xf000);
 }
+// the purpose of this function is to load the properties for a specific object.
+int dMagnetic2_engine_linea_loadproperties(tVMLineA* pVMLineA,tVM68k_uword objectnum,tVM68k_ulong* retaddr,tProperties* pProperties)
+{
+	tVM68k_ulong addr;
+	tVM68k* pVM68k=(pVMLineA->pVM68k);
+	int version;
+	int i;
+
+	version=pVMLineA->version;
+
+	if (version>2 && (objectnum>pVMLineA->properties_size))
+	{
+		addr=(pVMLineA->properties_size-objectnum)^0xffff;	// TODO: WTF?
+		addr*=2;
+		addr+=pLineA->properties_tab;
+		objectnum=READ_INT16BE(pVM68k->memory,addr);
+	}
+	addr=pVMLineA->properties_offset+14*objectnum;
+
+	for (i=0;i<5;i++)
+	{
+		pProperties->unknown1[i]=pVM68k->memory[addr+i];
+	}
+	pProperties->flags1=pVM68k->memory[addr+5];
+	pProperties->flags2=pVM68k->memory[addr+6];
+	pProperties->unknown2=pVM68k->memory[addr+7];
+	pProperties->parentobject=READ_INT16BE(pVM68k->memory,addr+8);
+	for (i=0;i<2;i++)
+	{
+		pProperties->unknown3[i]=pVM68k->memory[addr+i+10];
+	}
+	pProperties->endflags=READ_INT16BE(pVM68k->memory,addr+12);
+	if (retaddr!=NULL) *retaddr=addr;
+	return LINEA_OK;
+}
+
+
+tVM68k_ulong dMagnetic2_engine_linea_getrandom(tVMLineA* pVMLineA)
+{
+	// if random mode is PRBS
+	pVMLineA->random_state*=1103515245ull;
+	pVMLineA->random_state+=12345ull;
+	
+	return (pVMLineA->random_state&0x7fffffff);
+}
 
 
 int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_ushort opcode,unsigned int *pStatus)
@@ -152,6 +209,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_ushort opcode,unsign
 
 	switch(opcode)
 	{
+// lets start with the input/output traps
 		case 0xa000:	// getchar
 			{
 				if (*(pVMLineA->pInputLevel)==0)	// the input buffer is empty
@@ -174,6 +232,160 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_ushort opcode,unsign
 			}
 			break;
 
+		case 0xa0f8:	// write string
+			{
+				// strings are huffman-coded.
+				// version 0: 'string2' holds the decoding tree in the first 256 bytes.
+				// and the offset addresses for the bit streams in string1.
+				// modes have bit 7 set.
+				//
+				// when the string is terminated with a \0 it ends.
+				// when the string terminates with the sequence " @", it will be
+				// extended. 
+				//
+				// the extension will have the cflag set.
+				//
+				tVM68k_ulong idx;
+				tVM68k_uword tmp;
+				tVM68k_ubyte val;
+				tVM68k_ubyte prevval;
+				tVM68k_ulong byteidx;
+				tVM68k_ubyte bitidx;
+				int retval;
+
+				char c;
+				if (!(pVM68k->sr&(1<<0)))	// cflag is in bit 0.
+				{
+					bitidx=0;
+					idx=pVM68k->d[0]&0xffff;
+					if (idx==0) byteidx=idx;
+					// version 0: string 2 holds the table to decode the strings.
+					// the decoder table is 256 bytes long. afterwards, a bunch of pointers
+					// to bit indexes follow.
+					else byteidx=READ_INT16BE(pLineA->pStringHuffman,(0x100+2*idx));
+					tmp=READ_INT16BE(pLineA->pStringHuffman,0x100);
+					if (tmp && idx>=tmp)
+					{
+						byteidx+=pLineA->string1size;
+					}
+				} else {
+					byteidx=pLineA->interrupted_byteidx;
+					bitidx=pLineA->interrupted_bitidx;
+
+				}
+				val=0;
+				do
+				{
+					prevval=val;
+					val=0;
+					while (!(val&0x80))	// terminal symbols have bit 7 set.
+					{
+						tVM68k_ubyte bit;
+						bit=pVMLineA->pStrings1[byteidx];
+						if (bit>>(bitidx)&1)
+						{
+							val=pVMLineA->pStringHuffman[0x80+val];	// =1 -> go to the right
+						} else {
+							val=pVMLineA->pStringHuffman[     val];	// =0 -> go to the left
+						}
+						bitidx++;
+						if (bitidx==8)
+						{
+							bitidx=0;
+							byteidx++;
+						}
+					}
+					val&=0x7f;	// remove bit 7.
+					c=val;
+
+
+					retval=dMagnetic2_engine_linea_newchar(pVMLineA,c,pVM68k->d[2]&0xff,pVM68k->d[3]&0xff,pStatus);
+					if (retval!=DMAGNETIC2_OK)
+					{
+						return retval;
+					}
+
+				}
+				while (val!=0 && !(prevval==' ' && val=='@'));	// end markers for the string are \0 and " @"
+				if (prevval==' ' && val=='@')		// extend the string next time this function is being called.
+				{
+					pVM68k->sr|=(1<<0);	// set the cflag. cflag=bit 0.
+					pVMLineA->interrupted_byteidx=byteidx;
+					pVMLineA->interrupted_bitidx=bitidx;
+				} else {
+					pVM68k->sr&=~(1<<0);	// clear the cflag. cflag=bit 0.
+				}
+				
+			}
+			break;
+
+		case 0xa0f5:	// load game
+			{
+				int nameptr;
+//				int namelen;
+//				int dataptr;
+//				int datalen;
+				*pStatus|=DMAGNETIC2_ENGINE_STATUS_LOAD;
+				// the filename is stored at a[0]
+				nameptr=pVM68k->a[0]%pVM68k->memsize; // where in the memory is the filename?
+				//namelen=pVM68k->d[0];		// PROBABLY the filename is this long.
+				namelen=DMAGNETIC2_SIZE_FILENAMEBUF;	// but i am not sure
+				if (namelen>=DMAGNETIC2_SIZE_FILENAMEBUF) namelen=DMAGNETIC2_SIZE_FILENAMEBUF-1;
+				memcpy(pVMLineA->pFilenameBuf,&(pVM68k->memory[nameidx]),namelen);
+
+//				dataptr=pVM68k->a[1]%pVM68k->memsize; // where in the memory is the filedata?
+//				datalen=pVM68k->d[1];		// PROBABLY the filedata is this long.
+			}
+			break;
+		case 0xa0f4:	// save game
+			{
+				int nameptr;
+				int namelen;
+//				int dataptr;
+//				int datalen;
+				*pStatus|=DMAGNETIC2_ENGINE_STATUS_SAVE;
+				// the filename is stored at a[0]
+				nameptr=pVM68k->a[0]%pVM68k->memsize; // where in the memory is the filename?
+//				namelen=pVM68k->d[0];		// PROBABLY the filename is this long.
+				namelen=DMAGNETIC2_SIZE_FILENAMEBUF;	// but i am not sure
+				if (namelen>=DMAGNETIC2_SIZE_FILENAMEBUF) namelen=DMAGNETIC2_SIZE_FILENAMEBUF-1;
+				memcpy(pVMLineA->pFilenameBuf,&(pVM68k->memory[nameidx]),namelen);
+				pVMLineA->pFilenameBuf[namelen]=0;	// 0 terminate the name
+
+//				dataptr=pVM68k->a[1]%pVM68k->memsize; // where in the memory is the filedata?
+//				datalen=pVM68k->d[1];		// PROBABLY the filedata is this long.
+			}
+			break;
+		case 0xa0f3:	// new character
+			{
+				retval=dMagnetic2_engine_linea_newchar(pVMLineA,pVM68k->d[1],pVM68k->d[2]&0xff,pVM68k->d[3]&0xff,pStatus);
+			}			
+			break;	
+
+		case 0xa0f0:	// show picture
+			{
+				int picnum;
+				int picmode;
+				picnum=(pVM68k->d[0]&0x1f);	// there are no more than 30 pictures in any of the games.	at least not NUMBERED ones.
+				picmode=pVM68k->d[1];
+				if (picmode)
+				{
+					*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE;
+					snprintf(pVMLineA->pPicnameBuf,DMAGNETIC2_SIZE_PICNAMEBUF,"%02d",picnum);
+				}
+			}
+			break;
+		// the restart and the quit
+		case 0xa0ee:	// restart
+			{
+				*pStatus|=DMAGNETIC2_ENGINE_STATUS_RESTART;
+			}
+			break;	
+		case 0xa0ed:	// quit
+			{
+				*pStatus|=DMAGNETIC2_ENGINE_STATUS_QUIT;
+			}
+			break;	
 
 // historically, the lineA trap instructions were defined backwards. they started with 0xa0ff and grew towards smaller numbers
 		case 0xa0ff:	// read from the dictionary
@@ -507,6 +719,250 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_ushort opcode,unsign
 				}
 			}
 			break;
+		case 0xa0fc:	// skip D0 many words in the input buffer, as well as the dictionary.
+			{
+				tVM68k_ubyte*	dictptr;
+				tVM68k_ubyte*	inputptr;
+				tVM68k_uword	dictidx;
+				tVM68k_uword	inputidx;
+				int i,n;
+				dictidx=0;
+				inputidx=0;
+				if (version==0 || pVMLineA->pDict==NULL || pVMLineA->dictsize==0) 
+				{
+					dictptr=&pVM68k->memory[pVM68k->a[0]&0xffff];	// TODO: version 0. 
+				} else {
+					dictptr=&pLineA->pDict[pVM68k->a[0]&0xffff];
+				}
+				inputptr=&pVM68k->memory[pVM68k->a[1]&0xffff];
+				n=(pVM68k->d[0])&0xffff;
+				for (i=0;i<n;i++)
+				{
+					tVM68k_ubyte cdebug;
+					do
+					{
+						cdebug=dictptr[dictidx++];
+					}
+					while (!(cdebug&0x80));	// in the dictionary, the end marker is bit 7 being set.
+					do
+					{
+						cdebug=inputptr[inputidx++];
+					}
+					while (cdebug!=0x00);	// search for the end of the input.
+				}
+				pVM68k->d[0]&=0xffff0000;	// d0 was used as a counter
+				pVM68k->a[0]+=dictidx;
+				pVM68k->a[1]+=inputidx;
+			}
+			break;
+		case 0xa0fb:
+			{	// skip D2 many words in the dictionary, that is pointed at by A1
+				tVM68k_ubyte*	dictptr;
+				tVM68k_uword	dictidx;
+				tVM68k_ubyte	cdict;
+				int i;
+				int n;
+
+
+				dictidx=0;
+				if (version==0 || pVMLineA->pDict==NULL || pVMLineA->dictsize==0) 
+				{
+					dictptr=&pVM68k->memory[pVM68k->a[1]&0xffff];
+				} else {
+					//dictptr=pLineA->pDict;
+					dictptr=&pVMLineA->pDict[pVM68k->a[1]&0xffff];
+				}
+				n=(pVM68k->d[2]&0xffff);
+				for (i=0;i<n;i++)
+				{
+					do
+					{
+						cdict= READ_INT8BE(dictptr,dictidx++);
+					} while (!(cdict&0x80));	// until the end marker
+				}
+				pVM68k->d[2]&=0xffff0000;	// that was a counter
+				pVM68k->a[1]+=dictidx;
+			}
+			break;
+		case 0xa0fa:
+			{
+				// search the properties database for a match with the entry in D2.
+				// starting adress is stored in A0. D3 is the variable counter.
+				// d4 is the limit. for (;D3<D4;D3++) {}
+				// d5 =0 is a byte search. D5=1 is a word search.
+				// set cflag when the entry is found.
+
+				tVM68k_uword i;
+				tVM68k_bool found;
+				tVM68k_ulong addr;
+				tVM68k_uword pattern;
+				tVM68k_uword value;
+				tVM68k_bool byte0word1;
+
+				found=0;
+				addr=pVM68k->a[0];
+				pattern=pVM68k->d[2];
+				byte0word1=pVM68k->d[5];
+				pVM68k->sr&=~(1<<0);	// cflag is bit 0;
+				for (i=(pVM68k->d[3]&0xffff);i<(pVM68k->d[4]&0xffff) && !found;i++)
+				{
+					if (byte0word1)
+					{
+						value=READ_INT16BE(pVM68k->memory,addr);
+						value&=0x3fff;
+					} else {
+						value= READ_INT8BE(pVM68k->memory,addr);
+						value&=0xff;
+					}
+					addr+=14;
+					if (value==pattern)
+					{
+						found=1;
+						pVM68k->a[0]=addr;
+						pVM68k->sr|=(1<<0);	// cflag is bit 0.
+					}
+				}
+				pVM68k->d[3]=i;
+
+			}
+			break;
+		case 0xa0f9:	//get inventory item(d0)
+			{
+					// there is a list of parent objects
+					//
+					// apparently, the structure of the properties is as followed:
+					// byte 0..4: UNKNOWN
+					// byte 5: Flags. 
+					//		bit 0: is_described
+					// byte 6: some flags
+					//		=bit 7: worn
+					//		=bit 6: bodypart
+					//		=bit 3: room
+					//		=bit 2: hidden
+					// byte 8/9: parent object. the player is =0x0000
+					// byte 10..13: UNKNOWN
+					// the data structure is a list.
+				tVM68k_bool found;
+				tVM68k_uword objectnum1;
+				tVM68k_uword objectnum2;
+				tProperties properties;
+
+				found=0;
+				// go backwards from the objectnumber
+				for (objectnum1=pVM68k->d[0];objectnum1>0 && !found;objectnum1--)
+				{
+					objectnum2=objectnum1;
+					do
+					{
+						// search for the parent
+						retval=dMagnetic2_engine_linea_loadproperties(pVMLineA,objectnum2,&pVM68k->a[0],&properties);
+						objectnum2=properties.parentobject;
+						if ((properties.flags1&1) //is described
+							|| (properties.flags2&0xcc))	// worn, bodypart, room or hidden
+						{
+							objectnum2=0;	// break the loop
+						}
+						else if (properties.parentobject==0) found=1;
+						if (!(properties.flags2&1))
+						{
+							objectnum2=0;	// break the loop
+						}
+					} while (objectnum2);
+				}
+				// set the z-flag when the object was found. otherwise clear it.
+				pVM68k->sr&=~(1<<2);	// zflag is bit 2
+				if (found) pVM68k->sr|=(1<<2);
+				pVM68k->d[0]&=0xffff0000;
+				pVM68k->d[0]|=(objectnum1+1)&0xffff;	// return value
+			}
+			break;
+		case 0xa0f7:
+			{	// get a random value between 0 and 255, and write it to D0.
+				tVM68k_ulong rand;
+				rand=dMagnetic2_engine_linea_getrandom(pVMLineA);	// advance the random generator
+
+				pVM68k->d[0]&=0xffffff00;
+				pVM68k->d[0]|=((rand+(rand>>8))&0xff);
+			}
+			break;
+		case 0xa0f6:	// get random number (word), modulo D1.
+			{
+				tVM68k_ulong rand;
+				tVM68k_uword limit;
+				rand=dMagnetic2_engine_linea_getrandom(pVMLineA);	// advance the random generator
+				limit=(pVM68k->d[1])&0xff;
+				if (limit==0) limit=1;
+				rand%=limit;
+				pVM68k->d[1]&=0xffff0000;
+				pVM68k->d[1]|=(rand&0xffff);
+			}
+			break;
+		case 0xa0f2:
+			{
+				tVM68k_uword objectnum;
+				tProperties properties;
+				int n;
+				tVM68k_bool found;
+				objectnum=(pVM68k->d[2])&0x7fff;
+				n=pVM68k->d[4]&0x7fff;
+				pVM68k->d[0]&=0xffff0000;
+				pVM68k->d[0]|=pVM68k->d[2]&0xffff;
+				found=0;
+				retval=dMagnetic2_engine_linea_loadproperties(pVMLineA,objectnum,&pVM68k->a[0],&properties);
+				do
+				{
+					if (properties.endflags&0x3fff) 
+					{
+						found=1;
+					} else {
+						retval=dMagnetic2_engine_linea_loadproperties(pVMLineA,pVM68k,objectnum-1,NULL,&properties);
+						if (objectnum==n) found=1;
+						else objectnum--;
+					}
+				} while ((objectnum!=0) && !found);
+				if (found) pVM68k->sr|=(1<<0);            // bit 0 is the cflag
+				pVM68k->d[2]&=0xffff0000;
+				pVM68k->d[2]|=objectnum&0xffff;
+			}
+			break;
+		case 0xa0f1:
+			{	// skip some words in the input buffer
+				tVM68k_ubyte*	inputptr;
+				tVM68k_uword	inputidx;
+				tVM68k_ubyte	cinput;
+				int i,n;
+				inputptr=&pVM68k->memory[pVM68k->a[1]&0xffff];
+				inputidx=0;
+				n=(pVM68k->d[0])&0xffff;
+				for (i=0;i<n;i++)
+				{
+					do
+					{
+						cinput= READ_INT8BE(inputptr,inputidx++);
+					} while (cinput);	// words are zero-terminated
+				}
+				pVM68k->a[1]+=inputidx;
+			}
+			break;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	}
 	return retval;
@@ -561,14 +1017,6 @@ int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_ushort opcode)
 	return DMAGNETIC2_OK;
 }
 
-tVM68k_ulong dMagnetic2_engine_linea_random(tVMLineA* pVMLineA)
-{
-	// if random mode is PRBS
-	pVMLineA->random_state*=1103515245ull;
-	pVMLineA->random_state+=12345ull;
-	
-	return (pVMLineA->random_state&0x7fffffff);
-}
 int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_ushort opcode,unsigned int *pStatus)
 {
 	int retval;

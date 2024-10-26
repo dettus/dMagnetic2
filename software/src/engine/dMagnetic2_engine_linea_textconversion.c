@@ -36,7 +36,7 @@ int dMagnetic2_engine_line_flush(tVMLineA* pVMLineA)
 	return DMAGNETIC2_OK;
 }
 
-int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned char controlD2,unsigned char flag_headline)
+int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned char controlD2,unsigned char flag_headline,unsigned int *pStatus)
 {
 	unsigned char c2;
 	int textlevel;
@@ -177,6 +177,14 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 		}
 	}
 	// make sure that the buffers are zero-terminated.
+	if (titlelevel>=0)
+	{
+		*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_TITLE;
+	}
+	if (textlevel>=0)
+	{
+		*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_TEXT;
+	}
 	pVMLineA->headlinebuf[titlelevel]=0;
 	pVMLineA->textbuf[textlevel]=0;
 	*(pVMLineA->pTextLevel)=textlevel;
@@ -185,6 +193,7 @@ int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned 
 	{
 		dMagnetic2_engine_linea_flush(pVMLineA);	// the buffers are full, and flushing them is required
 	}
+
 	return DMAGNETIC2_OK;
 }
 

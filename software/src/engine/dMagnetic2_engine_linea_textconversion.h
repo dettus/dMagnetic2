@@ -30,7 +30,7 @@
 #include "dMagnetic2_engine_linea.h"
 
 int dMagnetic2_engine_line_flush(tVMLineA* pVMLineA);
-int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned char controlD2,unsigned char flag_headline);
+int dMagnetic2_engine_linea_newchar(tVMLineA* pVMLineA,unsigned char c,unsigned char controlD2,unsigned char flag_headline,unsigned int *pStatus);
 
 
 #endif
