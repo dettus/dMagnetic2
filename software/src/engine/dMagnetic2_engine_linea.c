@@ -54,8 +54,10 @@ int dMagnetic2_engine_linea_init(tVMLineA* pVMLineA,unsigned char *pMagBuf)
 	int undosize;
 	int undopc;
 	int idx;
+	int version;
 
 	memset(pVMLineA,0,sizeof(tVMLineA));
+	pVMLineA->magic=MAGIC;
 	// lets start with the header.
 	// @0   4 bytes "MaSc"
 	// @4   9 bytes TODO
@@ -100,7 +102,7 @@ int dMagnetic2_engine_linea_init(tVMLineA* pVMLineA,unsigned char *pMagBuf)
 	pVMLineA->undopc=undopc;
 	pVMLineA->decsize=decsize;
 
-	
+	return DMAGNETIC2_OK;	
 }
 int dMagnetic2_engine_linea_link_communication(tVMLineA* pVMLineA,
 	tVM68k* pVM68k,
@@ -108,10 +110,10 @@ int dMagnetic2_engine_linea_link_communication(tVMLineA* pVMLineA,
 	char* textbuf,int *pTextLevel,
 	char* titlebuf,int *pTitleLevel,
 	char* picnamebuf,int *pPicnameLevel,int *pPictureNum,
-	char* filenamebuf,int *pFilenameLevel,
+	char* filenamebuf,int *pFilenameLevel
 )
 {
-	pVMLineA->pVM68k,
+	pVMLineA->pVM68k=pVM68k;
 
 	pVMLineA->pInputBuf=inputbuf;
 	pVMLineA->pInputLevel=pInputLevel;
@@ -164,7 +166,7 @@ int dMagnetic2_engine_linea_loadproperties(tVMLineA* pVMLineA,tVM68k_uword objec
 	{
 		addr=(pVMLineA->properties_size-objectnum)^0xffff;	// TODO: WTF?
 		addr*=2;
-		addr+=pLineA->properties_tab;
+		addr+=pVMLineA->properties_tab;
 		objectnum=READ_INT16BE(pVM68k->memory,addr);
 	}
 	addr=pVMLineA->properties_offset+14*objectnum;
@@ -183,7 +185,7 @@ int dMagnetic2_engine_linea_loadproperties(tVMLineA* pVMLineA,tVM68k_uword objec
 	}
 	pProperties->endflags=READ_INT16BE(pVM68k->memory,addr+12);
 	if (retaddr!=NULL) *retaddr=addr;
-	return LINEA_OK;
+	return DMAGNETIC2_OK;
 }
 
 
@@ -279,9 +281,9 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 								c='\n';	// apparently, the virtual machine wants its strings CR terminated.
 							}
 							WRITE_INT8BE(pVM68k->memory,(pVM68k->a[1]+i),c);
-							pLineA->used++;					// increase the read pointer for the next time.
+							pVMLineA->used++;					// increase the read pointer for the next time.
 							i++;
-						} while (i<MAXINPUTBUFFER  && pVMLineA->level>pLineA->used && c!='\n');
+						} while (i<MAXINPUTBUFFER  && pVMLineA->level>pVMLineA->used && c!='\n');
 					}
 					if (pVMLineA->level==pVMLineA->used) 	// the input buffer has been fully read
 					{
@@ -429,15 +431,15 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 					// version 0: string 2 holds the table to decode the strings.
 					// the decoder table is 256 bytes long. afterwards, a bunch of pointers
 					// to bit indexes follow.
-					else byteidx=READ_INT16BE(pLineA->pStringHuffman,(0x100+2*idx));
-					tmp=READ_INT16BE(pLineA->pStringHuffman,0x100);
+					else byteidx=READ_INT16BE(pVMLineA->pStringHuffman,(0x100+2*idx));
+					tmp=READ_INT16BE(pVMLineA->pStringHuffman,0x100);
 					if (tmp && idx>=tmp)
 					{
-						byteidx+=pLineA->string1size;
+						byteidx+=pVMLineA->string1size;
 					}
 				} else {
-					byteidx=pLineA->interrupted_byteidx;
-					bitidx=pLineA->interrupted_bitidx;
+					byteidx=pVMLineA->interrupted_byteidx;
+					bitidx=pVMLineA->interrupted_bitidx;
 
 				}
 				val=0;
@@ -541,13 +543,13 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 			break;
 		case 0xa0eb:	// write the byte stored in D1 into the dictionary at index A1
 			{
-				pLineA->pDict[pVM68k->a[1]&0xffff]=pVM68k->d[1]&0xff;
+				pVMLineA->pDict[pVM68k->a[1]&0xffff]=pVM68k->d[1]&0xff;
 			}
 			break;
 		case 0xa0ec:	// read one byte stored @A1 from the dictionary. write it into register D0.	(jinxter)
 			{
 				pVM68k->d[1]&=0xffffff00;
-				pVM68k->d[1]|=pLineA->pDict[pVM68k->a[1]&0xffff]&0xff;
+				pVM68k->d[1]|=pVMLineA->pDict[pVM68k->a[1]&0xffff]&0xff;
 			}
 			break;
 		case 0xa0f1:
@@ -724,7 +726,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 				{
 					dictptr=&pVM68k->memory[pVM68k->a[1]&0xffff];
 				} else {
-					//dictptr=pLineA->pDict;
+					//dictptr=pVMLineA->pDict;
 					dictptr=&pVMLineA->pDict[pVM68k->a[1]&0xffff];
 				}
 				n=(pVM68k->d[2]&0xffff);
@@ -752,7 +754,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 				{
 					dictptr=&pVM68k->memory[pVM68k->a[0]&0xffff];	// TODO: version 0. 
 				} else {
-					dictptr=&pLineA->pDict[pVM68k->a[0]&0xffff];
+					dictptr=&pVMLineA->pDict[pVM68k->a[0]&0xffff];
 				}
 				inputptr=&pVM68k->memory[pVM68k->a[1]&0xffff];
 				n=(pVM68k->d[0])&0xffff;
@@ -802,12 +804,12 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 				tVM68k_sword objectnum;
 				tVM68k_ulong objectidx;
 
-				if (version>2 && (pVM68k->d[0]&0x3fff)>pLineA->properties_size)
+				if (version>2 && (pVM68k->d[0]&0x3fff)>pVMLineA->properties_size)
 				{
 					pVM68k->d[0]&=0xffff7fff;
-					//						objectidx=((pLineA->properties_size-(pVM68k->d[0]&0x3fff))^0xffff);	// TODO: I THINK THIS IS JUST A MODULO!!!
-					objectidx=((pVM68k->d[0]&0x3fff)-pLineA->properties_size)-1;
-					objectnum=READ_INT16BE(pVM68k->memory,pLineA->properties_tab+objectidx*2);
+					//						objectidx=((pVMLineA->properties_size-(pVM68k->d[0]&0x3fff))^0xffff);	// TODO: I THINK THIS IS JUST A MODULO!!!
+					objectidx=((pVM68k->d[0]&0x3fff)-pVMLineA->properties_size)-1;
+					objectnum=READ_INT16BE(pVM68k->memory,pVMLineA->properties_tab+objectidx*2);
 				} else {
 					if (version>=2) 
 					{
@@ -821,7 +823,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 
 				}
 				objectnum&=0x3fff;
-				pVM68k->a[0]=pLineA->properties_offset+objectnum*14;
+				pVM68k->a[0]=pVMLineA->properties_offset+objectnum*14;
 
 			}
 			break;
@@ -876,8 +878,8 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 						dictptr=&pVM68k->memory[pVM68k->a[3]&0xffff];
 						dtabptr=&pVM68k->memory[pVM68k->a[5]&0xffff];	// version>0
 					} else {
-						dictptr=&pLineA->pDict[pVM68k->a[3]&0xffff];
-						dtabptr=&pLineA->pDict[pVM68k->a[5]&0xffff];	// version>0
+						dictptr=&pVMLineA->pDict[pVM68k->a[3]&0xffff];
+						dtabptr=&pVMLineA->pDict[pVM68k->a[5]&0xffff];	// version>0
 
 					}
 					outputptr =&pVM68k->memory[pVM68k->a[2]];
@@ -1152,7 +1154,7 @@ int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_uword opcode)
 		int base;
 		
 		idx=opcode&0x7ff;
-		if (idx>=pLineA->linef_tabsize)
+		if (idx>=pVMLineA->linef_tabsize)
 		{
 			if (!(opcode&0x0800))	// 0xf800 : jump. if not, this is a call to a subroutine.
 			{
@@ -1162,8 +1164,8 @@ int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_uword opcode)
 			}
 			idx=(opcode|0x0800);
 			idx^=0xffff;
-			base=READ_INT16BE(pVM68k->memory,(pLineA->linef_tab+2*idx));
-			pVM68k->pcr(pLineA->linef_tab+2*idx+base)%pVM68k->memsize;	// weird, but it works.
+			base=READ_INT16BE(pVM68k->memory,(pVMLineA->linef_tab+2*idx));
+			pVM68k->pcr(pVMLineA->linef_tab+2*idx+base)%pVM68k->memsize;	// weird, but it works.
 		} else {
 			// push the PCR to the the stack
 			pVM68k->a[7]-=4;
