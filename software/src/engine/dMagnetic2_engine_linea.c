@@ -25,6 +25,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "dMagnetic2_errorcodes.h"
+#include "dMagnetic2_engine.h"
 #include "dMagnetic2_engine_linea.h"
 #include "dMagnetic2_engine_vm68k.h"
 #include "dMagnetic2_shared.h"
@@ -211,6 +212,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 
 	switch(opcode)
 	{
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // lets start with the input/output traps
 		case 0xa000:	// getchar
 			{
@@ -221,14 +223,15 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 					pVMLineA->input_used=0;
 				} else { 	// read from the input buffer
 					// take one byte from the input buffer, and send it to the CPU
-					pVMLineA->input_level=*(pVMLineA->pInputLevel);
 					pVM68k->d[1]=pVMLineA->pInputBuf[pVMLineA->input_used];
-					pVM68k->input_used++;
+					pVMLineA->input_level=*(pVMLineA->pInputLevel);
+					pVMLineA->input_used++;
 				}
-				if (pVMLineA->input_level==pVMLineA_used && pVMLineA->*(pVMLineA->pInputLevel)) // the buffer has been fully read
+				if (pVMLineA->input_level==pVMLineA->input_used && (*(pVMLineA->pInputLevel)!=0)) // the buffer has been fully read
 				{
 					pVMLineA->input_level=0;	// prepare the next read
 					pVMLineA->input_used=0;
+					*pVMLineA->pInputLevel=0;	// mark the buffer as empty
 					*pStatus&=~(DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT);// remove the status flag
 				}
 			}
@@ -240,11 +243,11 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 				int i;
 				datatype=READ_INT8BE(pVM68k->memory,pVM68k->a[1]+2);
 
-				for (i=0;i<DMAGNETIC2_SIZE_PICTUREBUF;i++)
+				for (i=0;i<DMAGNETIC2_SIZE_PICNAMEBUF;i++)
 				{
 					pVMLineA->pPictureBuf[i]=READ_INT8BE(pVM68k->memory,pVM68k->a[1]+3+i);
 				}
-				pVMLineA->pPictureBuf[DMAGNETIC2_SIZE_PICTUREBUF-1]=0;
+				pVMLineA->pPictureBuf[DMAGNETIC2_SIZE_PICNAMEBUF-1]=0;
 				*(pVMLineA->pPictureNum)=DMAGNETIC2_LINEA_PICTURE_NAME;
 				if (datatype==7)	
 				{
@@ -491,8 +494,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 
 
 
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // historically, the lineA trap instructions were defined backwards. they started with 0xa0ff and grew towards smaller numbers
 // i tried implementing this, but it got confusing.
 		case 0xa0de:	// version 3 (corruption) introduced this. the other implementation wrote a 1 into D1.
