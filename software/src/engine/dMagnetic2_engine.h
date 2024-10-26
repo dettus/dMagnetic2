@@ -65,4 +65,6 @@ int dMagnetic2_engine_load_game(void* pHandle,int pSize,void* pContext);
 // API functions for configuration
 int dMagnetic2_engine_configure(void* pHandle,int* todo);
 
+
+#define	DMAGNETIC2_UNKNOWN_OPCODE	-10
 #endif

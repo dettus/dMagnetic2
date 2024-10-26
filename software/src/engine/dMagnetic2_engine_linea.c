@@ -27,6 +27,7 @@
 #include "dMagnetic2_errorcodes.h"
 #include "dMagnetic2_engine.h"
 #include "dMagnetic2_engine_linea.h"
+#include "dMagnetic2_engine_linea_textconversion.h"
 #include "dMagnetic2_engine_vm68k.h"
 #include "dMagnetic2_shared.h"
 #include <stdio.h>
@@ -245,9 +246,9 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 
 				for (i=0;i<DMAGNETIC2_SIZE_PICNAMEBUF;i++)
 				{
-					pVMLineA->pPictureBuf[i]=READ_INT8BE(pVM68k->memory,pVM68k->a[1]+3+i);
+					pVMLineA->pPicnameBuf[i]=READ_INT8BE(pVM68k->memory,pVM68k->a[1]+3+i);
 				}
-				pVMLineA->pPictureBuf[DMAGNETIC2_SIZE_PICNAMEBUF-1]=0;
+				pVMLineA->pPicnameBuf[DMAGNETIC2_SIZE_PICNAMEBUF-1]=0;
 				*(pVMLineA->pPictureNum)=DMAGNETIC2_LINEA_PICTURE_NAME;
 				if (datatype==7)	
 				{
@@ -258,8 +259,6 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 		case 0xa0e1:	// getstring, new feature by corruption! (version4)
 			{
 				int i;
-				int level;
-				int used;
 				if (*(pVMLineA->pInputLevel)==0)	// the input buffer is empty
 				{
 					*pStatus|=(DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT);	// set the status flag
@@ -271,28 +270,28 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 					// when the amount of bytes is either 256 or 1, D1 is set to 1. (TODO: why?)
 					// 
 					// when the buffer is empty, the callback function for inputs is called first.
-					pVMLineA->level=*(pVMLineA->pInputLevel);
+					pVMLineA->input_level=*(pVMLineA->pInputLevel);
 					i=0;
-					if (pVMLineA->level>pVMLineA->used)	// still characters in the buffer?
+					if (pVMLineA->input_level>pVMLineA->input_used)	// still characters in the buffer?
 					{
 						tVM68k_ubyte c;
 						do
 						{
-							c=pVMLineA->pInputbuf[pVMLineA->used];
+							c=pVMLineA->pInputBuf[pVMLineA->input_used];
 							if (c==0)
 							{
 								c='\n';	// apparently, the virtual machine wants its strings CR terminated.
 							}
 							WRITE_INT8BE(pVM68k->memory,(pVM68k->a[1]+i),c);
-							pVMLineA->used++;					// increase the read pointer for the next time.
+							pVMLineA->input_used++;					// increase the read pointer for the next time.
 							i++;
-						} while (i<MAXINPUTBUFFER  && pVMLineA->level>pVMLineA->used && c!='\n');
+						} while (i<DMAGNETIC2_SIZE_INPUTBUF  && pVMLineA->input_level>pVMLineA->input_used && c!='\n');
 					}
-					if (pVMLineA->level==pVMLineA->used) 	// the input buffer has been fully read
+					if (pVMLineA->input_level==pVMLineA->input_used) 	// the input buffer has been fully read
 					{
 						dMagnetic2_engine_linea_getrandom(pVMLineA);	// advance the random generator
-						pVMLineA->level=0;
-						pVMLineA->used=0;
+						pVMLineA->input_level=0;
+						pVMLineA->input_used=0;
 						*pStatus&=~(DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT);	// clear the status flag
 						*(pVMLineA->pInputLevel)=0;					// clear the input buffer
 
@@ -300,7 +299,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 					}
 					pVM68k->a[1]+=(i-1);
 					pVM68k->d[1]&=0xffff0000;
-					if (i==MAXINPUTBUFFER || i==1)
+					if (i==DMAGNETIC2_SIZE_INPUTBUF || i==1)
 					{
 						pVM68k->d[1]|=1;
 					}
@@ -313,8 +312,8 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 				if (pVMLineA->version<4 || pVM68k->d[6]==0)
 				{
 					*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE;
-					*(pVMLineA->pPictureNum)=DMAGNETIC2_LINEA_NO_PICTURE
-					pVMLineA->pPictureBuf[0]=0;	
+					*(pVMLineA->pPictureNum)=DMAGNETIC2_LINEA_NO_PICTURE;
+					pVMLineA->pPicnameBuf[0]=0;	
 				}
 			}
 			break;
@@ -357,7 +356,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 				{
 					*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE;
 					*(pVMLineA->pPictureNum)=picnum;
-					pVMLineA->pPictureBuf[0]=0;	// the picture has a number, not a name
+					pVMLineA->pPicnameBuf[0]=0;	// the picture has a number, not a name
 			//		snprintf(pVMLineA->pPicnameBuf,DMAGNETIC2_SIZE_PICNAMEBUF,"%02d",picnum);
 				}
 			}
@@ -379,7 +378,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 //				namelen=pVM68k->d[0];		// PROBABLY the filename is this long.
 				namelen=DMAGNETIC2_SIZE_FILENAMEBUF;	// but i am not sure
 				if (namelen>=DMAGNETIC2_SIZE_FILENAMEBUF) namelen=DMAGNETIC2_SIZE_FILENAMEBUF-1;
-				memcpy(pVMLineA->pFilenameBuf,&(pVM68k->memory[nameidx]),namelen);
+				memcpy(pVMLineA->pFilenameBuf,&(pVM68k->memory[nameptr]),namelen);
 				pVMLineA->pFilenameBuf[namelen]=0;	// 0 terminate the name
 
 //				dataptr=pVM68k->a[1]%pVM68k->memsize; // where in the memory is the filedata?
@@ -389,7 +388,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 		case 0xa0f5:	// load game
 			{
 				int nameptr;
-//				int namelen;
+				int namelen;
 //				int dataptr;
 //				int datalen;
 				*pStatus|=DMAGNETIC2_ENGINE_STATUS_LOAD;
@@ -398,7 +397,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 				//namelen=pVM68k->d[0];		// PROBABLY the filename is this long.
 				namelen=DMAGNETIC2_SIZE_FILENAMEBUF;	// but i am not sure
 				if (namelen>=DMAGNETIC2_SIZE_FILENAMEBUF) namelen=DMAGNETIC2_SIZE_FILENAMEBUF-1;
-				memcpy(pVMLineA->pFilenameBuf,&(pVM68k->memory[nameidx]),namelen);
+				memcpy(pVMLineA->pFilenameBuf,&(pVM68k->memory[nameptr]),namelen);
 
 //				dataptr=pVM68k->a[1]%pVM68k->memsize; // where in the memory is the filedata?
 //				datalen=pVM68k->d[1];		// PROBABLY the filedata is this long.
@@ -591,7 +590,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 					{
 						found=1;
 					} else {
-						retval=dMagnetic2_engine_linea_loadproperties(pVMLineA,pVM68k,objectnum-1,NULL,&properties);
+						retval=dMagnetic2_engine_linea_loadproperties(pVMLineA,objectnum-1,NULL,&properties);
 						if (objectnum==n) found=1;
 						else objectnum--;
 					}
@@ -1150,7 +1149,7 @@ int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_uword opcode)
 		WRITE_INT32BE(pVM68k->memory,pVM68k->a[7],pVM68k->pcr);
 
 		// jump to the preconfigured address
-		pVM68k->pcr=(pVMLineA->linef_subroutines)&pVM68k->memsize;
+		pVM68k->pcr=(pVMLineA->linef_subroutine)&pVM68k->memsize;
 	} else {
 		int idx;
 		int base;
@@ -1167,14 +1166,14 @@ int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_uword opcode)
 			idx=(opcode|0x0800);
 			idx^=0xffff;
 			base=READ_INT16BE(pVM68k->memory,(pVMLineA->linef_tab+2*idx));
-			pVM68k->pcr(pVMLineA->linef_tab+2*idx+base)%pVM68k->memsize;	// weird, but it works.
+			pVM68k->pcr=(pVMLineA->linef_tab+2*idx+base)%pVM68k->memsize;	// weird, but it works.
 		} else {
 			// push the PCR to the the stack
 			pVM68k->a[7]-=4;
 			WRITE_INT32BE(pVM68k->memory,pVM68k->a[7],pVM68k->pcr);
 
 			// jump to the preconfigured address
-			pVM68k->pcr=(pVMLineA->linef_subroutines)&pVM68k->memsize;
+			pVM68k->pcr=(pVMLineA->linef_subroutine)&pVM68k->memsize;
 		}
 	}
 	return DMAGNETIC2_OK;
@@ -1184,20 +1183,19 @@ int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_uword opcode,un
 {
 	int retval;
 	int version;
-	tVM68k* pVM68k=pVMLineA->pVM68k;
 
 
 	version=pVMLineA->version;
 
 	// check if the machine is actively waiting for input
-	if ((*pStatus)&MAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT && (*(pVMLineA->pInputLevel==0)))
+	if ((*pStatus)&DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT && (*(pVMLineA->pInputLevel)==0))
 	{
 		return DMAGNETIC2_OK;		// in that case: there is nothing to do
 	}
 
 	retval=DMAGNETIC2_UNKNOWN_OPCODE;
 
-	if (opcode&0xf000==0xa000)
+	if ((opcode&0xf000)==0xa000)
 	{
 		// first: advance the random generator. but only for certain opcodes
 		if (
@@ -1208,9 +1206,9 @@ int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_uword opcode,un
 		{
 			(void)dMagnetic2_engine_linea_getrandom(pVMLineA);
 		} 
-		retval=dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode);
-	} else if (opcode&0xf000==0xf000) {
-		retval=dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_uword opcode);
+		retval=dMagnetic2_engine_linea_trapa(pVMLineA,opcode,pStatus);
+	} else if ((opcode&0xf000)==0xf000) {
+		retval=dMagnetic2_engine_linea_trapf(pVMLineA,opcode);
 	}
 	return retval;
 
