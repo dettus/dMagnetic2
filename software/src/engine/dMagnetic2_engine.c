@@ -29,6 +29,7 @@
 #include "dMagnetic2_engine.h"
 #include "dMagnetic2_shared.h"
 #include "dMagnetic2_engine_shared.h"
+#include "dMagnetic2_engine_linea.h"
 #include "dMagnetic2_engine_vm68k.h"
 #include <string.h>
 
@@ -39,6 +40,7 @@
 typedef struct _tdMagnetic2_game_context
 {
 	tVM68k	vm68k;
+	tVMLineA linea;
 } tdMagnetic2_game_context;
 
 typedef struct _tdMagnetic2_engine_handle
@@ -60,6 +62,7 @@ typedef struct _tdMagnetic2_engine_handle
 	int inputlevel;
 	int outputlevel;
 	int titlelevel;
+	int picnamelevel;
 	int filenamelevel;
 
 	unsigned int status_flags;
@@ -90,9 +93,21 @@ int dMagnetic2_engine_init(void *pHandle)
 int dMagnetic2_engine_set_mag(void *pHandle,unsigned char* pMagBuf)
 {
 	tdMagnetic2_engine_handle* pThis=(tdMagnetic2_engine_handle*)pHandle;
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+
 
 	dMagnetic2_engine_vm68k_init(&(pThis->game_context.vm68k),pMagBuf);
-//	dMagnetic2_linea_init(&pThis->game_context.linea,pMagBuf);
+	dMagnetic2_engine_linea_init(&(pThis->game_context.linea),pMagBuf);
+	dMagnetic2_engine_linea_link_communication(&(pThis->game_context.linea),&(pThis->game_context.vm68k),
+		pThis->inputbuf,&(pThis->inputlevel),
+		pThis->outputbuf,&(pThis->outputlevel),
+		pThis->titlebuf,&(pThis->titlelevel),
+		pThis->picnamebuf,&(pThis->picnamelevel),&(pThis->picturenum),
+		pThis->filenamebuf,&(pThis->filenamelevel)
+	);
 	return DMAGNETIC2_OK;
 	
 		
@@ -183,3 +198,34 @@ int dMagnetic2_engine_get_filename(void *pHandle,char** ppFilename)
 	return DMAGNETIC2_OK;
 	
 }
+
+int dMagnetic2_engine_process(void *pHandle,int singlestep,int *pStatus)
+{
+	int retval;
+	tdMagnetic2_engine_handle* pThis=(tdMagnetic2_engine_handle*)pHandle;
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	retval=DMAGNETIC2_OK;
+	do
+	{
+		tVM68k_uword opcode;
+		retval=dMagnetic2_engine_vm68k_getNextOpcode(&(pThis->game_context.vm68k),&opcode);
+		if (retval==DMAGNETIC2_OK)
+		{
+			if (dMagnetic2_engine_linea_istrap(&opcode))		// decide which of the two modules this opcode belongs to
+			{
+				retval=dMagnetic2_engine_linea_singlestep(&(pThis->game_context.linea),opcode,&(pThis->status_flags));
+			} else {
+				retval=dMagnetic2_engine_vm68k_singlestep(&(pThis->game_context.vm68k),opcode);
+			}
+		}
+	}
+	while (retval==DMAGNETIC2_OK && (!singlestep  || ((pThis->status_flags&DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT)==0))); 
+	
+
+	*pStatus=(pThis->status_flags);
+	return retval;
+}
+

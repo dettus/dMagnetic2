@@ -103,6 +103,7 @@ int dMagnetic2_engine_linea_link_communication(tVMLineA* pVMLineA,
 	char* filenamebuf,int *pFilenameLevel
 );
 int dMagnetic2_engine_linea_istrap(tVM68k_uword *pOpcode);
+int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigned int *pStatus);
 
 #define	DMAGNETIC2_LINEA_NO_PICTURE		-1
 #define	DMAGNETIC2_LINEA_PICTURE_NAME		-2
