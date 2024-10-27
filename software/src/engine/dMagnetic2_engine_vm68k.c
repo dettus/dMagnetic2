@@ -157,7 +157,7 @@ tVM68k_bool dMagnetic2_engine_checkcondition(tVM68k* pVM68k,tVM68k_ubyte conditi
 	return condtrue;
 }
 
-//#define DEBUG_PRINT
+#define DEBUG_PRINT
 
 #ifdef	 DEBUG_PRINT
 void vm68k_get_instructionname(tVM68k_instruction instruction,char* name)

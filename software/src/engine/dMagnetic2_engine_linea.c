@@ -97,6 +97,7 @@ int dMagnetic2_engine_linea_init(tVMLineA* pVMLineA,unsigned char *pMagBuf)
 	pVMLineA->string2size=string2size;
 	idx+=string1size;
 	idx+=string2size;
+	printf("DICT @ %d\n",idx);
 	pVMLineA->pDict=&pMagBuf[idx];
 	idx+=dictsize;
 	pVMLineA->pUndo=&pMagBuf[idx];
@@ -269,6 +270,9 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 				if (*(pVMLineA->pInputLevel)==0)	// the input buffer is empty
 				{
 					*pStatus|=(DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT);	// set the status flag
+					pVMLineA->input_level=0;	// prepare the read from the buffer
+					pVMLineA->input_used=0;
+					pVM68k->pcr-=2;			// go back one instruction
 				} else {
 					// when this instruction is being called, the argument is the output pointer in A1.
 					// up to 256 bytes may be written there. A1 itself is being incremented, until
@@ -911,6 +915,8 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 					while (cdict!=0x81)	// 0x81 is the end marker of the dictionary
 					{
 						cdict=dictptr[dictidx++];
+						if (cdict>=0x80) printf("\n");
+						else printf("\x1b[1;34m%c\x1b[0m",cdict&0x7f);
 						if (cdict==0x82)	// bank separator
 						{
 							flag=0;
@@ -1172,7 +1178,7 @@ int dMagnetic2_engine_linea_trapf(tVMLineA* pVMLineA,tVM68k_uword opcode)
 			}
 			idx=(opcode|0x0800);
 			idx^=0xffff;
-			base=READ_INT16BE(pVM68k->memory,(pVMLineA->linef_tab+2*idx));
+			base=(signed short)READ_INT16BE(pVM68k->memory,(pVMLineA->linef_tab+2*idx));
 			pVM68k->pcr=(pVMLineA->linef_tab+2*idx+base)%pVM68k->memsize;	// weird, but it works.
 		} else {
 			// push the PCR to the the stack
