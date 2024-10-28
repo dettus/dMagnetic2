@@ -97,9 +97,10 @@ int dMagnetic2_engine_linea_init(tVMLineA* pVMLineA,unsigned char *pMagBuf)
 	pVMLineA->string2size=string2size;
 	idx+=string1size;
 	idx+=string2size;
-	printf("DICT @ %d\n",idx);
 	pVMLineA->pDict=&pMagBuf[idx];
+	pVMLineA->dictsize=dictsize;
 	idx+=dictsize;
+	
 	pVMLineA->pUndo=&pMagBuf[idx];
 	pVMLineA->undosize=undosize;
 	pVMLineA->undopc=undopc;
@@ -915,8 +916,6 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 					while (cdict!=0x81)	// 0x81 is the end marker of the dictionary
 					{
 						cdict=dictptr[dictidx++];
-						if (cdict>=0x80) printf("\n");
-						else printf("\x1b[1;34m%c\x1b[0m",cdict&0x7f);
 						if (cdict==0x82)	// bank separator
 						{
 							flag=0;
