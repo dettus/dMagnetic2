@@ -516,7 +516,7 @@ int dMagnetic2_loader_mw_mkgfx(unsigned char* pTmpBuf,char* filename1,unsigned c
 
 		for (i=0;i<2;i++)
 		{
-			dMagnetic2_loader_mw_substitute_tworsc(filename1,pTmpBuf,substs[i],NULL);
+			dMagnetic2_loader_mw_substitute_tworsc(filename1,pFilename,substs[i],NULL);
 			f=fopen(pFilename,"rb");
 			if (f!=NULL)
 			{

@@ -240,7 +240,6 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 						pVMLineA->input_level=0;	// prepare the next read
 						pVMLineA->input_used=0;
 						*pVMLineA->pInputLevel=0;	// mark the buffer as empty
-						*pStatus&=~(DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT);// remove the status flag
 						dMagnetic2_engine_linea_getrandom(pVMLineA);	// advance the random generator
 					}
 				}
@@ -304,7 +303,6 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 						dMagnetic2_engine_linea_getrandom(pVMLineA);	// advance the random generator
 						pVMLineA->input_level=0;
 						pVMLineA->input_used=0;
-						*pStatus&=~(DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT);	// clear the status flag
 						*(pVMLineA->pInputLevel)=0;					// clear the input buffer
 
 						//						dMagnetic2_engine_linea_flush(pVMLineA);
@@ -1199,14 +1197,8 @@ int dMagnetic2_engine_linea_singlestep(tVMLineA* pVMLineA,tVM68k_uword opcode,un
 
 	version=pVMLineA->version;
 
-	// check if the machine is actively waiting for input
-	if ((*pStatus)&DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT && (*(pVMLineA->pInputLevel)==0))
-	{
-		return DMAGNETIC2_OK;		// in that case: there is nothing to do
-	}
 
 	retval=DMAGNETIC2_UNKNOWN_OPCODE;
-
 	if ((opcode&0xf000)==0xa000)
 	{
 		// first: advance the random generator. but only for certain opcodes

@@ -1047,7 +1047,7 @@ int dMagnetic2_engine_vm68k_singlestep(tVM68k* pVM68k,tVM68k_uword opcode)
 #else
 				printf("UNIMPLEMENTED opcode %04X\n",opcode);
 #endif
-				retval=VM68K_NOK_UNKNOWN_INSTRUCTION;
+				retval=DMAGNETIC2_UNKNOWN_OPCODE;
 			}
 			break;
 	}

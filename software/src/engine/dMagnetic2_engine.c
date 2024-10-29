@@ -211,13 +211,19 @@ int dMagnetic2_engine_get_filename(void *pHandle,char** ppFilename)
 	
 }
 
-int dMagnetic2_engine_process(void *pHandle,int singlestep,int *pStatus)
+int dMagnetic2_engine_process(void *pHandle,int singlestep,unsigned int *pStatus)
 {
 	int retval;
 	tdMagnetic2_engine_handle* pThis=(tdMagnetic2_engine_handle*)pHandle;
 	if (pThis->magic!=MAGIC)
 	{
 		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	*pStatus=(pThis->status_flags);
+	// check if the virtual machine is waiting for input, but nothing is available at the moment
+	if (((pThis->status_flags)&DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT) && ((pThis->inputlevel)==0))
+	{
+		return DMAGNETIC2_OK;		// in that case: there is nothing to do
 	}
 	retval=DMAGNETIC2_OK;
 	do

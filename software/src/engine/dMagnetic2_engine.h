@@ -53,7 +53,7 @@ int dMagnetic2_engine_set_mag(void *pHandle,unsigned char* pMagBuf);
 
 
 // API functions for running the game
-int dMagnetic2_engine_process(void *pHandle,int singlestep,int* pStatus);	// singlestep=0: run until input is required
+int dMagnetic2_engine_process(void *pHandle,int singlestep,unsigned int* pStatus);	// singlestep=0: run until input is required
 int dMagnetic2_engine_new_input(void *pHandle,int len,char* pInput,int *pCnt);	
 int dMagnetic2_engine_get_text(void* pHandle,char** ppText);
 int dMagnetic2_engine_get_title(void* pHandle,char** ppTitle);
@@ -66,5 +66,4 @@ int dMagnetic2_engine_load_game(void* pHandle,int pSize,void* pContext);
 int dMagnetic2_engine_configure(void* pHandle,int* todo);
 
 
-#define	DMAGNETIC2_UNKNOWN_OPCODE	-10
 #endif
