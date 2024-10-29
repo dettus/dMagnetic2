@@ -29,9 +29,11 @@
 
 #include "dMagnetic2_graphics.h"	// for the datatypes
 
-int dMagnetic2_pictures_getsize(int *pBytes);
-int dMagnetic2_pictures_init(void *pHandle,unsigned char* pGfxbuf,int gfxsize,int version,int vga0ega1);
-int dMagnetic2_pictures_decode(void *pHandle,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+int dMagnetic2_pictures_getsize(int *pBytes,int *pTmpSize);
+int dMagnetic2_pictures_init(void *pHandle,unsigned char* pGfxBuf,unsigned char* pTmpBuf);
+int dMagnetic2_pictures_set_gfx(void* pHandle,unsigned char* pGfxBuf,int gfxsize,int version,int vga0ega1);
+int dMagnetic2_pictures_decode_by_picnum(void *pHandle,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+int dMagnetic2_pictures_decode_by_picname(void *pHandle,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 
 #endif
 

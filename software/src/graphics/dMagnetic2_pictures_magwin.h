@@ -29,7 +29,7 @@
 
 #include "dMagnetic2_graphics.h"	// for the datatypes
 
-int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,int picnum,int egamode,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,char* picname,int egamode,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 
 #endif
 

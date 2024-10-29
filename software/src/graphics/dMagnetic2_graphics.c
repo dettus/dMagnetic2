@@ -37,7 +37,7 @@ typedef	struct _tHandle_graphics
 	unsigned int	magic;
 
 	int 		gfxsize;
-	unsigned char	gfxbuf[MAX_GFX_SIZE];
+	unsigned char	*gfxbuf;
 // internal canvas
 	tdMagnetic2_canvas_small	canvas_small;
 // configurations
@@ -80,7 +80,7 @@ int dMagnetic2_graphics_set_gfx(void *pHandle,int size,unsigned char* pGfx,int v
 	{
 		if (size<=MAX_GFX_SIZE)
 		{
-			memcpy(pThis->gfxbuf,pGfx,size);
+			pThis->gfxbuf=pGfx;
 			pThis->gfxsize=size;
 			pThis->vga0ega1=vga0ega1;
 		} else {
