@@ -59,7 +59,6 @@ typedef	struct _tdMagnetic2_picture_handle
 	unsigned char *pTmpBuf;
 	unsigned char *pGfxBuf;
 	int gfxsize;
-	int version;
 	int vga0ega1;
 	tGraphic_format format;
 } tdMagnetic2_picture_handle;
@@ -72,7 +71,7 @@ int dMagnetic2_pictures_getsize(int *pBytes,int *size_tmpbuf)
 	return DMAGNETIC2_OK;
 }
 
-int dMagnetic2_pictures_init(void *pHandle,unsigned char* pGfxBuf,unsigned char* pTmpBuf)
+int dMagnetic2_pictures_init(void *pHandle,unsigned char* pTmpBuf)
 {
 	tdMagnetic2_picture_handle* pThis=(tdMagnetic2_picture_handle*)pHandle;
 	pThis->magic=MAGICNUM;
@@ -81,18 +80,17 @@ int dMagnetic2_pictures_init(void *pHandle,unsigned char* pGfxBuf,unsigned char*
 	pThis->format=DMAGNETIC2_FORMAT_NONE;
 	return DMAGNETIC2_OK;
 }
-int dMagnetic2_pictures_set_gfx(void* pHandle,unsigned char* pGfxBuf,int gfxsize,int version,int vga0ega1)
+int dMagnetic2_pictures_set_gfx(void* pHandle,unsigned char* pGfxBuf,int gfxsize,int vga0ega1)
 {
 	tdMagnetic2_picture_handle* pThis=(tdMagnetic2_picture_handle*)pHandle;
 	pThis->magic=MAGICNUM;
 	pThis->pGfxBuf=pGfxBuf;
 	pThis->gfxsize=gfxsize;
-	pThis->version=version;
 	pThis->vga0ega1=vga0ega1;
 
 	if (pGfxBuf!=NULL)
 	{
-		if (pGfxBuf[0]=='M' && pGfxBuf[1]=='a' && pGfxBuf[1]=='P')
+		if (pGfxBuf[0]=='M' && pGfxBuf[1]=='a' && pGfxBuf[2]=='P')
 		{
 			switch (pGfxBuf[3])
 			{
@@ -148,6 +146,5 @@ int dMagnetic2_pictures_decode_by_picname(void *pHandle,char* picname,tdMagnetic
 	}
 	return retval;
 }
-
 
 

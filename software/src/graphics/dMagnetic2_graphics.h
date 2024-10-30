@@ -75,5 +75,6 @@ int dMagnetic2_graphics_set_current_picture(void *pHandle,char* pPicname,int pic
 int dMagnetic2_graphics_get_current_type(void* pHandle,char* todo);
 int dMagnetic2_graphics_draw_picture(void* pHandle,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 int dMagnetic2_graphics_draw_animation(void* pHandle,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge,int *pEnd);
+int dMagnetic2_graphics_canvas_small_to_xpm(tdMagnetic2_canvas_small *pSmall,char* pxpm,int xpmbufsize);
 
 #endif
