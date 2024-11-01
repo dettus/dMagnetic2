@@ -39,6 +39,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define	PICTURE_MAX_RGB_VALUE	1023
 #define	DMAGNETIC2_GRAPHICS_WRONG_CEL	-17
 
+#define	MAXCMDS		256
+#define	MAXANIMATIONS	256
+
+typedef struct _tdMagnetic2_animation_drawState
+{
+	int animationidx;
+	int start;
+	int count;
+	int current;
+} tdMagnetic2_animation_drawState;
+
 typedef struct _tdMagnetic2_animation_handle
 {
 	int magic;
@@ -50,11 +61,41 @@ typedef struct _tdMagnetic2_animation_handle
 	int celnum;
 	unsigned char* pGfxBuf;
 	int gfxsize;
+
+	// pointer to where the actual animation can be found inside the gfx buffer
+	int offset;
+	int length;
+
+	// states for the animation
+	int animation_offset;
+	int animation_num;
+	int cmd_offset;
+	int cmd_num;
+	int cmd_ptr[MAXCMDS];
+	int cmd_idx;
+	int framecnt;
+	tdMagnetic2_animation_drawState drawChain[MAXANIMATIONS];
+	
 } tdMagnetic2_animation_handle;
 
+int dMagnetic2_animation_magwin_getsize(int *pBytes)
+{
+	*pBytes=sizeof(tdMagnetic2_animation_handle);
+	return DMAGNETIC2_OK;
+}
+int dMagnetic2_animation_magwin_init(void *pHandle,unsigned char *pGfxBuf,int gfxsize)
+{
+	tdMagnetic2_animation_handle *pThis=(tdMagnetic2_animation_handle*)pHandle;
+	memset(pThis,0,sizeof(tdMagnetic2_animation_handle));
+	pThis->magic=MAGIC;
+	pThis->pGfxBuf=pGfxBuf;
+	pThis->gfxsize=gfxsize;
+	return DMAGNETIC2_OK;
+	
+}
 
 int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge,
-	int offset,int celidx,int xpos,int ypos,int magic)
+	int celidx,int xpos,int ypos,int magic)
 {
 	int width;
 	int height;
@@ -75,7 +116,7 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 	// 2 bytes height
 
 	celnum=0;
-	animidx=offset+TREESIZE+(NUM_COLORS*2)+4;	// skip most of the header
+	animidx=pThis->offset+TREESIZE+(NUM_COLORS*2)+4;	// skip most of the header
 	memset(pThis->linebuf,0,sizeof(pThis->linebuf));
 
 	blocksize=READ_INT16LE(pThis->pGfxBuf,animidx+6);
@@ -86,7 +127,7 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 		{
 			int red,green,blue;
 			unsigned short rgb;
-			rgb=READ_INT16LE(pThis->pGfxBuf,offset+TREESIZE+j*2+4);
+			rgb=READ_INT16LE(pThis->pGfxBuf,pThis->offset+TREESIZE+j*2+4);
 			red=	(rgb>>8)&0xf;
 			green=	(rgb>>4)&0xf;
 			blue=	(rgb>>0)&0xf;
@@ -171,7 +212,7 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 		{
 			ypos=ypos-TWOSCOMPLEMENT;
 		}
-		rlechar=gfxbuf[offset+0x240];
+		rlechar=pThis->pGfxBuf[pThis->offset+0x240];
 		// draw until the picture is full, the bit stream is over or the next lines would be drawn outside of the frame
 		while (pixcnt<(width*height) && (bitidx<gfxsize || mask) && ypos<pThis->height)
 		{
@@ -180,10 +221,10 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 			unsigned char branch;
 			unsigned char termbyte;
 
-			termbyte0=pThis->pGfxBuf[offset+ 0x00+treeidx/8];
-			termbyte1=pThis->pGfxBuf[offset+0x120+treeidx/8];
-			branch0=  pThis->pGfxBuf[offset+ 0x20+treeidx];
-			branch1=  pThis->pGfxBuf[offset+0x140+treeidx];
+			termbyte0=pThis->pGfxBuf[pThis->offset+ 0x00+treeidx/8];
+			termbyte1=pThis->pGfxBuf[pThis->offset+0x120+treeidx/8];
+			branch0=  pThis->pGfxBuf[pThis->offset+ 0x20+treeidx];
+			branch1=  pThis->pGfxBuf[pThis->offset+0x140+treeidx];
 			if (mask==0)
 			{
 				byte=gfxbuf[bitidx++];
@@ -272,3 +313,275 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 	}	
 	return DMAGNETIC2_OK;
 }
+
+// the purpose of this function is to find the animation in the gfx buffer
+// in the directory, animations are marked by having a name that is all lowercase. 
+// 
+// for example: 
+// FROG (vga)
+// Frog (ega)
+// frog (animation)
+int dMagnetic2_animation_magwin_isanimation(tdMagnetic2_animation_handle *pThis,char* picname)
+{
+	int i;
+	int num_entries;
+	int idx;
+	int match;
+#define DIR_BYTES_NAME          6
+#define DIR_BYTES_OFFSET        4
+#define DIR_BYTES_LENGTH        4
+#define DIR_BYTES_ENTRY         (DIR_BYTES_NAME+DIR_BYTES_OFFSET+DIR_BYTES_LENGTH)
+
+#define TO_LOWERCASE(c)         ((c)|0x20)              // lower case characters have bit 5 set.
+#define TO_UPPERCASE(c)         ((c)&0x5f)              // upper case characters do not have bit 5 set.
+
+	idx=4;				// 4 bytes header
+	num_entries=READ_INT16LE(pThis->pGfxBuf,idx),idx+=2;	// 2 bytes number of entries
+
+	for (i=0;i<num_entries && !match;i++)
+	{
+		int j;
+		match=1;
+		j=0;
+		do
+		{
+			char c1;
+			char c2;
+
+			c1=pThis->pGfxBuf[idx+1];
+			c2=TO_LOWERCASE(pThis->pGfxBuf[picname[j]]);
+			j++;
+			if (c1==0 && c2==0x20)
+			{
+				j=6;		// the end of the name has been reached
+			}
+			else if (c1!=c2)
+			{
+				match=0;
+			}
+		} while (j<6 && match);
+		// as long as we are in the directory, we might as well store the offset and the length
+		if (match)
+		{
+			idx+=DIR_BYTES_NAME;
+			pThis->offset=READ_INT32LE(pThis->pGfxBuf,idx);	idx+=DIR_BYTES_OFFSET;	
+			pThis->length=READ_INT32LE(pThis->pGfxBuf,idx);	idx+=DIR_BYTES_LENGTH;
+		} else {
+			idx+=DIR_BYTES_ENTRY;
+		}
+	}
+	// double check
+	if (match)
+	{
+		unsigned int magic;
+		magic=READ_INT32LE(pThis->pGfxBuf,pThis->offset+pThis->length-4);
+		if (magic==0x5ed0)	// static pictures end with this magic value
+		{
+			match=0;
+		}
+	}
+	return match;
+}
+
+int dMagnetic2_animation_magwin_start(void *pHandle,char *picname,int *pIsAnimation)
+{
+	tdMagnetic2_animation_handle *pThis=(tdMagnetic2_animation_handle*)pHandle;
+	int isanimation;
+	int blocksize;
+	int j;
+	int cmdsize;
+	int idx;
+	int retval;
+	const int dMagnetic2_animation_cmdlen[7]={	//there are 7 possible commands. each have a different number of bytes 
+		1,              // "END MARKER"
+		4,              // "ANIMATION", animationidx, start, count 
+		2,              // "JUMP", cmdidx
+		3,              // "RENDER FRAMES", frames
+		3,              // "PAUSE", delay_lsb, delay_msb
+		4,              // "CHANCE JUMP", chance, addr_lsb, addr_msb
+		3               // "JUMP IF RUNNING", addr_lsb, addr_msb
+	};
+
+	isanimation=dMagnetic2_animation_magwin_isanimation(pThis,picname);
+	*pIsAnimation=isanimation;
+	if (!isanimation)		// not an animation
+	{
+		return DMAGNETIC2_OK;	// nothing to do
+	}
+
+	pThis->celnum=0;
+	pThis->cmd_num=0;
+	pThis->framecnt=0;
+	memset(pThis->drawChain,0,sizeof(pThis->drawChain));
+
+	//	
+	idx=pThis->offset;      // this has been initialized within the "isanimation()" function
+	idx+=TREESIZE;          // skip the tree at the beginning                                       
+	idx+=(NUM_COLORS*2)+4;          // skip the RGB values (encoded as 2 bytes), and a magic number 
+
+	blocksize=READ_INT16LE(pThis->pGfxBuf,idx+6);
+	idx+=blocksize+8;
+
+	// afterwards, there are n cels
+	pThis->celnum=READ_INT16LE(pThis->pGfxBuf,idx+2);
+	idx+=4;                      
+	for (j=0;j<pThis->celnum;j++)
+	{
+		blocksize=READ_INT16LE(pThis->pGfxBuf,idx+6);
+		idx+=blocksize+8;
+	}
+	//
+	// let the animations begin 
+	//
+	pThis->animation_offset=idx;
+	pThis->animation_num=READ_INT16LE(pThis->pGfxBuf,idx);
+	idx+=4;
+
+	for (j=0;j<pThis->animation_num;j++)
+	{
+		int steps;
+		pThis->animation_offset[j]=idx;
+		steps=READ_INT16LE(pThis->pGfxBuf,idx);
+		idx+=2;			// TODO: What am I skipping here?
+		idx+=2;
+		idx+=8*steps;
+	}
+	idx-=2;	// TODO: I feel like this can be solved differently
+
+
+	// we have reached the beginning of the list of commands for the animations
+	pThis->cmd_offset=idx;
+	cmdsize=READ_INT16LE(pThis->pGfxBuf,idx);	idx+=2;
+	pThis->cmd_num=0;
+	while (cmdsize>0 && pThis->cmd_num<MAXCMDS)
+	{
+		int cmd;
+		pThis->cmd_ptr[pThis->cmd_num]=idx;
+		pThis->cmd_num++;
+		cmd=pThis->pGfxBuf[idx];
+		if (cmd>=0 && cmd<7)
+		{
+			idx+=dMagnetic2_animation_cmdlen[cmd];
+		} else {
+			return DMAGNETIC2_NOK_INVALID_PARAM;	// illegal cmd found: parser error
+		}
+	}
+	pThis->cmd_idx=0;	// when the frames are about to be rendered, start the list of commands at the very beginning
+
+
+	pThis->framecnt=0;	// 0 frame have been rendered
+	return DMAGNETIC2_OK;	
+}
+
+int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast)
+{
+	tdMagnetic2_animation_handle *pThis=(tdMagnetic2_animation_handle*)pHandle;
+	int done;
+	int timeout;
+	int i;
+	*pIsLast=0;
+	done=0;
+
+	// there is a list of commands. go through it, one by one. 
+	// until there is the command to render frames
+	// since the commands have jumps in them, a faulty gfxbuf could result
+	// in an infinite loop.
+	// to break it, there is a timeout.
+
+	// one of the commands is "render <n> frames"
+	while (!done && timeout>0 && pThis->framecnt=0)
+	{
+		unsigned char cmd;
+		int ptr;
+		int tmp;
+		timeout--;
+
+
+		
+		if (pThis->framecnt==0)	// no more frames to render. check the commands
+		{
+#define CMD_END_MARKER          0
+#define CMD_SELECT_ANIMATION    1
+#define CMD_RENDER_FRAMES       2
+#define CMD_JUMP_TO_INSTRUCTION 3
+#define CMD_PAUSE               4       // those commands have never been used (as far as i know...)
+#define CMD_CHANCE_JUMP         5
+#define CMD_JUMP_IF_RUNNING     6
+			ptr=pThis->cmd_ptr[pThis->cmd_idx];	pThis->cmd_idx++;
+			cmd=pThis->pGfxBuf[ptr+0];
+
+			switch(cmd)
+			{
+				case CMD_END_MARKER:
+					*pIsLast=1;
+					return DMAGNETIC_OK;
+				break;
+				case CMD_SELECT_ANIMATION:
+					// animations are a loop. they have a start, a number of cels, and they start somewhere in this loop
+					tmp=pThis->pGfxBuf[ptr+1]-1;
+					pThis->drawChain[tmp].animationidx=	pThis->pGfxBuf[ptr+1]-1;	// kind of redundant
+					pThis->drawChain[tmp].start=		pThis->pGfxBuf[ptr+2]-1;
+					pThis->drawChain[tmp].count=		pThis->pGfxBuf[ptr+3]-1;
+					pThis->drawChain[tmp].current=		pThis->drawChain[tmp].start;	// the current animationidx should be the start
+				break;
+				case CMD_JUMP_TO_INSTRUCTION:
+					pThis->cmd_idx=READ_INT16LE(pThis->pGfxBuf,ptr+1);
+				break;	
+				case CMD_RENDER_FRAMES:	// finally! start rendering frames
+					pThis->framecnt=pThis->pGfxBuf[ptr+1];	// this many, please
+					done=1;
+				break;
+
+				
+				// the next commands have NEVER been used
+				case CMD_PAUSE:
+				case CMD_CHANCE_JUMP:
+				case CMD_JUMP_IF_RUNNING:
+				default:
+					break;
+			}
+		}
+	}
+
+	retval=dMagnetic2_animation_magwin_addcel(pThis,pSmall,pLarge,0,0,0,0);		// draw the background
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	// go through all the animations
+	// draw them on top of each other: animations which are later in the list are in the foreground
+	for (i=0;i<pThis->animation_num;i++)
+	{
+		int ptr;
+		int steps;
+		int xpos,ypos,cel,magic;
+		ptr=pThis->animation_offset[pThis->drawChain[i].animationidx];
+		steps=READ_INT16LE(pThis->pGfxBuf,ptr);
+		if (pThis->drawChain[i].current>=steps)	// the animations are looping
+		{
+			pThis->drawChain[i].current=0;	// start back at the beginning
+		}
+		ptr+=8*pThis->drawChain[i].current+2;
+	
+		xpos= READ_INT16LE(pThis->pGfxBuf,ptr+0);	// where
+		ypos= READ_INT16LE(pThis->pGfxBuf,ptr+2);	// to put
+		cel=  READ_INT16LE(pThis->pGfxBuf,ptr+4);	// which cel?
+		magic=READ_INT16LE(pThis->pGfxBuf,ptr+6);
+
+		if (cel!=0)
+		{
+			retval=dMagnetic2_animation_magwin_addcel(pThis,pSmall,pLarge,cel,xpos,ypos,magic);		// draw the background
+			if (retval!=DMAGNETIC2_OK)
+			{
+				return retval;
+			}
+		}
+		pThis->drawChain[i].count--;
+		pThis->drawChain[i].current++;
+	}
+	pThis->framwcnt--;	// one frame has been rendered. 
+	
+	return DMAGNETIC2_OK;
+	
+}
+
