@@ -27,7 +27,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
 #include <stdlib.h>
-#include "dMagnetic2_errorcodes.h"
+#include "dMagnetic2_graphics.h"		// for the datatypes
+#include "dMagnetic2_shared.h"			// for the macros
+#include "dMagnetic2_errorcodes.h"		// for the error codes
 #include "dMagnetic2_graphics.h"
 
 #define	MAGIC		0x28816
@@ -145,7 +147,7 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 		}
 		pThis->width=	READ_INT16LE(pThis->pGfxBuf,animidx+0);
 		pThis->height=	READ_INT16LE(pThis->pGfxBuf,animidx+2);
-		pThis->celnum=	READ_INT16LE(pTHis->pGfxBuf,animidx+blocksize+8);
+		pThis->celnum=	READ_INT16LE(pThis->pGfxBuf,animidx+blocksize+8);
 	}
 
 	if (celidx>=pThis->celnum)
@@ -163,10 +165,11 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 
 	if (pSmall!=NULL)
 	{
+		int i;
 		pSmall->width=width;
 		pSmall->height=height;
 		pSmall->flags=DMAGNETIC2_GRAPHICS_RENDER_FLAG_NONE;
-		for (i=0;i<MAX_COLORS;i++)
+		for (i=0;i<NUM_COLORS;i++)
 		{
 			pSmall->rgb[i]=pThis->rgbs[i];	
 		}
@@ -179,7 +182,7 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 	}
 
 	// patch away some transparency encoding i have not understood.
-	if (transparency==21 && magic==1) transparency==65536;
+	if (transparency==21 && magic==1) transparency=65536;
 	if (transparency==21) transparency=0;
 
 	// at this point, the transparency denotes the color which is not drawn
@@ -195,7 +198,7 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 		int treeidx;
 		int bitidx;
 
-		bitidx=picidx+8;
+		bitidx=animidx+8;
 		pixcnt=0;
 		rlestate=0;
 		byte=0;
@@ -204,17 +207,18 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 		rlenum=1;
 
 		x=0;
-		if (xpos>=(TWOSCOMPLEMENT-pPicture->width))
+		// negative positions are stored as a twos complement
+		if (xpos>=(TWOSCOMPLEMENT-pThis->width))
 		{
 			xpos=xpos-TWOSCOMPLEMENT;
 		}
-		if (ypos>=(TWOSCOMPLEMENT-pPicture->height))
+		if (ypos>=(TWOSCOMPLEMENT-pThis->height))
 		{
 			ypos=ypos-TWOSCOMPLEMENT;
 		}
 		rlechar=pThis->pGfxBuf[pThis->offset+0x240];
 		// draw until the picture is full, the bit stream is over or the next lines would be drawn outside of the frame
-		while (pixcnt<(width*height) && (bitidx<gfxsize || mask) && ypos<pThis->height)
+		while (pixcnt<(width*height) && (bitidx<pThis->gfxsize || mask) && ypos<pThis->height)
 		{
 			unsigned char branch0,branch1;
 			unsigned char termbyte0,termbyte1;
@@ -227,7 +231,7 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 			branch1=  pThis->pGfxBuf[pThis->offset+0x140+treeidx];
 			if (mask==0)
 			{
-				byte=gfxbuf[bitidx++];
+				byte=pThis->pGfxBuf[bitidx++];
 				mask=0x80;
 			}
 			branch  =(byte&mask)?  branch1:  branch0;
@@ -338,6 +342,7 @@ int dMagnetic2_animation_magwin_isanimation(tdMagnetic2_animation_handle *pThis,
 	idx=4;				// 4 bytes header
 	num_entries=READ_INT16LE(pThis->pGfxBuf,idx),idx+=2;	// 2 bytes number of entries
 
+	// go through the directory
 	for (i=0;i<num_entries && !match;i++)
 	{
 		int j;
@@ -349,7 +354,7 @@ int dMagnetic2_animation_magwin_isanimation(tdMagnetic2_animation_handle *pThis,
 			char c2;
 
 			c1=pThis->pGfxBuf[idx+1];
-			c2=TO_LOWERCASE(pThis->pGfxBuf[picname[j]]);
+			c2=TO_LOWERCASE(picname[j]);
 			j++;
 			if (c1==0 && c2==0x20)
 			{
@@ -579,7 +584,7 @@ int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast)
 		pThis->drawChain[i].count--;
 		pThis->drawChain[i].current++;
 	}
-	pThis->framwcnt--;	// one frame has been rendered. 
+	pThis->framecnt--;	// one frame has been rendered. 
 	
 	return DMAGNETIC2_OK;
 	

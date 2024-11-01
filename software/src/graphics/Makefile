@@ -38,6 +38,7 @@ INCFLAGS=	\
 
 
 SOURCEFILES=	\
+	dMagnetic2_animations_magwin.c	\
 	dMagnetic2_graphics.c	\
 	dMagnetic2_pictures.c	\
 	dMagnetic2_pictures_amstrad_cpc.c	\
