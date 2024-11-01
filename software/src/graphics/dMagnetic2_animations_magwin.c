@@ -69,13 +69,13 @@ typedef struct _tdMagnetic2_animation_handle
 	int length;
 
 	// states for the animation
-	int animation_offset;
 	int animation_num;
 	int cmd_offset;
 	int cmd_num;
 	int cmd_ptr[MAXCMDS];
 	int cmd_idx;
 	int framecnt;
+	int animations_offset[MAXANIMATIONS];
 	tdMagnetic2_animation_drawState drawChain[MAXANIMATIONS];
 	
 } tdMagnetic2_animation_handle;
@@ -105,7 +105,6 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 	int animidx;
 	int j;
 	int blocksize;
-	int celnum;
 	int x;
 	unsigned char linebuf[MAXPICWIDTH];
 	unsigned int rgbs[NUM_COLORS];
@@ -117,7 +116,6 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 	// 2 bytes width
 	// 2 bytes height
 
-	celnum=0;
 	animidx=pThis->offset+TREESIZE+(NUM_COLORS*2)+4;	// skip most of the header
 	memset(pThis->linebuf,0,sizeof(pThis->linebuf));
 
@@ -396,7 +394,6 @@ int dMagnetic2_animation_magwin_start(void *pHandle,char *picname,int *pIsAnimat
 	int j;
 	int cmdsize;
 	int idx;
-	int retval;
 	const int dMagnetic2_animation_cmdlen[7]={	//there are 7 possible commands. each have a different number of bytes 
 		1,              // "END MARKER"
 		4,              // "ANIMATION", animationidx, start, count 
@@ -438,14 +435,14 @@ int dMagnetic2_animation_magwin_start(void *pHandle,char *picname,int *pIsAnimat
 	//
 	// let the animations begin 
 	//
-	pThis->animation_offset=idx;
+//	pThis->animation_offset=idx;
 	pThis->animation_num=READ_INT16LE(pThis->pGfxBuf,idx);
 	idx+=4;
 
 	for (j=0;j<pThis->animation_num;j++)
 	{
 		int steps;
-		pThis->animation_offset[j]=idx;
+		pThis->animations_offset[j]=idx;
 		steps=READ_INT16LE(pThis->pGfxBuf,idx);
 		idx+=2;			// TODO: What am I skipping here?
 		idx+=2;
@@ -468,7 +465,7 @@ int dMagnetic2_animation_magwin_start(void *pHandle,char *picname,int *pIsAnimat
 		{
 			idx+=dMagnetic2_animation_cmdlen[cmd];
 		} else {
-			return DMAGNETIC2_NOK_INVALID_PARAM;	// illegal cmd found: parser error
+			return DMAGNETIC2_INVALID_ANIMATION;	// illegal cmd found: parser error
 		}
 	}
 	pThis->cmd_idx=0;	// when the frames are about to be rendered, start the list of commands at the very beginning
@@ -478,12 +475,13 @@ int dMagnetic2_animation_magwin_start(void *pHandle,char *picname,int *pIsAnimat
 	return DMAGNETIC2_OK;	
 }
 
-int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast)
+int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
 	tdMagnetic2_animation_handle *pThis=(tdMagnetic2_animation_handle*)pHandle;
 	int done;
 	int timeout;
 	int i;
+	int retval;
 	*pIsLast=0;
 	done=0;
 
@@ -492,9 +490,13 @@ int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast)
 	// since the commands have jumps in them, a faulty gfxbuf could result
 	// in an infinite loop.
 	// to break it, there is a timeout.
+	timeout=50000;
 
 	// one of the commands is "render <n> frames"
-	while (!done && timeout>0 && pThis->framecnt=0)
+	// so there are actually two modes of operation:
+	// first, to search for said command, selecting and placing the animations
+	// second, to render <n> frames.
+	while (!done && timeout>0 && pThis->framecnt==0)
 	{
 		unsigned char cmd;
 		int ptr;
@@ -519,7 +521,7 @@ int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast)
 			{
 				case CMD_END_MARKER:
 					*pIsLast=1;
-					return DMAGNETIC_OK;
+					return DMAGNETIC2_OK;
 				break;
 				case CMD_SELECT_ANIMATION:
 					// animations are a loop. they have a start, a number of cels, and they start somewhere in this loop
@@ -560,7 +562,7 @@ int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast)
 		int ptr;
 		int steps;
 		int xpos,ypos,cel,magic;
-		ptr=pThis->animation_offset[pThis->drawChain[i].animationidx];
+		ptr=pThis->animations_offset[pThis->drawChain[i].animationidx];
 		steps=READ_INT16LE(pThis->pGfxBuf,ptr);
 		if (pThis->drawChain[i].current>=steps)	// the animations are looping
 		{

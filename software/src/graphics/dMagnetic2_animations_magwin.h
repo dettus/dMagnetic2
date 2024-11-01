@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int dMagnetic2_animation_magwin_getsize(int *pBytes);
 int dMagnetic2_animation_magwin_init(void *pHandle,unsigned char *pGfxBuf,int gfxsize);
 int dMagnetic2_animation_magwin_start(void *pHandle,char *picname,int *pIsAnimation);
-int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast);
+int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 
 
 #endif
