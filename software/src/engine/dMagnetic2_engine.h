@@ -31,11 +31,12 @@
 #define	DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT	(1<<0)
 #define	DMAGNETIC2_ENGINE_STATUS_NEW_TEXT		(1<<1)
 #define	DMAGNETIC2_ENGINE_STATUS_NEW_TITLE		(1<<2)
-#define	DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE		(1<<3)
-#define	DMAGNETIC2_ENGINE_STATUS_SAVE			(1<<4)
-#define	DMAGNETIC2_ENGINE_STATUS_LOAD			(1<<5)
-#define	DMAGNETIC2_ENGINE_STATUS_RESTART		(1<<6)
-#define	DMAGNETIC2_ENGINE_STATUS_QUIT			(1<<7)
+#define	DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE_NUM	(1<<3)
+#define	DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE_NAME	(1<<4)
+#define	DMAGNETIC2_ENGINE_STATUS_SAVE			(1<<5)
+#define	DMAGNETIC2_ENGINE_STATUS_LOAD			(1<<6)
+#define	DMAGNETIC2_ENGINE_STATUS_RESTART		(1<<7)
+#define	DMAGNETIC2_ENGINE_STATUS_QUIT			(1<<8)
 
 #define	DMAGNETIC2_SIZE_INPUTBUF		256
 #define	DMAGNETIC2_SIZE_OUTPUTBUF		4096
@@ -57,7 +58,8 @@ int dMagnetic2_engine_process(void *pHandle,int singlestep,unsigned int* pStatus
 int dMagnetic2_engine_new_input(void *pHandle,int len,char* pInput,int *pCnt);	
 int dMagnetic2_engine_get_text(void* pHandle,char** ppText);
 int dMagnetic2_engine_get_title(void* pHandle,char** ppTitle);
-int dMagnetic2_engine_get_picture(void* pHandle,char** ppPicname,int *pPicnum);
+int dMagnetic2_engine_get_picture_num(void* pHandle,int *pPicnum);
+int dMagnetic2_engine_get_picture_name(void* pHandle,char** ppPicname);
 int dMagnetic2_engine_get_filename(void* pHandle,char** ppFilename);
 int dMagnetic2_engine_save_game(void* pHandle,int *pSize,void* pContext);
 int dMagnetic2_engine_load_game(void* pHandle,int pSize,void* pContext);

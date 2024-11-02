@@ -260,7 +260,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 				*(pVMLineA->pPictureNum)=DMAGNETIC2_LINEA_PICTURE_NAME;
 				if (datatype==7)	
 				{
-					*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE;	// report the picture
+					*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE_NAME;	// report the picture
 				}
 			}
 			break;
@@ -321,7 +321,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 			{
 				if (pVMLineA->version<4 || pVM68k->d[6]==0)
 				{
-					*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE;
+					*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE_NUM;
 					*(pVMLineA->pPictureNum)=DMAGNETIC2_LINEA_NO_PICTURE;
 					pVMLineA->pPicnameBuf[0]=0;	
 				}
@@ -364,7 +364,7 @@ int dMagnetic2_engine_linea_trapa(tVMLineA* pVMLineA,tVM68k_uword opcode,unsigne
 				picmode=pVM68k->d[1];
 				if (picmode)
 				{
-					*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE;
+					*pStatus|=DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE_NUM;
 					*(pVMLineA->pPictureNum)=picnum;
 					pVMLineA->pPicnameBuf[0]=0;	// the picture has a number, not a name
 			//		snprintf(pVMLineA->pPicnameBuf,DMAGNETIC2_SIZE_PICNAMEBUF,"%02d",picnum);

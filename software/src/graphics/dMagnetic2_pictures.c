@@ -39,54 +39,22 @@
 
 
 #define	MAGICNUM	0x1345abdf
-#define	TMPBUFSIZE	65536		// TODO: how much is needed?
-
-typedef	enum _tGraphic_format
-{
-	DMAGNETIC2_FORMAT_NONE=0,
-	DMAGNETIC2_FORMAT_GFX1,	// MaPi
-	DMAGNETIC2_FORMAT_GFX2,	// MaP2
-	DMAGNETIC2_FORMAT_MSDOS,	// MaP3
-	DMAGNETIC2_FORMAT_MAGWIN,	// MaP4
-	DMAGNETIC2_FORMAT_C64,		// MaP5
-	DMAGNETIC2_FORMAT_AMSTRAD_CPC,	// MaP6
-	DMAGNETIC2_FORMAT_ATARI_XL,	// MaP7
-	DMAGNETIC2_FORMAT_APPLE_II	// MaP8
-} tGraphic_format;
-typedef	struct _tdMagnetic2_picture_handle
-{
-	unsigned int magic;
-	unsigned char *pTmpBuf;
-	unsigned char *pGfxBuf;
-	int gfxsize;
-	int vga0ega1;
-	tGraphic_format format;
-} tdMagnetic2_picture_handle;
+//#define	TMPBUFSIZE	65536		// TODO: how much is needed?
 
 
-int dMagnetic2_pictures_getsize(int *pBytes,int *size_tmpbuf)
+int dMagnetic2_pictures_init(tdMagnetic2_picture_handle *pThis,unsigned char* pTmpBuf)
 {
-	*pBytes=sizeof(tdMagnetic2_picture_handle);
-	*size_tmpbuf=TMPBUFSIZE;
-	return DMAGNETIC2_OK;
-}
-
-int dMagnetic2_pictures_init(void *pHandle,unsigned char* pTmpBuf)
-{
-	tdMagnetic2_picture_handle* pThis=(tdMagnetic2_picture_handle*)pHandle;
 	pThis->magic=MAGICNUM;
 	pThis->pTmpBuf=pTmpBuf;
 	pThis->pGfxBuf=NULL;
 	pThis->format=DMAGNETIC2_FORMAT_NONE;
 	return DMAGNETIC2_OK;
 }
-int dMagnetic2_pictures_set_gfx(void* pHandle,unsigned char* pGfxBuf,int gfxsize,int vga0ega1)
+int dMagnetic2_pictures_set_gfx(tdMagnetic2_picture_handle *pThis,unsigned char* pGfxBuf,int gfxsize)
 {
-	tdMagnetic2_picture_handle* pThis=(tdMagnetic2_picture_handle*)pHandle;
 	pThis->magic=MAGICNUM;
 	pThis->pGfxBuf=pGfxBuf;
 	pThis->gfxsize=gfxsize;
-	pThis->vga0ega1=vga0ega1;
 
 	if (pGfxBuf!=NULL)
 	{
@@ -111,9 +79,8 @@ int dMagnetic2_pictures_set_gfx(void* pHandle,unsigned char* pGfxBuf,int gfxsize
 }
 
 
-int dMagnetic2_pictures_decode_by_picnum(void *pHandle,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
+int dMagnetic2_pictures_decode_by_picnum(tdMagnetic2_picture_handle *pThis,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
-	tdMagnetic2_picture_handle* pThis=(tdMagnetic2_picture_handle*)pHandle;
 	int retval;
 
 	retval=DMAGNETIC2_OK;
@@ -132,14 +99,13 @@ int dMagnetic2_pictures_decode_by_picnum(void *pHandle,int picnum,tdMagnetic2_ca
 	return retval;
 }
 
-int dMagnetic2_pictures_decode_by_picname(void *pHandle,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
+int dMagnetic2_pictures_decode_by_picname(tdMagnetic2_picture_handle *pThis,char* picname,int vga0ega1,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
-	tdMagnetic2_picture_handle* pThis=(tdMagnetic2_picture_handle*)pHandle;
 	int retval;
 	switch (pThis->format)
 	{
 		case DMAGNETIC2_FORMAT_GFX2:		retval=dMagnetic2_gfxloader_gfx2(pThis->pGfxBuf,pThis->gfxsize,picname,pSmall,pLarge);	break;
-		case DMAGNETIC2_FORMAT_MAGWIN:		retval=dMagnetic2_gfxloader_magwin(pThis->pGfxBuf,pThis->gfxsize,picname,pThis->vga0ega1,pSmall,pLarge);	break;
+		case DMAGNETIC2_FORMAT_MAGWIN:		retval=dMagnetic2_gfxloader_magwin(pThis->pGfxBuf,pThis->gfxsize,picname,vga0ega1,pSmall,pLarge);	break;
 		default:
 			retval=DMAGNETIC2_OK;
 			

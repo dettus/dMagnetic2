@@ -182,7 +182,20 @@ int dMagnetic2_engine_get_title(void *pHandle,char** ppTitle)
 	return DMAGNETIC2_OK;
 	
 }
-int dMagnetic2_engine_get_picture(void *pHandle,char** ppPicname,int *pPicnum)
+int dMagnetic2_engine_get_picture_num(void *pHandle,int *pPicnum)
+{
+	tdMagnetic2_engine_handle* pThis=(tdMagnetic2_engine_handle*)pHandle;
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+
+	*pPicnum=pThis->picturenum;
+	pThis->status_flags&=~DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE_NUM;
+	
+	return DMAGNETIC2_OK;
+}
+int dMagnetic2_engine_get_picture_name(void *pHandle,char** ppPicname)
 {
 	tdMagnetic2_engine_handle* pThis=(tdMagnetic2_engine_handle*)pHandle;
 	if (pThis->magic!=MAGIC)
@@ -191,8 +204,7 @@ int dMagnetic2_engine_get_picture(void *pHandle,char** ppPicname,int *pPicnum)
 	}
 
 	*ppPicname=&(pThis->picnamebuf[0]);
-	*pPicnum=pThis->picturenum;
-	pThis->status_flags&=~DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE;
+	pThis->status_flags&=~DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE_NAME;
 	
 	return DMAGNETIC2_OK;
 }	

@@ -29,11 +29,32 @@
 
 #include "dMagnetic2_graphics.h"	// for the datatypes
 
-int dMagnetic2_pictures_getsize(int *pBytes,int *pTmpSize);
-int dMagnetic2_pictures_init(void *pHandle,unsigned char* pTmpBuf);
-int dMagnetic2_pictures_set_gfx(void* pHandle,unsigned char* pGfxBuf,int gfxsize,int vga0ega1);
-int dMagnetic2_pictures_decode_by_picnum(void *pHandle,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
-int dMagnetic2_pictures_decode_by_picname(void *pHandle,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+typedef	enum _tGraphic_format
+{
+	DMAGNETIC2_FORMAT_NONE=0,
+	DMAGNETIC2_FORMAT_GFX1,	// MaPi
+	DMAGNETIC2_FORMAT_GFX2,	// MaP2
+	DMAGNETIC2_FORMAT_MSDOS,	// MaP3
+	DMAGNETIC2_FORMAT_MAGWIN,	// MaP4
+	DMAGNETIC2_FORMAT_C64,		// MaP5
+	DMAGNETIC2_FORMAT_AMSTRAD_CPC,	// MaP6
+	DMAGNETIC2_FORMAT_ATARI_XL,	// MaP7
+	DMAGNETIC2_FORMAT_APPLE_II	// MaP8
+} tGraphic_format;
+typedef	struct _tdMagnetic2_picture_handle
+{
+	unsigned int magic;
+	unsigned char *pTmpBuf;
+	unsigned char *pGfxBuf;
+	int gfxsize;
+	tGraphic_format format;
+} tdMagnetic2_picture_handle;
+
+
+int dMagnetic2_pictures_init(tdMagnetic2_picture_handle *pThis,unsigned char* pTmpBuf);
+int dMagnetic2_pictures_set_gfx(tdMagnetic2_picture_handle *pThis,unsigned char* pGfxBuf,int gfxsize);
+int dMagnetic2_pictures_decode_by_picnum(tdMagnetic2_picture_handle *pThis,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+int dMagnetic2_pictures_decode_by_picname(tdMagnetic2_picture_handle *pThis,char* picname,int vga0ega1,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 
 #endif
 

@@ -44,15 +44,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define	MAXCMDS		256
 #define	MAXANIMATIONS	256
 
-typedef struct _tdMagnetic2_animation_drawState
+typedef struct _tdMagnetic2_animations_drawState
 {
 	int animationidx;
 	int start;
 	int count;
 	int current;
-} tdMagnetic2_animation_drawState;
+} tdMagnetic2_animations_drawState;
 
-typedef struct _tdMagnetic2_animation_handle
+typedef struct _tdMagnetic2_animations_handle
 {
 	int magic;
 	// the information about the current animation
@@ -76,27 +76,27 @@ typedef struct _tdMagnetic2_animation_handle
 	int cmd_idx;
 	int framecnt;
 	int animations_offset[MAXANIMATIONS];
-	tdMagnetic2_animation_drawState drawChain[MAXANIMATIONS];
+	tdMagnetic2_animations_drawState drawChain[MAXANIMATIONS];
 	
-} tdMagnetic2_animation_handle;
+} tdMagnetic2_animations_handle;
 
-int dMagnetic2_animation_magwin_getsize(int *pBytes)
+int dMagnetic2_animations_magwin_init(tdMagnetic2_animations_handle *pThis)
 {
-	*pBytes=sizeof(tdMagnetic2_animation_handle);
+	memset(pThis,0,sizeof(tdMagnetic2_animations_handle));
+	pThis->magic=MAGIC;
 	return DMAGNETIC2_OK;
 }
-int dMagnetic2_animation_magwin_init(void *pHandle,unsigned char *pGfxBuf,int gfxsize)
+
+
+// TODO: check if the gfx format matches
+int dMagnetic2_animations_magin_set_gfx(tdMagnetic2_animations_handle *pThis,unsigned char *pGfxBuf,int gfxsize)
 {
-	tdMagnetic2_animation_handle *pThis=(tdMagnetic2_animation_handle*)pHandle;
-	memset(pThis,0,sizeof(tdMagnetic2_animation_handle));
-	pThis->magic=MAGIC;
 	pThis->pGfxBuf=pGfxBuf;
 	pThis->gfxsize=gfxsize;
 	return DMAGNETIC2_OK;
-	
 }
 
-int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge,
+int dMagnetic2_animations_magwin_addcel(tdMagnetic2_animations_handle *pThis,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge,
 	int celidx,int xpos,int ypos,int magic)
 {
 	int width;
@@ -323,7 +323,7 @@ int dMagnetic2_animation_magwin_addcel(tdMagnetic2_animation_handle *pThis,tdMag
 // FROG (vga)
 // Frog (ega)
 // frog (animation)
-int dMagnetic2_animation_magwin_isanimation(tdMagnetic2_animation_handle *pThis,char* picname)
+int dMagnetic2_animations_magwin_isanimation(tdMagnetic2_animations_handle *pThis,char* picname)
 {
 	int i;
 	int num_entries;
@@ -386,15 +386,14 @@ int dMagnetic2_animation_magwin_isanimation(tdMagnetic2_animation_handle *pThis,
 	return match;
 }
 
-int dMagnetic2_animation_magwin_start(void *pHandle,char *picname,int *pIsAnimation)
+int dMagnetic2_animations_magwin_start(tdMagnetic2_animations_handle *pThis,char *picname,int *pIsAnimation)
 {
-	tdMagnetic2_animation_handle *pThis=(tdMagnetic2_animation_handle*)pHandle;
 	int isanimation;
 	int blocksize;
 	int j;
 	int cmdsize;
 	int idx;
-	const int dMagnetic2_animation_cmdlen[7]={	//there are 7 possible commands. each have a different number of bytes 
+	const int dMagnetic2_animations_cmdlen[7]={	//there are 7 possible commands. each have a different number of bytes 
 		1,              // "END MARKER"
 		4,              // "ANIMATION", animationidx, start, count 
 		2,              // "JUMP", cmdidx
@@ -404,7 +403,7 @@ int dMagnetic2_animation_magwin_start(void *pHandle,char *picname,int *pIsAnimat
 		3               // "JUMP IF RUNNING", addr_lsb, addr_msb
 	};
 
-	isanimation=dMagnetic2_animation_magwin_isanimation(pThis,picname);
+	isanimation=dMagnetic2_animations_magwin_isanimation(pThis,picname);
 	*pIsAnimation=isanimation;
 	if (!isanimation)		// not an animation
 	{
@@ -463,7 +462,7 @@ int dMagnetic2_animation_magwin_start(void *pHandle,char *picname,int *pIsAnimat
 		cmd=pThis->pGfxBuf[idx];
 		if (cmd>=0 && cmd<7)
 		{
-			idx+=dMagnetic2_animation_cmdlen[cmd];
+			idx+=dMagnetic2_animations_cmdlen[cmd];
 		} else {
 			return DMAGNETIC2_INVALID_ANIMATION;	// illegal cmd found: parser error
 		}
@@ -474,10 +473,9 @@ int dMagnetic2_animation_magwin_start(void *pHandle,char *picname,int *pIsAnimat
 	pThis->framecnt=0;	// 0 frame have been rendered
 	return DMAGNETIC2_OK;	
 }
-
-int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
+// TODO: check if there is a valid animation
+int dMagnetic2_animations_magwin_render_frame(tdMagnetic2_animations_handle *pThis,int *pIsLast,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
-	tdMagnetic2_animation_handle *pThis=(tdMagnetic2_animation_handle*)pHandle;
 	int done;
 	int timeout;
 	int i;
@@ -550,7 +548,7 @@ int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast,tdMagnet
 		}
 	}
 
-	retval=dMagnetic2_animation_magwin_addcel(pThis,pSmall,pLarge,0,0,0,0);		// draw the background
+	retval=dMagnetic2_animations_magwin_addcel(pThis,pSmall,pLarge,0,0,0,0);		// draw the background
 	if (retval!=DMAGNETIC2_OK)
 	{
 		return retval;
@@ -577,7 +575,7 @@ int dMagnetic2_animation_magwin_render_frame(void *pHandle,int *pIsLast,tdMagnet
 
 		if (cel!=0)
 		{
-			retval=dMagnetic2_animation_magwin_addcel(pThis,pSmall,pLarge,cel,xpos,ypos,magic);		// draw the background
+			retval=dMagnetic2_animations_magwin_addcel(pThis,pSmall,pLarge,cel,xpos,ypos,magic);		// draw the background
 			if (retval!=DMAGNETIC2_OK)
 			{
 				return retval;

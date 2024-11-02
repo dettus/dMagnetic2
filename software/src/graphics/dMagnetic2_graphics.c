@@ -26,74 +26,118 @@
 
 #include "dMagnetic2_errorcodes.h"
 #include "dMagnetic2_graphics.h"
+#include "dMagnetic2_pictures.h"
+#include "dMagnetic2_animations_magwin.h"
+
 #include <string.h>
 #include <stdio.h>
 
 #define	MAGICNUM	0xbc412ef9
 
 
-#define	MAX_GFX_SIZE	2534116		// wonder.gfx is 2534113 bytes large
+#define	MAX_GFX_SIZE	2534116		// wonder.gfx has 2534113 bytes
 typedef	struct _tHandle_graphics
 {
 	unsigned int	magic;
-
-	int 		gfxsize;
-	unsigned char	*gfxbuf;
-// internal canvas
-	tdMagnetic2_canvas_small	canvas_small;
-// configurations
-	int		vga0ega1;
+	tdMagnetic2_picture_handle hPicture;
+	tdMagnetic2_animations_handle hAnimations;
 } tHandle_graphics;
 
 
-int dMagnetic2_graphics_getSize(int *pBytes)
+int dMagnetic2_graphics_getSize(int *pSize_handle,int *pSize_tmpbuf)
 {
-	*pBytes=sizeof(tHandle_graphics);
+	*pSize_handle=sizeof(tHandle_graphics);
+	*pSize_tmpbuf=16384;			// TODO: how much is really needed?
 	return DMAGNETIC2_OK;
 }
 
-int dMagnetic2_graphics_init(void *pHandle)
+int dMagnetic2_graphics_init(void *pHandle,void *pTmpBuf)
 {
+	int retval;
 	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
 	memset(pThis,0,sizeof(tHandle_graphics));
 	pThis->magic=MAGICNUM;
+	retval=dMagnetic2_pictures_init(&(pThis->hPicture),pTmpBuf);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+
+	retval=dMagnetic2_animations_magwin_init(&(pThis->hAnimations));
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+
+	
 	return DMAGNETIC2_OK;
 }
 
-int dMagnetic2_graphics_check_handle(tHandle_graphics* pThis)
-{
-	int retval;
-
-	retval=DMAGNETIC2_OK;
-	if (pThis->magic!=MAGICNUM)
-	{
-		retval=DMAGNETIC2_ERROR_WRONG_HANDLE;
-	}
-	return retval;
-}
-
-int dMagnetic2_graphics_set_gfx(void *pHandle,int size,unsigned char* pGfx,int vga0ega1)
+int dMagnetic2_graphics_set_gfx(void *pHandle,unsigned char* pGfxBuf,int gfxsize)
 {
 	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
 	int retval;
-	retval=dMagnetic2_graphics_check_handle(pThis);
-	if (retval==DMAGNETIC2_OK)
+	if (pThis->magic!=MAGICNUM)
 	{
-		if (size<=MAX_GFX_SIZE)
-		{
-			pThis->gfxbuf=pGfx;
-			pThis->gfxsize=size;
-			pThis->vga0ega1=vga0ega1;
-		} else {
-			retval=DMAGNETIC2_ERROR_BUFFER_TOO_SMALL;
-		}
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
 	}
+
+	retval=dMagnetic2_pictures_set_gfx(&(pThis->hPicture),pGfxBuf,gfxsize);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	retval=dMagnetic2_animations_magin_set_gfx(&(pThis->hAnimations),pGfxBuf,gfxsize);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+
+	return retval;
+}
+int dMagnetic2_graphics_decode_by_picnum(void *pHandle,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
+{
+	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
+	int retval;
+	if (pThis->magic!=MAGICNUM)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	retval=dMagnetic2_pictures_decode_by_picnum(&(pThis->hPicture),picnum,pSmall,pLarge);
+	return retval;
+}
+#define	VGA0EGA1	0		// TODO
+int dMagnetic2_graphics_decode_by_picname(void *pHandle,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge,int* pIsAnimation)
+{
+	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
+	int retval;
+	if (pThis->magic!=MAGICNUM)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	retval=dMagnetic2_pictures_decode_by_picname(&(pThis->hPicture),picname,VGA0EGA1,pSmall,pLarge);
+	if (retval!=DMAGNETIC2_OK)
+	{
+		return retval;
+	}
+	// check if there is an animation available under this name
+	retval=dMagnetic2_animations_magwin_start(&(pThis->hAnimations),picname,pIsAnimation);
+	return retval;
+}
+int dMagnetic2_graphics_animation_nxtframe(void* pHandle,int *pIsLast,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
+{
+	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
+	int retval;
+	if (pThis->magic!=MAGICNUM)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	retval=dMagnetic2_animations_magwin_render_frame(&(pThis->hAnimations),pIsLast,pSmall,pLarge);
 	return retval;
 }
 
 
-
-
+//////////////////// some converters /////////////////////////////
 int dMagnetic2_graphics_canvas_small_to_xpm(tdMagnetic2_canvas_small *pSmall,char* pxpm,int xpmbufsize)
 {
 	int i;

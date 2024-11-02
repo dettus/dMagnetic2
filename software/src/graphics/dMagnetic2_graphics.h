@@ -66,15 +66,16 @@ typedef struct _tdMagnetic2_canvas_large
 
 
 // API functions for initialization
-int dMagnetic2_graphics_get_size(int *pBytes);
-int dMagnetic2_graphics_init(void *pHandle);
-int dMagnetic2_graphics_set_gfx(void *pHandle,int size,unsigned char* pGfx,int vga0ega1);
+int dMagnetic2_graphics_getSize(int *pSize_handle,int *pSize_tmpbuf);
+int dMagnetic2_graphics_init(void *pHandle,void *pTmpBuf);
+int dMagnetic2_graphics_set_gfx(void *pHandle,unsigned char* pGfxBuf,int gfxsize);
 
 // API functions for drawing
-int dMagnetic2_graphics_set_current_picture(void *pHandle,char* pPicname,int picNum);
-int dMagnetic2_graphics_get_current_type(void* pHandle,char* todo);
-int dMagnetic2_graphics_draw_picture(void* pHandle,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
-int dMagnetic2_graphics_draw_animation(void* pHandle,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge,int *pEnd);
+int dMagnetic2_graphics_decode_by_picnum(void *pHandle,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+int dMagnetic2_graphics_decode_by_picname(void *pHandle,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge,int* pIsAnimation);
+int dMagnetic2_graphics_animation_nxtframe(void* pHandle,int *pIsLast,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+
+// some converters
 int dMagnetic2_graphics_canvas_small_to_xpm(tdMagnetic2_canvas_small *pSmall,char* pxpm,int xpmbufsize);
 
 #endif
