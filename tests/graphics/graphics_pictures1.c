@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "dMagnetic2_errorcodes.h"
-#include "dMagnetic2_pictures.h"	// for the decoder
 #include "dMagnetic2_graphics.h"	// for the xpm function
 
 
@@ -55,7 +54,7 @@ int main(int argc,char** argv)
 	}
 
 
-	retval=dMagnetic2_pictures_getsize(&size_handle,&size_tmpbuf);
+	retval=dMagnetic2_graphics_getsize(&size_handle,&size_tmpbuf);
 	if (retval!=DMAGNETIC2_OK)
 	{
 		return retval;
@@ -65,7 +64,7 @@ int main(int argc,char** argv)
 	tmpbuf=malloc(size_tmpbuf);
 
 	printf("initializing backend\n");
-	retval=dMagnetic2_pictures_init(handle,tmpbuf);
+	retval=dMagnetic2_graphics_init(handle,tmpbuf);
 	if (retval!=DMAGNETIC2_OK)
 	{
 		printf("FAIL!");
@@ -78,7 +77,7 @@ int main(int argc,char** argv)
 	fclose(f);
 	printf("read %d bytes\n",gfxsize);
 
-	retval=dMagnetic2_pictures_set_gfx(handle,gfxbuf,gfxsize,0);	
+	retval=dMagnetic2_graphics_set_gfx(handle,gfxbuf,gfxsize);
 	if (retval!=DMAGNETIC2_OK)
 	{
 		printf("FAIL!");
@@ -92,7 +91,7 @@ int main(int argc,char** argv)
 	
 	for (picnum=0;picnum<32;picnum++)
 	{
-		retval=dMagnetic2_pictures_decode_by_picnum(handle,picnum,&canvas_small,&canvas_large);
+		retval=dMagnetic2_graphics_decode_by_picnum(handle,picnum,&canvas_small,&canvas_large);
 		if (retval==DMAGNETIC2_OK)
 		{
 			char filename[128];

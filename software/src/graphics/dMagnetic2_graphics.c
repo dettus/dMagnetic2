@@ -44,7 +44,7 @@ typedef	struct _tHandle_graphics
 } tHandle_graphics;
 
 
-int dMagnetic2_graphics_getSize(int *pSize_handle,int *pSize_tmpbuf)
+int dMagnetic2_graphics_getsize(int *pSize_handle,int *pSize_tmpbuf)
 {
 	*pSize_handle=sizeof(tHandle_graphics);
 	*pSize_tmpbuf=16384;			// TODO: how much is really needed?

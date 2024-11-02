@@ -66,7 +66,7 @@ typedef struct _tdMagnetic2_canvas_large
 
 
 // API functions for initialization
-int dMagnetic2_graphics_getSize(int *pSize_handle,int *pSize_tmpbuf);
+int dMagnetic2_graphics_getsize(int *pSize_handle,int *pSize_tmpbuf);
 int dMagnetic2_graphics_init(void *pHandle,void *pTmpBuf);
 int dMagnetic2_graphics_set_gfx(void *pHandle,unsigned char* pGfxBuf,int gfxsize);
 
