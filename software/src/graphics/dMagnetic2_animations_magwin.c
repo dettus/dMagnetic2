@@ -535,8 +535,9 @@ int dMagnetic2_animations_magwin_render_frame(tdMagnetic2_animations_handle *pTh
 					tmp=pThis->pGfxBuf[ptr+1]-1;
 					pThis->drawChain[tmp].animationidx=	pThis->pGfxBuf[ptr+1]-1;	// kind of redundant
 					pThis->drawChain[tmp].start=		pThis->pGfxBuf[ptr+2]-1;
-					pThis->drawChain[tmp].count=		pThis->pGfxBuf[ptr+3]-1;
+					pThis->drawChain[tmp].count=		pThis->pGfxBuf[ptr+3];
 					pThis->drawChain[tmp].current=		pThis->drawChain[tmp].start;	// the current animationidx should be the start
+
 				break;
 				case CMD_JUMP_TO_INSTRUCTION:
 					pThis->cmd_idx=READ_INT16LE(pThis->pGfxBuf,ptr+1);
@@ -566,32 +567,36 @@ int dMagnetic2_animations_magwin_render_frame(tdMagnetic2_animations_handle *pTh
 	// draw them on top of each other: animations which are later in the list are in the foreground
 	for (i=0;i<pThis->animation_num;i++)
 	{
-		int ptr;
-		int steps;
-		int xpos,ypos,cel,magic;
-		ptr=pThis->animations_offset[pThis->drawChain[i].animationidx];
-		steps=READ_INT16LE(pThis->pGfxBuf,ptr);
-		if (pThis->drawChain[i].current>=steps)	// the animations are looping
+		if (pThis->drawChain[i].count>0)
 		{
-			pThis->drawChain[i].current=0;	// start back at the beginning
-		}
-		ptr+=8*pThis->drawChain[i].current+2;
-	
-		xpos= READ_INT16LE(pThis->pGfxBuf,ptr+0);	// where
-		ypos= READ_INT16LE(pThis->pGfxBuf,ptr+2);	// to put
-		cel=  READ_INT16LE(pThis->pGfxBuf,ptr+4);	// which cel?
-		magic=READ_INT16LE(pThis->pGfxBuf,ptr+6);
-
-		if (cel!=0)
-		{
-			retval=dMagnetic2_animations_magwin_addcel(pThis,pSmall,pLarge,cel,xpos,ypos,magic);		// draw the background
-			if (retval!=DMAGNETIC2_OK)
+			int ptr;
+			int steps;
+			int xpos,ypos,cel,magic;
+			ptr=pThis->animations_offset[pThis->drawChain[i].animationidx];
+			steps=READ_INT16LE(pThis->pGfxBuf,ptr);
+			if (pThis->drawChain[i].current>=steps)	// the animations are looping
 			{
-				return retval;
+				pThis->drawChain[i].current=0;	// start back at the beginning
 			}
+			ptr+=8*pThis->drawChain[i].current+2;
+
+			xpos= READ_INT16LE(pThis->pGfxBuf,ptr+0);	// where
+			ypos= READ_INT16LE(pThis->pGfxBuf,ptr+2);	// to put
+			cel=  READ_INT16LE(pThis->pGfxBuf,ptr+4);	// which cel?
+			magic=READ_INT16LE(pThis->pGfxBuf,ptr+6);
+
+
+			if (cel!=0)
+			{
+				retval=dMagnetic2_animations_magwin_addcel(pThis,pSmall,pLarge,cel,xpos,ypos,magic);		// draw the background
+				if (retval!=DMAGNETIC2_OK)
+				{
+					return retval;
+				}
+			}
+			pThis->drawChain[i].count--;
+			pThis->drawChain[i].current++;
 		}
-		pThis->drawChain[i].count--;
-		pThis->drawChain[i].current++;
 	}
 	pThis->framecnt--;	// one frame has been rendered. 
 	

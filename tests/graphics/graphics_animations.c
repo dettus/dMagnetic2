@@ -88,28 +88,6 @@ int main(int argc,char** argv)
 	}
 		
 
-	{
-		int isLast;
-		int i;
-		retval=dMagnetic2_graphics_decode_by_picname(handle,"frog",&canvas_small,&canvas_large,&isAnimation);
-		dMagnetic2_graphics_canvas_small_to_xpm(&canvas_small,xpmbuf,sizeof(xpmbuf));
-		f=fopen("eins.xpm","w");
-		fprintf(f,"%s",xpmbuf);
-		fclose(f);
-
-		for (i=0;i<100;i++)
-		{
-			char filename[64];
-			snprintf(filename,64,"%03d.xpm",i);
-			retval=dMagnetic2_graphics_animation_nxtframe(handle,&isLast,&canvas_small,&canvas_large);
-			dMagnetic2_graphics_canvas_small_to_xpm(&canvas_small,xpmbuf,sizeof(xpmbuf));
-			f=fopen(filename,"w");
-			fprintf(f,"%s",xpmbuf);
-			fclose(f);
-		}
-	}
-
-	return 0;
 	
 	for (picnum=0;picnum<128;picnum++)
 	{
@@ -143,7 +121,6 @@ int main(int argc,char** argv)
 
 					framecnt++;
 				} while (!isLast && framecnt<framenum);	
-
 			}
 		}
 	}
