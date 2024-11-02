@@ -340,6 +340,7 @@ int dMagnetic2_animations_magwin_isanimation(tdMagnetic2_animations_handle *pThi
 	idx=4;				// 4 bytes header
 	num_entries=READ_INT16LE(pThis->pGfxBuf,idx),idx+=2;	// 2 bytes number of entries
 
+	match=0;
 	// go through the directory
 	for (i=0;i<num_entries && !match;i++)
 	{
@@ -351,7 +352,7 @@ int dMagnetic2_animations_magwin_isanimation(tdMagnetic2_animations_handle *pThi
 			char c1;
 			char c2;
 
-			c1=pThis->pGfxBuf[idx+1];
+			c1=pThis->pGfxBuf[idx+j];
 			c2=TO_LOWERCASE(picname[j]);
 			j++;
 			if (c1==0 && c2==0x20)

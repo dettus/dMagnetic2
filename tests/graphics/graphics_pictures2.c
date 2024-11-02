@@ -43,6 +43,7 @@ int main(int argc,char** argv)
 	int gfxsize;
 	int retval;
 	int picnum;
+	int isAnimation;
 	tdMagnetic2_canvas_small canvas_small;
 	tdMagnetic2_canvas_large canvas_large;
 	FILE *f;
@@ -90,13 +91,11 @@ int main(int argc,char** argv)
 	{
 		char picname[7];
 
-//		retval=dMagnetic2_graphics_decode_by_picnum(handle,picnum,&canvas_small,&canvas_large);
 		retval=dMagnetic2_graphics_getpicname(handle,picname,picnum);
 		if (picname[0])
 		{	
-			int isAnimation;
 			retval=dMagnetic2_graphics_decode_by_picname(handle,picname,&canvas_small,&canvas_large,&isAnimation);
-			printf("%3d> %s %s\n",picnum,picname,isAnimation?"animation":"picture");
+			printf("%3d> %-6s %s\n",picnum,picname,isAnimation?"animation":"picture");
 
 			if (retval==DMAGNETIC2_OK)
 			{
