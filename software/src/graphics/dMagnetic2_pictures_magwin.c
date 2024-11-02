@@ -195,6 +195,7 @@ int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,char* picname,
 	}
 	if (offset!=-1 && length!=-1) found=1;
 
+	offset=677698;
 	if (found)
 	{
 		int treestart;
@@ -265,6 +266,7 @@ int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,char* picname,
 			// the entry in the table could either be a branch or a terminal symbol
 			branch0=gfxbuf[treestart+0x20 +treeidx];
 			branch1=gfxbuf[treestart+0x140+treeidx];
+
 
 			if (mask==0)
 			{
@@ -338,7 +340,7 @@ int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,char* picname,
 					}
 				}
 				treeidx=0;	// go back to the start;
-			} else {	// not a terminal symbol. keep following the branches
+			} else {	// not a terminal symbol. keep following the branchesa
 				treeidx=branch;
 			}
 		}

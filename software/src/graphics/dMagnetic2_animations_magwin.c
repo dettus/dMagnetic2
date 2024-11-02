@@ -27,6 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "dMagnetic2_graphics.h"		// for the datatypes
 #include "dMagnetic2_shared.h"			// for the macros
 #include "dMagnetic2_errorcodes.h"		// for the error codes
@@ -106,8 +107,6 @@ int dMagnetic2_animations_magwin_addcel(tdMagnetic2_animations_handle *pThis,tdM
 	int j;
 	int blocksize;
 	int x;
-	unsigned char linebuf[MAXPICWIDTH];
-	unsigned int rgbs[NUM_COLORS];
 
 	// the header of a picture is
 	// 609 bytes Tree
@@ -145,27 +144,35 @@ int dMagnetic2_animations_magwin_addcel(tdMagnetic2_animations_handle *pThis,tdM
 		}
 		pThis->width=	READ_INT16LE(pThis->pGfxBuf,animidx+0);
 		pThis->height=	READ_INT16LE(pThis->pGfxBuf,animidx+2);
-		pThis->celnum=	READ_INT16LE(pThis->pGfxBuf,animidx+blocksize+8);
 	}
+	// skip the blocks to get to the proper cel
 
-	if (celidx>=pThis->celnum)
+	for (j=0;j<celidx;j++)
 	{
-		return DMAGNETIC2_GRAPHICS_WRONG_CEL;
+		blocksize=READ_INT16LE(pThis->pGfxBuf,animidx+6);
+		animidx+=blocksize+8;
+		if (j==0)
+		{
+			pThis->celnum=READ_INT16LE(pThis->pGfxBuf,animidx+2);
+			animidx+=4;
+			if (pThis->celnum<celidx)
+			{
+				return DMAGNETIC2_INVALID_ANIMATION;
+			}
+		}
 	}
-
-	animidx+=4;	// the first cel has some information
-	animidx+=(celidx*(blocksize+8));	// the other information is stored in blocks with some heaeders
 
 	width=	READ_INT16LE(pThis->pGfxBuf,animidx+0);
 	height= READ_INT16LE(pThis->pGfxBuf,animidx+2);
 	transparency=	READ_INT16LE(pThis->pGfxBuf,animidx+4);
 	blocksize=	READ_INT16LE(pThis->pGfxBuf,animidx+6);
 
+
 	if (pSmall!=NULL)
 	{
 		int i;
-		pSmall->width=width;
-		pSmall->height=height;
+		pSmall->width=pThis->width;
+		pSmall->height=pThis->height;
 		pSmall->flags=DMAGNETIC2_GRAPHICS_RENDER_FLAG_NONE;
 		for (i=0;i<NUM_COLORS;i++)
 		{
@@ -174,8 +181,8 @@ int dMagnetic2_animations_magwin_addcel(tdMagnetic2_animations_handle *pThis,tdM
 	}
 	if (pLarge!=NULL)
 	{
-		pLarge->width=width;
-		pLarge->height=height;
+		pLarge->width=pThis->width;
+		pLarge->height=pThis->height;
 		pLarge->flags=DMAGNETIC2_GRAPHICS_RENDER_FLAG_NONE;
 	}
 
@@ -284,7 +291,7 @@ int dMagnetic2_animations_magwin_addcel(tdMagnetic2_animations_handle *pThis,tdM
 						for (i=0;i<width;i++)
 						{
 							int pnew;
-							pnew=linebuf[i];
+							pnew=pThis->linebuf[i];
 							// do not draw "transparent" pixels.
 							// and only draw, if the pixel would be inside the picture
 							if (ypos>=0 && ypos<=pThis->height && (i+xpos)>=0 && (i+xpos)<pThis->width && pnew!=transparency)
@@ -297,7 +304,7 @@ int dMagnetic2_animations_magwin_addcel(tdMagnetic2_animations_handle *pThis,tdM
 								} 
 								if (pLarge!=NULL)
 								{
-									pLarge->rgbpixels[c]=rgbs[pnew];
+									pLarge->rgbpixels[c]=pThis->rgbs[pnew];
 								}
 							}
 						}
@@ -370,6 +377,7 @@ int dMagnetic2_animations_magwin_isanimation(tdMagnetic2_animations_handle *pThi
 			idx+=DIR_BYTES_NAME;
 			pThis->offset=READ_INT32LE(pThis->pGfxBuf,idx);	idx+=DIR_BYTES_OFFSET;	
 			pThis->length=READ_INT32LE(pThis->pGfxBuf,idx);	idx+=DIR_BYTES_LENGTH;
+
 		} else {
 			idx+=DIR_BYTES_ENTRY;
 		}
