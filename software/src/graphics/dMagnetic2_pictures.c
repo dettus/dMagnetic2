@@ -113,4 +113,18 @@ int dMagnetic2_pictures_decode_by_picname(tdMagnetic2_picture_handle *pThis,char
 	return retval;
 }
 
+int dMagnetic2_pictures_getpicname(tdMagnetic2_picture_handle *pThis,char* picname,int picnum)
+{
+	int retval;
+	picname[0]=0;
+	switch (pThis->format)
+	{
+		case DMAGNETIC2_FORMAT_GFX2:		retval=dMagnetic2_gfxloader_gfx2_getpicname(pThis->pGfxBuf,picname,picnum); break;
+		case DMAGNETIC2_FORMAT_MAGWIN:		retval=dMagnetic2_gfxloader_magwin_getpicname(pThis->pGfxBuf,picname,picnum); break;
+		default:
+			retval=DMAGNETIC2_OK;
+			
+	}
 
+	return retval;	
+}

@@ -29,6 +29,7 @@
 
 #include "dMagnetic2_graphics.h"	// for the datatypes
 
+int dMagnetic2_gfxloader_magwin_getpicname(unsigned char* gfxbuf,char* picname,int picnum);	// helper function
 int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,char* picname,int egamode,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 
 #endif

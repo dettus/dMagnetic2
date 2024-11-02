@@ -55,6 +55,7 @@ int dMagnetic2_pictures_init(tdMagnetic2_picture_handle *pThis,unsigned char* pT
 int dMagnetic2_pictures_set_gfx(tdMagnetic2_picture_handle *pThis,unsigned char* pGfxBuf,int gfxsize);
 int dMagnetic2_pictures_decode_by_picnum(tdMagnetic2_picture_handle *pThis,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 int dMagnetic2_pictures_decode_by_picname(tdMagnetic2_picture_handle *pThis,char* picname,int vga0ega1,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+int dMagnetic2_pictures_getpicname(tdMagnetic2_picture_handle *pThis,char* picname,int picnum);		// helper function
 
 #endif
 

@@ -71,6 +71,26 @@
 // the xor is being performed line by line.
 //
 // note that the end of the image comes BEFORE the end of the bitstream. (due to a bug in the encoder)
+#include <string.h>
+
+int dMagnetic2_gfxloader_magwin_getpicname(unsigned char* gfxbuf,char* picname,int picnum)
+{
+	int idx;
+	int entrynum;
+	entrynum=READ_INT16BE(gfxbuf,4)/14;
+	if (picnum>=entrynum)
+	{
+		picname[0]=0;
+		return DMAGNETIC2_OK;
+	}
+
+	idx=4+2+picnum*(6+4+4);		// skip the header, the number of entries. and each entry has 6 Bytes name, 4 bytes offset, 4 bytes length
+	memcpy(picname,&gfxbuf[idx],6);	
+	picname[6]=0;			// make sure that it is zero-terminated
+
+
+	return DMAGNETIC2_OK;
+}
 int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,char* picname,int egamode,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
 #define	SIZEOFTREE	609

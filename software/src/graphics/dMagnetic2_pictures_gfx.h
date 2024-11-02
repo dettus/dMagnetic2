@@ -32,6 +32,7 @@
 // it is also the format for the Acron Archimedes and Amiga releases.
 int dMagnetic2_gfxloader_gfx1(unsigned char* gfxbuf,int gfxsize,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 int dMagnetic2_gfxloader_gfx2(unsigned char* gfxbuf,int gfxsize,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+int dMagnetic2_gfxloader_gfx2_getpicname(unsigned char* gfxbuf,char* picname,int picnum);		// helper function
 
 
 #endif

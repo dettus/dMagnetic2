@@ -135,7 +135,18 @@ int dMagnetic2_graphics_animation_nxtframe(void* pHandle,int *pIsLast,tdMagnetic
 	retval=dMagnetic2_animations_magwin_render_frame(&(pThis->hAnimations),pIsLast,pSmall,pLarge);
 	return retval;
 }
-
+int dMagnetic2_graphics_getpicname(void* pHandle,char* picname,int picnum)
+{
+	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
+	int retval;
+	if (pThis->magic!=MAGICNUM)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	retval=dMagnetic2_pictures_getpicname(&(pThis->hPicture),picname,picnum);
+	return retval;
+}
+int dMagnetic2_gfxloader_magwin_getpicname(unsigned char* gfxbuf,char* picname,int picnum);	// helper function
 
 //////////////////// some converters /////////////////////////////
 int dMagnetic2_graphics_canvas_small_to_xpm(tdMagnetic2_canvas_small *pSmall,char* pxpm,int xpmbufsize)

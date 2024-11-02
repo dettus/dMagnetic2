@@ -33,5 +33,6 @@
   make
 )
 cc -g -o graphics_pictures1.app graphics_pictures1.c -I../../software/src -I../../software/include -I../../software/src/graphics -L../../software/src/graphics -ldmagnetic2_graphics
+cc -g -o graphics_pictures2.app graphics_pictures2.c -I../../software/src -I../../software/include -I../../software/src/graphics -L../../software/src/graphics -ldmagnetic2_graphics
 
 

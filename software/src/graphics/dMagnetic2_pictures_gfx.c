@@ -25,6 +25,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdlib.h>
+#include <string.h>
 #include "dMagnetic2_graphics.h"	// for the datatypes
 #include "dMagnetic2_shared.h"		// for the macros
 #include "dMagnetic2_errorcodes.h"			// for the error codes
@@ -340,4 +341,23 @@ int dMagnetic2_gfxloader_gfx2(unsigned char* gfxbuf,int gfxsize,char* picname,td
 	return retval;
 }
 
+int dMagnetic2_gfxloader_gfx2_getpicname(unsigned char* gfxbuf,char* picname,int picnum)
+{
+	int idx;
+	int entrynum;
+	entrynum=READ_INT16BE(gfxbuf,4)/16;
+	if (picnum>=entrynum)
+	{
+		picname[0]=0;
+		return DMAGNETIC2_OK;
+	}
+
+	idx=4+2+picnum*(6+4+4+2);		// skip the header, the number of entries. and each entry has 6 Bytes name, 4 bytes offset, 4 bytes length, 2 bytes UNKNOWN
+	memcpy(picname,&gfxbuf[idx],6);	
+	picname[6]=0;			// make sure that it is zero-terminated
+
+
+	return DMAGNETIC2_OK;
+
+}
 

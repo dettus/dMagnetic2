@@ -74,6 +74,7 @@ int dMagnetic2_graphics_set_gfx(void *pHandle,unsigned char* pGfxBuf,int gfxsize
 int dMagnetic2_graphics_decode_by_picnum(void *pHandle,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 int dMagnetic2_graphics_decode_by_picname(void *pHandle,char* picname,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge,int* pIsAnimation);
 int dMagnetic2_graphics_animation_nxtframe(void* pHandle,int *pIsLast,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
+int dMagnetic2_graphics_getpicname(void* pHandle,char* picname,int picnum);
 
 // some converters
 int dMagnetic2_graphics_canvas_small_to_xpm(tdMagnetic2_canvas_small *pSmall,char* pxpm,int xpmbufsize);
