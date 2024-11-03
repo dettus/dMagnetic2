@@ -411,17 +411,18 @@ int dMagnetic2_animations_magwin_start(tdMagnetic2_animations_handle *pThis,char
 		4,              // "CHANCE JUMP", chance, addr_lsb, addr_msb
 		3               // "JUMP IF RUNNING", addr_lsb, addr_msb
 	};
-
+	
 	isanimation=dMagnetic2_animations_magwin_isanimation(pThis,picname);
 	*pIsAnimation=isanimation;
 	if (!isanimation)		// not an animation
 	{
 		return DMAGNETIC2_OK;	// nothing to do
 	}
-
+	pThis->cmd_idx=0;
 	pThis->celnum=0;
 	pThis->cmd_num=0;
 	pThis->framecnt=0;
+	memset(pThis->cmd_ptr,0,sizeof(pThis->cmd_ptr));
 	memset(pThis->drawChain,0,sizeof(pThis->drawChain));
 
 	//	
