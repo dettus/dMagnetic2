@@ -111,6 +111,7 @@ int dMagnetic2_graphics_decode_by_picname(void *pHandle,char* picname,tdMagnetic
 {
 	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
 	int retval;
+	*pIsAnimation=0;
 	if (pThis->magic!=MAGICNUM)
 	{
 		return DMAGNETIC2_ERROR_WRONG_HANDLE;
