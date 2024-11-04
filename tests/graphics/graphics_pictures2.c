@@ -52,6 +52,7 @@ int main(int argc,char** argv)
 	{
 		printf("PLEASE RUN WITH %s INPUT.gfx PREFIX\n",argv[0]);
 		printf("   which will generate files such as PREFIX_frog.xpm\n");
+		return 1;
 	}
 
 

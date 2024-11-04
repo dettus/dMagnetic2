@@ -374,10 +374,16 @@ int dMagnetic2_animations_magwin_isanimation(tdMagnetic2_animations_handle *pThi
 		// as long as we are in the directory, we might as well store the offset and the length
 		if (match)
 		{
+			unsigned int magic;
 			idx+=DIR_BYTES_NAME;
 			pThis->offset=READ_INT32LE(pThis->pGfxBuf,idx);	idx+=DIR_BYTES_OFFSET;	
 			pThis->length=READ_INT32LE(pThis->pGfxBuf,idx);	idx+=DIR_BYTES_LENGTH;
 
+			magic=READ_INT32LE(pThis->pGfxBuf,pThis->offset+pThis->length-4);
+			if (magic==0x5ed0)	// static pictures end with this magic value
+			{
+				match=0;
+			}
 		} else {
 			idx+=DIR_BYTES_ENTRY;
 		}
@@ -385,12 +391,6 @@ int dMagnetic2_animations_magwin_isanimation(tdMagnetic2_animations_handle *pThi
 	// double check
 	if (match)
 	{
-		unsigned int magic;
-		magic=READ_INT32LE(pThis->pGfxBuf,pThis->offset+pThis->length-4);
-		if (magic==0x5ed0)	// static pictures end with this magic value
-		{
-			match=0;
-		}
 	}
 	return match;
 }

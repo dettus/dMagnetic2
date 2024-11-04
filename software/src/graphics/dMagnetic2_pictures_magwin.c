@@ -195,7 +195,6 @@ int dMagnetic2_gfxloader_magwin(unsigned char* gfxbuf,int gfxsize,char* picname,
 	}
 	if (offset!=-1 && length!=-1) found=1;
 
-	offset=677698;
 	if (found)
 	{
 		int treestart;
