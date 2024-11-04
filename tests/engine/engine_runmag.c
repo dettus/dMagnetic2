@@ -91,13 +91,21 @@ int main(int argc,char** argv)
 			retval=dMagnetic2_engine_get_text(handle,&pText);
 			printf("[%s]\x1b[0m retval:%d\n",pText,retval);	
 		}
-		if (status&DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE)
+		if (status&DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE_NUM)
 		{
 			char *pPicname;
 			int picnum;
-			printf("\x1b[1;37;43mNEW PICTURE");
-			retval=dMagnetic2_engine_get_picture(handle,&pPicname,&picnum);
-			printf("[%s]/%d\x1b[0m retval:%d\n",pPicname,picnum,retval);
+			printf("\x1b[1;37;43mNEW PICTURE NUMBER");
+			retval=dMagnetic2_engine_get_picture_num(handle,&picnum);
+			printf("%d\x1b[0m retval:%d\n",picnum,retval);
+		}
+		if (status&DMAGNETIC2_ENGINE_STATUS_NEW_PICTURE_NAME)
+		{
+			char *pPicname;
+			int picnum;
+			printf("\x1b[1;37;43mNEW PICTURE NAME");
+			retval=dMagnetic2_engine_get_picture_name(handle,&pPicname);
+			printf("[%s]\x1b[0m retval:%d\n",pPicname,retval);
 		}
 		if (status&DMAGNETIC2_ENGINE_STATUS_WAITING_FOR_INPUT)
 		{
