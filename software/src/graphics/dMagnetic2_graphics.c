@@ -55,6 +55,10 @@ int dMagnetic2_graphics_init(void *pHandle,void *pTmpBuf)
 {
 	int retval;
 	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
+	if (pThis==NULL)
+	{
+		return DMAGNETIC2_ERROR_NULLPTR;
+	}
 	memset(pThis,0,sizeof(tHandle_graphics));
 	pThis->magic=MAGICNUM;
 	retval=dMagnetic2_pictures_init(&(pThis->hPicture),pTmpBuf);
@@ -77,6 +81,10 @@ int dMagnetic2_graphics_set_gfx(void *pHandle,unsigned char* pGfxBuf,int gfxsize
 {
 	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
 	int retval;
+	if (pThis==NULL)
+	{
+		return DMAGNETIC2_ERROR_NULLPTR;
+	}
 	if (pThis->magic!=MAGICNUM)
 	{
 		return DMAGNETIC2_ERROR_WRONG_HANDLE;
@@ -87,7 +95,7 @@ int dMagnetic2_graphics_set_gfx(void *pHandle,unsigned char* pGfxBuf,int gfxsize
 	{
 		return retval;
 	}
-	retval=dMagnetic2_animations_magin_set_gfx(&(pThis->hAnimations),pGfxBuf,gfxsize);
+	retval=dMagnetic2_animations_magwin_set_gfx(&(pThis->hAnimations),pGfxBuf,gfxsize);
 	if (retval!=DMAGNETIC2_OK)
 	{
 		return retval;
@@ -99,6 +107,10 @@ int dMagnetic2_graphics_decode_by_picnum(void *pHandle,int picnum,tdMagnetic2_ca
 {
 	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
 	int retval;
+	if (pThis==NULL)
+	{
+		return DMAGNETIC2_ERROR_NULLPTR;
+	}
 	if (pThis->magic!=MAGICNUM)
 	{
 		return DMAGNETIC2_ERROR_WRONG_HANDLE;
@@ -111,6 +123,10 @@ int dMagnetic2_graphics_decode_by_picname(void *pHandle,char* picname,tdMagnetic
 {
 	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
 	int retval;
+	if (pThis==NULL || picname==NULL || pIsAnimation==NULL)	
+	{
+		return DMAGNETIC2_ERROR_NULLPTR;
+	}
 	*pIsAnimation=0;
 	if (pThis->magic!=MAGICNUM)
 	{
@@ -129,6 +145,10 @@ int dMagnetic2_graphics_animation_nxtframe(void* pHandle,int *pIsLast,tdMagnetic
 {
 	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
 	int retval;
+	if (pThis==NULL)
+	{
+		return DMAGNETIC2_ERROR_NULLPTR;
+	}
 	if (pThis->magic!=MAGICNUM)
 	{
 		return DMAGNETIC2_ERROR_WRONG_HANDLE;
@@ -140,6 +160,10 @@ int dMagnetic2_graphics_getpicname(void* pHandle,char* picname,int picnum)
 {
 	tHandle_graphics* pThis=(tHandle_graphics*)pHandle;
 	int retval;
+	if (pThis==NULL || picname==NULL)
+	{
+		return DMAGNETIC2_ERROR_NULLPTR;
+	}
 	if (pThis->magic!=MAGICNUM)
 	{
 		return DMAGNETIC2_ERROR_WRONG_HANDLE;
@@ -158,6 +182,7 @@ int dMagnetic2_graphics_canvas_small_to_xpm(tdMagnetic2_canvas_small *pSmall,cha
 	int width;
 	int height;
 	int cols;
+	
 
 	width=pSmall->width;
 	height=pSmall->height;

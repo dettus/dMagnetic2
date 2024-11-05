@@ -38,13 +38,13 @@
 #include "dMagnetic2_pictures_msdos.h"		// Header MaP3
 
 
-#define	MAGICNUM	0x1345abdf
+#define	MAGIC	0x1345abdf
 //#define	TMPBUFSIZE	65536		// TODO: how much is needed?
 
 
 int dMagnetic2_pictures_init(tdMagnetic2_picture_handle *pThis,unsigned char* pTmpBuf)
 {
-	pThis->magic=MAGICNUM;
+	pThis->magic=MAGIC;
 	pThis->pTmpBuf=pTmpBuf;
 	pThis->pGfxBuf=NULL;
 	pThis->format=DMAGNETIC2_FORMAT_NONE;
@@ -52,7 +52,11 @@ int dMagnetic2_pictures_init(tdMagnetic2_picture_handle *pThis,unsigned char* pT
 }
 int dMagnetic2_pictures_set_gfx(tdMagnetic2_picture_handle *pThis,unsigned char* pGfxBuf,int gfxsize)
 {
-	pThis->magic=MAGICNUM;
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+
 	pThis->pGfxBuf=pGfxBuf;
 	pThis->gfxsize=gfxsize;
 
@@ -82,6 +86,14 @@ int dMagnetic2_pictures_set_gfx(tdMagnetic2_picture_handle *pThis,unsigned char*
 int dMagnetic2_pictures_decode_by_picnum(tdMagnetic2_picture_handle *pThis,int picnum,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
 	int retval;
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	if (pThis->pGfxBuf==NULL)
+	{
+		return DMAGNETIC2_OK;	// nothing loaded? nothing to do
+	}
 
 	retval=DMAGNETIC2_OK;
 	switch (pThis->format)
@@ -102,6 +114,15 @@ int dMagnetic2_pictures_decode_by_picnum(tdMagnetic2_picture_handle *pThis,int p
 int dMagnetic2_pictures_decode_by_picname(tdMagnetic2_picture_handle *pThis,char* picname,int vga0ega1,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge)
 {
 	int retval;
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	if (pThis->pGfxBuf==NULL)
+	{
+		return DMAGNETIC2_OK;	// nothing loaded? nothing to do
+	}
+
 	switch (pThis->format)
 	{
 		case DMAGNETIC2_FORMAT_GFX2:		retval=dMagnetic2_gfxloader_gfx2(pThis->pGfxBuf,pThis->gfxsize,picname,pSmall,pLarge);	break;
@@ -117,6 +138,15 @@ int dMagnetic2_pictures_getpicname(tdMagnetic2_picture_handle *pThis,char* picna
 {
 	int retval;
 	picname[0]=0;
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	if (pThis->pGfxBuf==NULL)
+	{
+		return DMAGNETIC2_OK;	// nothing loaded? nothing to do
+	}
+
 	switch (pThis->format)
 	{
 		case DMAGNETIC2_FORMAT_GFX2:		retval=dMagnetic2_gfxloader_gfx2_getpicname(pThis->pGfxBuf,picname,picnum); break;

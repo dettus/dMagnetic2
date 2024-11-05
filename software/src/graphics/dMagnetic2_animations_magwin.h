@@ -76,7 +76,7 @@ typedef struct _tdMagnetic2_animations_handle
 
 
 int dMagnetic2_animations_magwin_init(tdMagnetic2_animations_handle *pThis);
-int dMagnetic2_animations_magin_set_gfx(tdMagnetic2_animations_handle *pThis,unsigned char *pGfxBuf,int gfxsize);
+int dMagnetic2_animations_magwin_set_gfx(tdMagnetic2_animations_handle *pThis,unsigned char *pGfxBuf,int gfxsize);
 int dMagnetic2_animations_magwin_start(tdMagnetic2_animations_handle *pThis,char *picname,int *pIsAnimation);
 int dMagnetic2_animations_magwin_render_frame(tdMagnetic2_animations_handle *pThis,int *pIsLast,tdMagnetic2_canvas_small *pSmall,tdMagnetic2_canvas_large *pLarge);
 

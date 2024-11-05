@@ -85,13 +85,18 @@ int dMagnetic2_animations_magwin_init(tdMagnetic2_animations_handle *pThis)
 {
 	memset(pThis,0,sizeof(tdMagnetic2_animations_handle));
 	pThis->magic=MAGIC;
+	pThis->pGfxBuf=NULL;
 	return DMAGNETIC2_OK;
 }
 
 
 // TODO: check if the gfx format matches
-int dMagnetic2_animations_magin_set_gfx(tdMagnetic2_animations_handle *pThis,unsigned char *pGfxBuf,int gfxsize)
+int dMagnetic2_animations_magwin_set_gfx(tdMagnetic2_animations_handle *pThis,unsigned char *pGfxBuf,int gfxsize)
 {
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
 	pThis->pGfxBuf=pGfxBuf;
 	pThis->gfxsize=gfxsize;
 	return DMAGNETIC2_OK;
@@ -114,6 +119,14 @@ int dMagnetic2_animations_magwin_addcel(tdMagnetic2_animations_handle *pThis,tdM
 	// 4 bytes??
 	// 2 bytes width
 	// 2 bytes height
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	if (pThis->pGfxBuf==NULL)
+	{
+		return DMAGNETIC2_OK;	// nothing to do
+	}
 
 	animidx=pThis->offset+TREESIZE+(NUM_COLORS*2)+4;	// skip most of the header
 	memset(pThis->linebuf,0,sizeof(pThis->linebuf));
@@ -344,6 +357,15 @@ int dMagnetic2_animations_magwin_isanimation(tdMagnetic2_animations_handle *pThi
 #define TO_LOWERCASE(c)         ((c)|0x20)              // lower case characters have bit 5 set.
 #define TO_UPPERCASE(c)         ((c)&0x5f)              // upper case characters do not have bit 5 set.
 
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	if (pThis->pGfxBuf==NULL)
+	{
+		return DMAGNETIC2_OK;	// nothing loaded? nothing to do
+	}
+
 	idx=4;				// 4 bytes header
 	num_entries=READ_INT16LE(pThis->pGfxBuf,idx),idx+=2;	// 2 bytes number of entries
 
@@ -411,6 +433,15 @@ int dMagnetic2_animations_magwin_start(tdMagnetic2_animations_handle *pThis,char
 		4,              // "CHANCE JUMP", chance, addr_lsb, addr_msb
 		3               // "JUMP IF RUNNING", addr_lsb, addr_msb
 	};
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	if (pThis->pGfxBuf==NULL)
+	{
+		return DMAGNETIC2_OK;	// nothing loaded? nothing to do
+	}
+
 	
 	isanimation=dMagnetic2_animations_magwin_isanimation(pThis,picname);
 	*pIsAnimation=isanimation;
@@ -490,6 +521,17 @@ int dMagnetic2_animations_magwin_render_frame(tdMagnetic2_animations_handle *pTh
 	int timeout;
 	int i;
 	int retval;
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	if (pThis->pGfxBuf==NULL)
+	{
+		return DMAGNETIC2_OK;	// nothing loaded? nothing to do
+	}
+
+
+
 	*pIsLast=0;
 	done=0;
 
