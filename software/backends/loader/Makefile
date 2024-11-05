@@ -33,8 +33,8 @@ PROJ_HOME=../../
 
 INCFLAGS=	\
 	-I$(PROJ_HOME)/include	\
-	-I$(PROJ_HOME)/src	\
-	-I$(PROJ_HOME)/src/shared	\
+	-I$(PROJ_HOME)/backends	\
+	-I$(PROJ_HOME)/backends/shared	\
 
 
 SOURCEFILES=	\

@@ -32,29 +32,32 @@ CFLAGS+=-Wall
 PROJ_HOME=../../
 
 INCFLAGS=	\
-	-I.	\
 	-I$(PROJ_HOME)/include	\
-	-I$(PROJ_HOME)/src	\
-	-I$(PROJ_HOME)/src/shared	\
+	-I$(PROJ_HOME)/backends	\
+	-I$(PROJ_HOME)/backends/shared	\
 
 
 SOURCEFILES=	\
-	dMagnetic2_engine.c				\
-	dMagnetic2_engine_linea.c			\
-	dMagnetic2_engine_linea_textconversion.c	\
-	dMagnetic2_engine_vm68k.c			\
-	dMagnetic2_engine_vm68k_decode.c		\
-	dMagnetic2_engine_vm68k_loadstore.c		\
+	dMagnetic2_animations_magwin.c	\
+	dMagnetic2_graphics.c	\
+	dMagnetic2_pictures.c	\
+	dMagnetic2_pictures_amstrad_cpc.c	\
+	dMagnetic2_pictures_appleii.c	\
+	dMagnetic2_pictures_atarixl.c	\
+	dMagnetic2_pictures_c64.c	\
+	dMagnetic2_pictures_gfx.c	\
+	dMagnetic2_pictures_magwin.c	\
+	dMagnetic2_pictures_msdos.c	\
 
 OBJFILES=${SOURCEFILES:.c=.o}
 
-all: libdmagnetic2_engine.a
+all: libdmagnetic2_graphics.a
 
 clean:
-	rm -f $(OBJFILES) libdmagnetic2_engine.a
+	rm -f $(OBJFILES) libdmagnetic2_graphics.a
 
 
-libdmagnetic2_engine.a:	$(OBJFILES)
+libdmagnetic2_graphics.a:	$(OBJFILES)
 	$(AR) rs $@ $(OBJFILES)
 
 .c.o:

@@ -28,8 +28,8 @@
 # 
 # 
 (
-  cd ../../software/src/loader
+  cd ../../software/backends/loader
   make clean
   make
 )
-cc -g -o loader_mkmaggfx.app loader_mkmaggfx.c -I../../software/src -I../../software/include -I../../software/src/loader -L../../software/src/loader -ldmagnetic2_loader
+cc -g -o loader_mkmaggfx.app loader_mkmaggfx.c -I../../software/backends -I../../software/include -I../../software/backends/loader -L../../software/backends/loader -ldmagnetic2_loader

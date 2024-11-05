@@ -28,10 +28,10 @@
 # 
 # 
 (
-  cd ../../software/src/engine
+  cd ../../software/backends/engine
   make clean
   make
 )
-cc -g -o engine_runmag.app engine_runmag.c -I../../software/src -I../../software/include -I../../software/src/engine -L../../software/src/engine -ldmagnetic2_engine
+cc -g -o engine_runmag.app engine_runmag.c -I../../software/backends -I../../software/include -I../../software/backends/engine -L../../software/backends/engine -ldmagnetic2_engine
 
 
