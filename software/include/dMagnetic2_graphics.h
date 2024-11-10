@@ -78,5 +78,6 @@ int dMagnetic2_graphics_getpicname(void* pHandle,char* picname,int picnum);
 
 // some converters
 int dMagnetic2_graphics_canvas_small_to_xpm(tdMagnetic2_canvas_small *pSmall,char* pxpm,int xpmbufsize);
+int dMagnetic2_graphics_canvas_small_to_8bit(tdMagnetic2_canvas_small *pSmall,int hasalpha,unsigned char *pDrawBuf,int* pWidth,int* pHeight);
 
 #endif

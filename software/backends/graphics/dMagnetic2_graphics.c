@@ -268,3 +268,79 @@ int dMagnetic2_graphics_canvas_small_to_xpm(tdMagnetic2_canvas_small *pSmall,cha
 	return DMAGNETIC2_OK;
 }
 
+int dMagnetic2_graphics_canvas_small_to_8bit(tdMagnetic2_canvas_small *pSmall,int hasalpha,unsigned char *pDrawBuf,int* pWidth,int* pHeight)
+{
+	int i;
+	int j;
+	int x;
+	int y;
+	int target_width;
+	int target_height;
+	int bytes_per_pixel;
+	int target_pixels_per_pixel;
+	unsigned int red,green,blue;
+	x=0;
+	y=0;
+	target_width=pSmall->width;
+	target_height=pSmall->height;
+	target_pixels_per_pixel=1;
+	if (pSmall->flags&DMAGNETIC2_GRAPHICS_RENDER_FLAG_WIDEN)
+	{
+		target_width*=2;
+		target_pixels_per_pixel*=2;
+	}
+	if (pSmall->flags&DMAGNETIC2_GRAPHICS_RENDER_FLAG_C64)
+	{
+		target_width*=2;
+		target_height*=2;
+		target_pixels_per_pixel*=2;
+	}
+	bytes_per_pixel=hasalpha?4:3;
+	memset(pDrawBuf,0,target_width*target_height*bytes_per_pixel);
+	for (i=0;i<pSmall->height;i++)
+	{
+		for (j=0;j<pSmall->width;j++)
+		{
+			int p;
+			int k;
+			unsigned int rgb;
+			p=pSmall->pixels[i*(pSmall->width)+j];
+			rgb=pSmall->rgb[p];
+
+			red=(rgb>>20)&0x3ff;
+			green=(rgb>>10)&0x3ff;
+			blue=(rgb>>0)&0x3ff;
+
+			red*=255;
+			green*=255;
+			blue*=255;
+
+			red/=0x3ff;
+			green/=0x3ff;
+			blue/=0x3ff;
+			for (k=0;k<target_pixels_per_pixel;k++)
+			{
+				if (hasalpha)
+				{
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+0]=0xff;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+1]=red;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+2]=green;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+3]=blue;
+				} else {
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+0]=red;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+1]=green;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+2]=blue;
+				}
+				x++;
+			}
+		}
+		y++;
+		if (pSmall->flags&DMAGNETIC2_GRAPHICS_RENDER_FLAG_C64) 
+		{
+			y++;			// leave one blank line
+		}
+	}
+	*pWidth=target_width;
+	*pHeight=target_height;
+	return DMAGNETIC2_OK;
+}
