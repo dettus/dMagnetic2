@@ -57,6 +57,24 @@ typedef struct _tHandle
      	pthread_mutex_t mutex;
 } tHandle;
 
+void save_picture(int num,GdkPixbuf* pixbuf,tdMagnetic2_canvas_small *pSmall)
+{
+	char filename[32];
+	GError *err;
+	unsigned char *pxpm;
+	FILE *f;
+
+	snprintf(filename,32,"%08d.png",num);
+	err=NULL;
+	gdk_pixbuf_save(pixbuf,filename,"png",&err,NULL);
+	pxpm=malloc(1<<20);
+	dMagnetic2_graphics_canvas_small_to_xpm(pSmall,pxpm,(1<<20));
+	f=fopen("test.xpm","wb");
+	fprintf(f,"%s",pxpm);
+	fclose(f);
+	free(pxpm);
+}
+
 static gboolean heartbeat(gpointer user_data)
 {
         tHandle* pThis=(tHandle*)user_data;
@@ -82,14 +100,31 @@ static void next_clicked(GtkWidget *widget,gpointer user_data)
 		int height;
 		int retval;
 		GdkPixbuf *pixbuf;
-		retval=dMagnetic2_graphics_canvas_small_to_8bit(&(pThis->canvas_small),1,pThis->drawbuf,&width,&height);
-		printf("retval:%d width:%d height:%d\n",retval,width,height);
+		retval=dMagnetic2_graphics_canvas_small_to_8bit(&(pThis->canvas_small),TRUE,pThis->drawbuf,&width,&height);
+		printf("retval:%d width:%d height:%d picnum:%d\n",retval,width,height,pThis->picnum);
+		if (0)
+		{
+			int i;
+			int j;
+			int p;
+			p=0;
+			for (i=0;i<height;i++)
+			{
+				for (j=0;j<width;j++)
+				{
+					printf("%02X%02X%02X%02X",pThis->drawbuf[p+0],pThis->drawbuf[p+1],pThis->drawbuf[p+2],pThis->drawbuf[p+3]);
+					p+=4;
+				}
+				printf("\n");
+			}
+		}
 
 
 		pixbuf=gdk_pixbuf_new_from_data(pThis->drawbuf,
 			GDK_COLORSPACE_RGB,TRUE,8,
 			width,height,
 			width*4,NULL,NULL);
+		save_picture(pThis->picnum,pixbuf,&(pThis->canvas_small));
 		
 		gdk_pixbuf_copy_area(pixbuf,0,0,gdk_pixbuf_get_width(pixbuf),gdk_pixbuf_get_height(pixbuf),pThis->pixbuf,0,0);
 		g_object_unref(pixbuf);
@@ -107,7 +142,7 @@ static void activate(GtkApplication* app,gpointer user_data)
 
         pThis->window=gtk_application_window_new(app);
         gtk_window_set_title(GTK_WINDOW(pThis->window),"hello there!");
-        gtk_window_set_default_size(GTK_WINDOW(pThis->window),640,200);
+        gtk_window_set_default_size(GTK_WINDOW(pThis->window),640,480);
 
 
 	pThis->box=gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
@@ -127,9 +162,9 @@ static void activate(GtkApplication* app,gpointer user_data)
  //       pThis->pixbuf=gdk_pixbuf_new(GDK_COLORSPACE_RGB,FALSE,8,640,200);
 	{
 		int i;
-		for (i=0;i<640*200*4;i+=3) pThis->drawbuf[i]=0xff;
+		for (i=0;i<640*480*4;i+=3) pThis->drawbuf[i]=0xff;
 	}
-	pThis->pixbuf=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,200,640*4,NULL,NULL);
+	pThis->pixbuf=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
         pThis->texture=gdk_texture_new_for_pixbuf(pThis->pixbuf);
         gtk_picture_set_paintable(GTK_PICTURE(pThis->picture),GDK_PAINTABLE(pThis->texture));
 

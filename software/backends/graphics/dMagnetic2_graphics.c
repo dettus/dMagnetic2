@@ -297,8 +297,10 @@ int dMagnetic2_graphics_canvas_small_to_8bit(tdMagnetic2_canvas_small *pSmall,in
 	}
 	bytes_per_pixel=hasalpha?4:3;
 	memset(pDrawBuf,0,target_width*target_height*bytes_per_pixel);
+	y=0;
 	for (i=0;i<pSmall->height;i++)
 	{
+		x=0;
 		for (j=0;j<pSmall->width;j++)
 		{
 			int p;
@@ -322,10 +324,10 @@ int dMagnetic2_graphics_canvas_small_to_8bit(tdMagnetic2_canvas_small *pSmall,in
 			{
 				if (hasalpha)
 				{
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+0]=0xff;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+1]=red;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+2]=green;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+3]=blue;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+3]=0xff;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+0]=red;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+1]=green;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+2]=blue;
 				} else {
 					pDrawBuf[(y*target_width+x)*bytes_per_pixel+0]=red;
 					pDrawBuf[(y*target_width+x)*bytes_per_pixel+1]=green;
@@ -336,8 +338,21 @@ int dMagnetic2_graphics_canvas_small_to_8bit(tdMagnetic2_canvas_small *pSmall,in
 		}
 		y++;
 		if (pSmall->flags&DMAGNETIC2_GRAPHICS_RENDER_FLAG_C64) 
-		{
-			y++;			// leave one blank line
+		{	
+			// leave one blank line
+			if (hasalpha)
+			{
+				x=0;
+				for (j=0;j<pSmall->width*target_pixels_per_pixel;j++)
+				{
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+3]=0xff;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+0]=0;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+1]=0;
+					pDrawBuf[(y*target_width+x)*bytes_per_pixel+2]=0;
+					x++;
+				}
+			}
+			y++;		
 		}
 	}
 	*pWidth=target_width;
