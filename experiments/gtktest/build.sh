@@ -36,4 +36,4 @@
 #../../software/backends/graphics/libdmagnetic2_graphics.a
 
 cc -O0 -g -c -o picturetest.o picturetest.c `pkg-config --cflags gtk4` -I../../software/backends/graphics -I../../software/include
-cc -o picturetest.x picturetest.o `pkg-config --libs gtk4` -L../../software/backends/graphics -ldmagnetic2_graphics
+cc -o picturetest.app picturetest.o `pkg-config --libs gtk4` -L../../software/backends/graphics -ldmagnetic2_graphics
