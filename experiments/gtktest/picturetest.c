@@ -95,7 +95,6 @@ static void next_clicked(GtkWidget *widget,gpointer user_data)
 
 	pthread_mutex_lock(&(pThis->mutex));
 	retval=dMagnetic2_graphics_decode_by_picnum(pThis->pGfxHandle,pThis->picnum,&(pThis->canvas_small),NULL);
-	printf("decoded %dx%d pixels\n",pThis->canvas_small.width,pThis->canvas_small.height);
 	if (retval==DMAGNETIC2_OK && pThis->canvas_small.width>0 && pThis->canvas_small.height>0)
 	{
 		int width;
@@ -106,7 +105,6 @@ static void next_clicked(GtkWidget *widget,gpointer user_data)
 		GdkTexture *dest_texture;
 
 		retval=dMagnetic2_graphics_canvas_small_to_8bit(&(pThis->canvas_small),TRUE,pThis->drawbuf,&width,&height);
-		printf("retval:%d width:%d height:%d picnum:%d\n",retval,width,height,pThis->picnum);
 
 
 		if (pThis->picnum&1)
@@ -114,7 +112,7 @@ static void next_clicked(GtkWidget *widget,gpointer user_data)
 			dest_pixbuf=pThis->pixbuf_ping;
 			dest_texture=pThis->texture_ping;
 		} else {
-			dest_pixbuf=pThis->pixbuf_pong;
+			dest_pixbuf=pThis->pixbuf_ping;
 			dest_texture=pThis->texture_pong;
 		}
 		pixbuf=gdk_pixbuf_new_from_data(pThis->drawbuf,
@@ -130,13 +128,13 @@ static void next_clicked(GtkWidget *widget,gpointer user_data)
 
 		if (pThis->picnum&1)
 		{		
-			g_object_unref(pThis->pixbuf_pong);
-			pThis->pixbuf_pong=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
+//			g_object_unref(pThis->pixbuf_pong);
+//			pThis->pixbuf_pong=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
 			g_object_unref(pThis->texture_pong);
-        		pThis->texture_pong=gdk_texture_new_for_pixbuf(pThis->pixbuf_pong);
+        		pThis->texture_pong=gdk_texture_new_for_pixbuf(pThis->pixbuf_ping);
 		} else {
-			g_object_unref(pThis->pixbuf_ping);
-			pThis->pixbuf_ping=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
+//			g_object_unref(pThis->pixbuf_ping);
+//			pThis->pixbuf_ping=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
 			g_object_unref(pThis->texture_ping);
         		pThis->texture_ping=gdk_texture_new_for_pixbuf(pThis->pixbuf_ping);
 		}
