@@ -195,7 +195,8 @@ static void activate(GtkApplication* app,gpointer user_data)
 			
 		}
 	}
-	pThis->pixbuf=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
+//	pThis->pixbuf=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
+	pThis->pixbuf=gdk_pixbuf_new(GDK_COLORSPACE_RGB,TRUE,8,640,480);
         pThis->texture_ping=gdk_texture_new_for_pixbuf(pThis->pixbuf);
         pThis->texture_pong=gdk_texture_new_for_pixbuf(pThis->pixbuf);
 	pThis->ping0_pong1=0;
