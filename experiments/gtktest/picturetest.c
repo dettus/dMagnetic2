@@ -58,22 +58,16 @@ typedef struct _tHandle
      	pthread_mutex_t mutex;
 } tHandle;
 
-void save_picture(int num,GdkPixbuf* pixbuf,tdMagnetic2_canvas_small *pSmall)
+void save_picture(int num,GdkPixbuf* pixbuf,char* note)
 {
 	char filename[32];
 	GError *err;
 	unsigned char *pxpm;
 	FILE *f;
 
-	snprintf(filename,32,"%08d.pixbuf.png",num);
+	snprintf(filename,32,"%08d.%s.png",num,note);
 	err=NULL;
 	gdk_pixbuf_save(pixbuf,filename,"png",&err,NULL);
-	pxpm=malloc(1<<20);
-	dMagnetic2_graphics_canvas_small_to_xpm(pSmall,pxpm,(1<<20));
-	f=fopen("test.xpm","wb");
-	fprintf(f,"%s",pxpm);
-	fclose(f);
-	free(pxpm);
 }
 
 static gboolean heartbeat(gpointer user_data)
@@ -85,7 +79,25 @@ static gboolean heartbeat(gpointer user_data)
 	return G_SOURCE_CONTINUE;
 	
 }
+void debug_printdrawbuf(unsigned char* drawbuf,int width,int height)
+{
+	int i,j;
+	for (i=0;i<height;i++)
+	{
+		for (j=0;j<width;j++)
+		{
+			int red,green,blue;
+			red=drawbuf[4*(width*i+j)+0];
+			green=drawbuf[4*(width*i+j)+1];
+			blue=drawbuf[4*(width*i+j)+2];
+			printf("\x1b[48;2;%d;%d;%dm ",
+					red,green,blue);
 
+		}
+		printf("\x1b[0m\n");
+	}
+
+}
 static void next_clicked(GtkWidget *widget,gpointer user_data)
 {
         tHandle* pThis=(tHandle*)user_data;
@@ -109,9 +121,11 @@ static void next_clicked(GtkWidget *widget,gpointer user_data)
 			GDK_COLORSPACE_RGB,TRUE,8,
 			width,height,
 			width*4,NULL,NULL);
+		save_picture(pThis->picnum,pixbuf,"before");
 		gdk_pixbuf_copy_area(pixbuf,0,0,gdk_pixbuf_get_width(pixbuf),gdk_pixbuf_get_height(pixbuf),pThis->pixbuf,0,0);
-		save_picture(pThis->picnum,pixbuf,&(pThis->canvas_small));
-		g_object_unref(pixbuf);
+		save_picture(pThis->picnum,pixbuf,"after");
+debug_printdrawbuf(pThis->drawbuf,width,height);
+//		gdk_pixbuf_composite(pixbuf,pThis->pixbuf, 0,0,gdk_pixbuf_get_width(pixbuf),gdk_pixbuf_get_height(pixbuf), 0,0, 1,1, GDK_INTERP_NEAREST, 0xff);
 	//	save_picture(pThis->picnum,pThis->pixbuf,&(pThis->canvas_small));
 
 		if (pThis->ping0_pong1)
@@ -127,6 +141,7 @@ static void next_clicked(GtkWidget *widget,gpointer user_data)
 			pThis->ping0_pong1=1;
 		}
 		gtk_widget_queue_draw(pThis->picture);
+		g_object_unref(pixbuf);
 	}
 	pThis->picnum=(pThis->picnum+1)%32;
 	pthread_mutex_unlock(&(pThis->mutex));
@@ -165,6 +180,19 @@ static void activate(GtkApplication* app,gpointer user_data)
 			pThis->drawbuf[i+1]=0x00;
 			pThis->drawbuf[i+2]=0xff;
 			pThis->drawbuf[i+3]=0xff;
+		}
+
+		for (i=0;i<480;i++)
+		{
+			int x;
+			int y;
+
+			x=i;
+			y=i;
+			pThis->drawbuf[4*(640*y+x)+0]=0x00;
+			pThis->drawbuf[4*(640*y+x)+1]=0xff;
+			pThis->drawbuf[4*(640*y+x)+2]=0x00;
+			
 		}
 	}
 	pThis->pixbuf=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);

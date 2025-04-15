@@ -307,17 +307,13 @@ int dMagnetic2_graphics_canvas_small_to_8bit(tdMagnetic2_canvas_small *pSmall,in
 			p=pSmall->pixels[iidx++];
 			rgb=pSmall->rgb[p];
 
-			red=(rgb>>20)&0x3ff;
-			green=(rgb>>10)&0x3ff;
-			blue=(rgb>>0)&0x3ff;
+			red=(rgb>>20)&0x3ff;	rgb<<=10;	
+			green=(rgb>>20)&0x3ff;	rgb<<=10;	
+			blue=(rgb>>20)&0x3ff;	rgb<<=10;	
 
-			red*=255;
-			green*=255;
-			blue*=255;
-
-			red/=0x3ff;
-			green/=0x3ff;
-			blue/=0x3ff;
+			red*=255;red/=1023;
+			green*=255;green/=1023;
+			blue*=255;blue/=1023;
 			for (k=0;k<target_pixels_per_pixel;k++)
 			{
 				pDrawBuf[oidx++]=red;
