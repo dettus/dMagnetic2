@@ -272,15 +272,13 @@ int dMagnetic2_graphics_canvas_small_to_8bit(tdMagnetic2_canvas_small *pSmall,in
 {
 	int i;
 	int j;
-	int x;
-	int y;
 	int target_width;
 	int target_height;
 	int bytes_per_pixel;
 	int target_pixels_per_pixel;
 	unsigned int red,green,blue;
-	x=0;
-	y=0;
+	int oidx;
+	int iidx;
 	target_width=pSmall->width;
 	target_height=pSmall->height;
 	target_pixels_per_pixel=1;
@@ -297,16 +295,16 @@ int dMagnetic2_graphics_canvas_small_to_8bit(tdMagnetic2_canvas_small *pSmall,in
 	}
 	bytes_per_pixel=hasalpha?4:3;
 	memset(pDrawBuf,0,target_width*target_height*bytes_per_pixel);
-	y=0;
+	oidx=0;
+	iidx=0;
 	for (i=0;i<pSmall->height;i++)
 	{
-		x=0;
 		for (j=0;j<pSmall->width;j++)
 		{
 			int p;
 			int k;
 			unsigned int rgb;
-			p=pSmall->pixels[i*(pSmall->width)+j];
+			p=pSmall->pixels[iidx++];
 			rgb=pSmall->rgb[p];
 
 			red=(rgb>>20)&0x3ff;
@@ -322,37 +320,28 @@ int dMagnetic2_graphics_canvas_small_to_8bit(tdMagnetic2_canvas_small *pSmall,in
 			blue/=0x3ff;
 			for (k=0;k<target_pixels_per_pixel;k++)
 			{
+				pDrawBuf[oidx++]=red;
+				pDrawBuf[oidx++]=green;
+				pDrawBuf[oidx++]=blue;
 				if (hasalpha)
 				{
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+3]=0xff;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+0]=red;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+1]=green;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+2]=blue;
-				} else {
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+0]=red;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+1]=green;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+2]=blue;
-				}
-				x++;
+					pDrawBuf[oidx++]=0xff;
+				} 
 			}
 		}
-		y++;
 		if (pSmall->flags&DMAGNETIC2_GRAPHICS_RENDER_FLAG_C64) 
 		{	
-			// leave one blank line
-			if (hasalpha)
+			for (j=0;j<pSmall->width*target_pixels_per_pixel;j++)
 			{
-				x=0;
-				for (j=0;j<pSmall->width*target_pixels_per_pixel;j++)
+				red=green=blue=0;	// one black line
+				pDrawBuf[oidx++]=red;
+				pDrawBuf[oidx++]=green;
+				pDrawBuf[oidx++]=blue;
+				if (hasalpha)
 				{
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+3]=0xff;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+0]=0;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+1]=0;
-					pDrawBuf[(y*target_width+x)*bytes_per_pixel+2]=0;
-					x++;
-				}
+					pDrawBuf[oidx++]=0xff;
+				} 
 			}
-			y++;		
 		}
 	}
 	*pWidth=target_width;

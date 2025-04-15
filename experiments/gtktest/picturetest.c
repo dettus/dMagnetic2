@@ -39,8 +39,7 @@ typedef struct _tHandle
 	GtkApplication *app;
 	GtkWidget *window;
 	GtkWidget *picture;
-	GdkPixbuf *pixbuf_ping;
-	GdkPixbuf *pixbuf_pong;
+	GdkPixbuf *pixbuf;
 	GdkTexture *texture_ping;
 	GdkTexture *texture_pong;
 	int ping0_pong1;
@@ -101,43 +100,33 @@ static void next_clicked(GtkWidget *widget,gpointer user_data)
 		int height;
 		int retval;
 		GdkPixbuf *pixbuf;
-		GdkPixbuf *dest_pixbuf;
 		GdkTexture *dest_texture;
 
 		retval=dMagnetic2_graphics_canvas_small_to_8bit(&(pThis->canvas_small),TRUE,pThis->drawbuf,&width,&height);
+		printf("width:%d height:%d\n",width,height);
 
-
-		if (pThis->picnum&1)
-		{		
-			dest_pixbuf=pThis->pixbuf_ping;
-			dest_texture=pThis->texture_ping;
-		} else {
-			dest_pixbuf=pThis->pixbuf_ping;
-			dest_texture=pThis->texture_pong;
-		}
 		pixbuf=gdk_pixbuf_new_from_data(pThis->drawbuf,
 			GDK_COLORSPACE_RGB,TRUE,8,
 			width,height,
 			width*4,NULL,NULL);
-		gdk_pixbuf_copy_area(pixbuf,0,0,gdk_pixbuf_get_width(pixbuf),gdk_pixbuf_get_height(pixbuf),dest_pixbuf,0,0);
+		gdk_pixbuf_copy_area(pixbuf,0,0,gdk_pixbuf_get_width(pixbuf),gdk_pixbuf_get_height(pixbuf),pThis->pixbuf,0,0);
+		save_picture(pThis->picnum,pixbuf,&(pThis->canvas_small));
 		g_object_unref(pixbuf);
-		save_picture(pThis->picnum,dest_pixbuf,&(pThis->canvas_small));
+	//	save_picture(pThis->picnum,pThis->pixbuf,&(pThis->canvas_small));
 
-        	gtk_picture_set_paintable(GTK_PICTURE(pThis->picture),GDK_PAINTABLE(dest_texture));
-		gtk_widget_queue_draw(pThis->picture);
-
-		if (pThis->picnum&1)
+		if (pThis->ping0_pong1)
 		{		
-//			g_object_unref(pThis->pixbuf_pong);
-//			pThis->pixbuf_pong=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
-			g_object_unref(pThis->texture_pong);
-        		pThis->texture_pong=gdk_texture_new_for_pixbuf(pThis->pixbuf_ping);
-		} else {
-//			g_object_unref(pThis->pixbuf_ping);
-//			pThis->pixbuf_ping=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
+        		gtk_picture_set_paintable(GTK_PICTURE(pThis->picture),GDK_PAINTABLE(pThis->texture_pong));
 			g_object_unref(pThis->texture_ping);
-        		pThis->texture_ping=gdk_texture_new_for_pixbuf(pThis->pixbuf_ping);
+        		pThis->texture_ping=gdk_texture_new_for_pixbuf(pThis->pixbuf);
+			pThis->ping0_pong1=0;
+		} else {
+        		gtk_picture_set_paintable(GTK_PICTURE(pThis->picture),GDK_PAINTABLE(pThis->texture_ping));
+			g_object_unref(pThis->texture_pong);
+        		pThis->texture_pong=gdk_texture_new_for_pixbuf(pThis->pixbuf);
+			pThis->ping0_pong1=1;
 		}
+		gtk_widget_queue_draw(pThis->picture);
 	}
 	pThis->picnum=(pThis->picnum+1)%32;
 	pthread_mutex_unlock(&(pThis->mutex));
@@ -170,16 +159,18 @@ static void activate(GtkApplication* app,gpointer user_data)
  //       pThis->pixbuf=gdk_pixbuf_new(GDK_COLORSPACE_RGB,FALSE,8,640,200);
 	{
 		int i;
-		for (i=0;i<640*480*4;i+=3) pThis->drawbuf[i]=0xff;
+		for (i=0;i<640*480*4;i+=4) 
+		{
+			pThis->drawbuf[i+0]=0xff;
+			pThis->drawbuf[i+1]=0x00;
+			pThis->drawbuf[i+2]=0xff;
+			pThis->drawbuf[i+3]=0xff;
+		}
 	}
-	pThis->pixbuf_ping=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
-        pThis->texture_ping=gdk_texture_new_for_pixbuf(pThis->pixbuf_ping);
-	{
-		int i;
-		for (i=0;i<640*480*4;i+=3) pThis->drawbuf[i]=0x7f;
-	}
-	pThis->pixbuf_pong=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
-        pThis->texture_pong=gdk_texture_new_for_pixbuf(pThis->pixbuf_pong);
+	pThis->pixbuf=gdk_pixbuf_new_from_data(pThis->drawbuf, GDK_COLORSPACE_RGB,TRUE,8,640,480,640*4,NULL,NULL);
+        pThis->texture_ping=gdk_texture_new_for_pixbuf(pThis->pixbuf);
+        pThis->texture_pong=gdk_texture_new_for_pixbuf(pThis->pixbuf);
+	pThis->ping0_pong1=0;
 
         gtk_picture_set_paintable(GTK_PICTURE(pThis->picture),GDK_PAINTABLE(pThis->texture_ping));
 	gtk_box_append(GTK_BOX(pThis->box),pThis->picture);
