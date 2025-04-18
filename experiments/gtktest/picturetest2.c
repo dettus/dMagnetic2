@@ -50,7 +50,6 @@ typedef struct _tGUIHandle
 	GdkTexture *texture_pong;
 	int ping0_pong1;
 	pthread_mutex_t mutex;
-	tdMagnetic2_canvas_small canvas_small;
 
 } tGUIHandle;
 
@@ -63,6 +62,7 @@ typedef struct _tdMagneticHandle
 	unsigned char pGfxBuf[1<<22];
 	int gfxsize;
 	int picnum;
+	tdMagnetic2_canvas_small canvas_small;
 } tdMagneticHandle;
 
 typedef struct _tHandle
@@ -98,17 +98,61 @@ int dMagnetic_setgfx(void *handle,char* filename)
 	int retval;
 
 	f=fopen(filename,"rb");
-	if (f)
+	if (!f)
 	{
 		return -10;
 	}
 	pThis->gfxsize=fread(pThis->pGfxBuf,sizeof(char),sizeof(pThis->pGfxBuf),f);
 	fclose(f);
+	printf("leaded %d bytes\n",pThis->gfxsize);
 	
 	retval=dMagnetic2_graphics_set_gfx(pThis->pGfxHandle,pThis->pGfxBuf,pThis->gfxsize);
 	return retval;	
 }
+static void gui_next_clicked(GtkWidget *widget,gpointer user_data)
+{
+	tHandle* pThis=(tHandle*)user_data;
+	tGUIHandle* pGUI=(tGUIHandle*)&(pThis->hGui);
+	tdMagneticHandle* pdMagnetic=(tdMagneticHandle*)&(pThis->hdMagnetic);
+	int retval;
 
+	pthread_mutex_lock(&(pGUI->mutex));
+	retval=dMagnetic2_graphics_decode_by_picnum(pdMagnetic->pGfxHandle,pdMagnetic->picnum,&(pdMagnetic->canvas_small),NULL);
+	printf("%2d> retval:%d width:%d height:%d\n",pdMagnetic->picnum,retval,pdMagnetic->canvas_small.width,pdMagnetic->canvas_small.height);
+	if (retval==DMAGNETIC2_OK && pdMagnetic->canvas_small.width>0 && pdMagnetic->canvas_small.height>0)
+	{
+		int width;
+		int height;
+		GdkPixbuf *pixbuf;
+		retval=dMagnetic2_graphics_canvas_small_to_8bit(&(pdMagnetic->canvas_small),true,pGUI->drawbuf,&width,&height);
+	
+		pixbuf=gdk_pixbuf_new_from_data(pGUI->drawbuf,GDK_COLORSPACE_RGB,true,8,width,height,width*4,NULL,NULL);
+		if (!pGUI->ping0_pong1)
+		{
+			pGUI->pixbuf_pong=gdk_pixbuf_new(GDK_COLORSPACE_RGB,true,8,width,height);
+			gdk_pixbuf_copy_area(pixbuf,0,0,width,height,pGUI->pixbuf_pong,0,0);
+			pGUI->texture_pong=gdk_texture_new_for_pixbuf(pGUI->pixbuf_pong);
+			gtk_picture_set_paintable(GTK_PICTURE(pGUI->picture),GDK_PAINTABLE(pGUI->texture_pong));
+			
+			g_object_unref(pGUI->pixbuf_ping);
+			g_object_unref(pGUI->texture_ping);
+			pGUI->ping0_pong1=1;
+		} else {
+			pGUI->pixbuf_ping=gdk_pixbuf_new(GDK_COLORSPACE_RGB,true,8,width,height);
+			gdk_pixbuf_copy_area(pixbuf,0,0,width,height,pGUI->pixbuf_ping,0,0);
+			pGUI->texture_ping=gdk_texture_new_for_pixbuf(pGUI->pixbuf_ping);	
+			gtk_picture_set_paintable(GTK_PICTURE(pGUI->picture),GDK_PAINTABLE(pGUI->texture_ping));
+
+			g_object_unref(pGUI->pixbuf_pong);
+			g_object_unref(pGUI->texture_pong);
+			pGUI->ping0_pong1=0;
+		}
+		gtk_widget_queue_draw(pGUI->picture);
+		g_object_unref(pixbuf);
+	}
+	pdMagnetic->picnum=(pdMagnetic->picnum+1)%32;
+	pthread_mutex_unlock(&(pGUI->mutex));
+}
 static void gui_activate(GtkApplication* app,gpointer user_data)
 {
 	tHandle* pThis=(tHandle*)user_data;
@@ -126,13 +170,12 @@ static void gui_activate(GtkApplication* app,gpointer user_data)
 	gtk_widget_set_valign(pGUI->box,GTK_ALIGN_START);
 	gtk_widget_set_hexpand(pGUI->box,true);
 	gtk_widget_set_vexpand(pGUI->box,true);
-//	gtk_window_set_child(GTK_WINDOW(pGUI->window),pGUI->box);
 
 
 	pGUI->button=gtk_button_new_with_label("next");
 	gtk_widget_set_hexpand(pGUI->button,true);
 	gtk_widget_set_vexpand(pGUI->button,false);
-	//g_signal_connect(pGUI->button,"clicked",G_CALLBACK(gui_next_clicked),pThis);
+	g_signal_connect(pGUI->button,"clicked",G_CALLBACK(gui_next_clicked),pThis);
 	gtk_box_append(GTK_BOX(pGUI->box),pGUI->button);
 
 
@@ -177,16 +220,9 @@ static void gui_activate(GtkApplication* app,gpointer user_data)
 
 
 
-	//gtk_window_set_child(GTK_WINDOW(pGUI->window),pGUI->picture);
 	gtk_window_set_child(GTK_WINDOW(pGUI->window),pGUI->box);
-
-
 	gtk_window_present(GTK_WINDOW(pGUI->window));
-
-
-
-	
-
+        pthread_mutex_init(&(pGUI->mutex),NULL);
 }
 
 int gui_run(void* GUIhandle,void *handle,int argc,char** argv)
