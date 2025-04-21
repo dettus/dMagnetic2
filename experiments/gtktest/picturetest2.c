@@ -104,7 +104,7 @@ int dMagnetic_setgfx(void *handle,char* filename)
 	}
 	pThis->gfxsize=fread(pThis->pGfxBuf,sizeof(char),sizeof(pThis->pGfxBuf),f);
 	fclose(f);
-	printf("leaded %d bytes\n",pThis->gfxsize);
+	printf("loaded %d bytes\n",pThis->gfxsize);
 	
 	retval=dMagnetic2_graphics_set_gfx(pThis->pGfxHandle,pThis->pGfxBuf,pThis->gfxsize);
 	return retval;	

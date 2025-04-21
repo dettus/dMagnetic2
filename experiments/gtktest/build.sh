@@ -43,4 +43,7 @@ cc -o picturetest2.app picturetest2.o `pkg-config --libs gtk4` -L../../software/
 cc -O0 -g -c -o animationtest.o animationtest.c `pkg-config --cflags gtk4` -I../../software/backends/graphics -I../../software/include
 cc -o animationtest.app animationtest.o `pkg-config --libs gtk4` -L../../software/backends/graphics -ldmagnetic2_graphics
 
+cc -O0 -g -c -o widgettest.o widgettest.c `pkg-config --cflags gtk4` -I../../software/backends/graphics -I../../software/include
+cc -o widgettest.app widgettest.o `pkg-config --libs gtk4` -L../../software/backends/graphics -ldmagnetic2_graphics
+
 
