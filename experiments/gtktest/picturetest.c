@@ -229,7 +229,7 @@ int main(int argc,char** argv)
 	handle.pTmpBuf=malloc(size_tmpbuf);
 
 	retval=dMagnetic2_graphics_init(handle.pGfxHandle,handle.pTmpBuf);
-	
+	printf("loading guild.gfx\n");	
 	f=fopen("guild.gfx","rb");
 	gfxsize=fread(handle.pGfxBuf,sizeof(char),sizeof(handle.pGfxBuf),f);
 	fclose(f);
