@@ -46,6 +46,8 @@ typedef struct _tGUIHandle
 	GdkPixbuf *pixbuf_ping;
 	GdkPixbuf *pixbuf_pong;
 	GtkWidget *scrollview;
+	GtkEntryBuffer *entrybuffer;
+	GtkWidget *entry;
 	GtkTextBuffer *textbuffer;
 	GtkWidget *textview;
 	unsigned char drawbuf[4*MAX_WIDTH*MAX_HEIGHT];	// red, green, blue, alpha
@@ -135,6 +137,13 @@ static void gui_textview_scrolldown(GtkWidget *widget,gpointer user_data)
 //gtk_text_buffer_apply_tag (buffer, tag, &start, &end);
 
 }
+static void gui_enter_pressed(GtkWidget *widget,gpointer user_data)
+{
+	tHandle* pThis=(tHandle*)user_data;
+	tGUIHandle* pGUI=(tGUIHandle*)&(pThis->hGui);
+	tdMagneticHandle* pdMagnetic=(tdMagneticHandle*)&(pThis->hdMagnetic);
+	printf("enter pressed\n");
+}
 static void gui_next_clicked(GtkWidget *widget,gpointer user_data)
 {
 	tHandle* pThis=(tHandle*)user_data;
@@ -182,6 +191,7 @@ static void gui_next_clicked(GtkWidget *widget,gpointer user_data)
 	gtk_text_buffer_insert_at_cursor(pGUI->textbuffer,tmp,strlen(tmp));
 	gtk_widget_queue_resize(pGUI->textview);
 	gui_textview_scrolldown(pGUI->textview,pThis);
+	gtk_widget_queue_resize(pGUI->textview);
 	pthread_mutex_unlock(&(pGUI->mutex));
 }
 static void gui_activate(GtkApplication* app,gpointer user_data)
@@ -270,9 +280,18 @@ static void gui_activate(GtkApplication* app,gpointer user_data)
 	gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(pGUI->scrollview),pGUI->textview);
 
 	pGUI->textbuffer=gtk_text_buffer_new(NULL);
-	gtk_text_buffer_set_text(pGUI->textbuffer,"Thomas Dettbarn\nHeimat\n",23);
+	gtk_text_buffer_set_text(pGUI->textbuffer,"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThomas Dettbarn\nHeimat\n",73);
+	gui_textview_scrolldown(pGUI->textview,pThis);
+	gtk_widget_queue_resize(pGUI->textview);
+
+
+	pGUI->entrybuffer=gtk_entry_buffer_new(NULL,0);
+	pGUI->entry=gtk_entry_new_with_buffer(pGUI->entrybuffer);
+	gtk_grid_attach(GTK_GRID(pGUI->grid),pGUI->entry,0,10, 1,1);
+	printf("pThis:%p\n",pThis);
+	g_signal_connect(pGUI->entry,"activate",G_CALLBACK(gui_enter_pressed),pThis);
 	
-	
+		
 
 
 
