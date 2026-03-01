@@ -37,3 +37,6 @@ cc -g -o colorprint.app colorprint.c
 cc -g -o unhuffer.app unhuffer.c -I../software/src -I../software/include -I../software/src/loader -L../software/src/loader -ldmagnetic2_loader
 cc -g -o rsc_extractor.app rsc_extractor.c -I../software/src -I../software/include -I../software/src/loader -L../software/src/loader -ldmagnetic2_loader
 
+
+cc -g -o magblowup.app magblowup.c
+
