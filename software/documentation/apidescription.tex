@@ -1,0 +1,48 @@
+\documentclass{report}
+\usepackage{amssymb}
+\begin{document}
+\title{libdmagnetic2- API description}
+\author{Thomas Dettbarn}
+\maketitle
+\tableofcontents
+\newpage
+\chapter{Introduction}
+The purpose of this chapter is to introduce the reader to conecpts of the library.
+\section{Mode of operation}
+EXPLAIN: There are a total of three libraries. One for loading/converting input sources. One for running the engine. One for decoding the pictures/animations. 
+Each library has a function \verb+get_size()+, which returns the number of bytes required for the handle. 
+\begin{verbatim}
+void *pHandle;
+int errcode;
+errcode=dMagnetic2_engine_get_size(&bytes);
+pHandle=malloc(bytes);
+errcode=dMagnetic2_engine_init(pHandle);
+\end{verbatim}
+\section{Helloworld example}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{libdmagnetic2 loader.a}
+The purpose of this chapter is to describe how to use the API to load Magnetic Scrolls Games from various sources.
+\section{Helloworld example}
+The purpose of this section is to provide a source code of a helloworld example which converts input sources into the .mag/.gfx format.
+For now, see \verb+tests/loader/loader_mkmaggfx.c+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{libdmagnetic2 engine.a}
+The purpose of this chapter is to describe how to use the API to run Magnetic Scrolls Games.
+\section{Helloworld example}
+The purpose of this section is to provide a source code of a helloworld example which runs a simple (playable) engine.
+For now, see \verb+tests/engine/engine_runmag.c+.
+\section{Data structures}
+\section{Interface functions}
+\section{Saving and Loading games}
+Get the context from the handle by calling \verb+dMagnetic2_engine_save_game();+. Overwrite the context in the handle by calling \verb+dMagnetic2_engine_load_game();+.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{libdmagnetic2 graphics.a}
+The purpose of this chapter is to descripe how to use the API to decode the graphics and animations.
+\section{Helloworld example}
+The purpose of this chapter is to provide a source code for decoding graphics and storing them as .xpm files.
+For now, see \verb+tests/graphics/graphics_animations.c+, \verb+tests/graphics/graphics_pictures1.c+, \verb+tests/graphics/graphics_pictures2.c+.
+\section{Data structures}
+\section{Interface functions}
+\end{document}
