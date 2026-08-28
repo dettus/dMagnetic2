@@ -66,6 +66,7 @@ int dMagnetic2_engine_load_game(void* pHandle,int pSize,void* pContext);
 
 // API functions for configuration
 int dMagnetic2_engine_configure(void* pHandle,int* todo);
+int dMagnetic2_engine_get_regs(void* pHandle,unsigned int* pPcr,unsigned int* pSr,unsigned int *pAregs,unsigned int *pDregs);
 
 
 #endif

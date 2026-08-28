@@ -260,4 +260,41 @@ int dMagnetic2_engine_process(void *pHandle,int singlestep,unsigned int *pStatus
 	*pStatus=(pThis->status_flags);
 	return retval;
 }
+int dMagnetic2_engine_get_regs(void *pHandle,unsigned int* pPcr,unsigned int* pSr, unsigned int *pAregs, unsigned int *pDregs)
+{
+	int retval;
+	tdMagnetic2_engine_handle* pThis=(tdMagnetic2_engine_handle*)pHandle;
+	if (pThis->magic!=MAGIC)
+	{
+		return DMAGNETIC2_ERROR_WRONG_HANDLE;
+	}
+	retval=DMAGNETIC2_OK;
+	if (pPcr!=NULL)
+	{
+		pPcr=(unsigned int)pThis->vm68k.pcr;
+	}
+	if (pSr!=NULL)
+	{
+		pSr=(unsigned int)pThis->vm68k.sr;
+	}
+	if (pAregs!=NULL)
+	{
+		int i;
+		for (i=0;i<8;i++)
+		{
+			pAregs[i]=(unsigned int)pThis->vm68k.a[i];
+		}
+	}
+
+	if (pDregs!=NULL)
+	{
+		int i;
+		for (i=0;i<8;i++)
+		{
+			pAregs[i]=(unsigned int)pThis->vm68k.a[i];
+		}
+	}
+
+	return retval;
+}
 
